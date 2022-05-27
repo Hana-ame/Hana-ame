@@ -1,4 +1,4 @@
-
+# 正则，替换
 修改，注释变为行内注释
 
 find: (?<=;|\s)//(.*)\n
@@ -12,3 +12,11 @@ for vscode用法
 
 find: (?<!var)(\s|\n)
 replace: <null>
+
+
+
+# git-autoconfig
+[git-autoconfig](https://marketplace.visualstudio.com/items?itemName=shyykoserhiy.git-autoconfig)
+
+登录不同的github账号(还没看)
+
