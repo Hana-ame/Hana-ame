@@ -1,7 +1,8 @@
 # 正则，替换
 修改，注释变为行内注释
 
-find: (?<=;|\s)//(.*)\n
+find: 
+(?<=;|\s)//(.*)\n
 replace: /*$1*/
 for vscode用法
 
@@ -10,7 +11,8 @@ for vscode用法
 
 修改，删掉所有的空格
 
-find: (?<!var)(\s|\n)
+find: 
+(?<!var|return|new|else)(\s|\n)
 replace: <null>
 
 
