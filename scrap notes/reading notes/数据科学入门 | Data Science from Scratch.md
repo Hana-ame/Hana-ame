@@ -1,5 +1,8 @@
 Data Science from Scratch 
-<!-- []() -->
+
+[pdf(本地)](file:///C:/Users/lumin/Downloads/%E6%95%B0%E6%8D%AE%E7%A7%91%E5%AD%A6%E5%85%A5%E9%97%A8.pdf)
+
+
 <a href="file:///C:/Users/lumin/Downloads/%E6%95%B0%E6%8D%AE%E7%A7%91%E5%AD%A6%E5%85%A5%E9%97%A8.pdf">pdf(本地)</a>
 
 动物书
