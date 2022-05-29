@@ -22,3 +22,13 @@ javascript: (function() {
   };
   panda_init(0);
 } ());
+
+// 需要content-type 为 js 的，
+// pages 也没用
+SCRIPT_URL = `https://moonchan.xyz/clear-display-name.js`;
+SCRIPT_URL = `https://gh.azalea.workers.dev/Hana-ame/hana-ame/main/scrap%20notes/javascript/clear_display_name.js`
+let s = document.createElement('script');
+s.src = SCRIPT_URL;
+document.body.appendChild(s);
+
+
