@@ -28,9 +28,15 @@ javascript: (function() {
 SCRIPT_URL = `https://moonchan.xyz/clear-display-name.js`;
 
 FILE_NAME = `clear_display_name.js`;
-SCRIPT_URL = `https://gh.moonchan.xyz/Hana-ame/hana-ame/main/scrap%20notes/javascript/${FILE_NAME}`;
+// SCRIPT_URL = `https://gh.moonchan.xyz/Hana-ame/hana-ame/main/scrap%20notes/javascript/${FILE_NAME}`;
 let s = document.createElement('script');
-s.src = SCRIPT_URL;
+s.src = `https://gh.moonchan.xyz/Hana-ame/hana-ame/main/scrap%20notes/javascript/${FILE_NAME}`;
+document.body.appendChild(s);
+
+FILE_NAME=`clear_display_name.js`;
+let s=document.createElement('script');
+s.src=`https://gh.moonchan.xyz/Hana-ame/hana-ame/main/script/${FILE_NAME}`;
 document.body.appendChild(s);
 
 
+javascript:(function(){FILE_NAME=`clear_display_name.js`;let s=document.createElement('script');s.src=`https://gh.moonchan.xyz/Hana-ame/hana-ame/main/script/${FILE_NAME}`;document.body.appendChild(s);})();
