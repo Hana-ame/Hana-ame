@@ -27,3 +27,5 @@ try {
 catch (e) {
   console.log( 'Error: Document tree modified during iteration ' + e );
 }
+
+[script/clear-display-name.js]
