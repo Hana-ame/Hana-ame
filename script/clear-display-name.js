@@ -14,18 +14,48 @@ javascript:(
         }        
         
         {
-            let iter = document.evaluate('//img[@class="u-photo account__avatar"]', document, null, XPathResult.ANY_TYPE, null );
+            // let iter = document.evaluate('//img[@class="u-photo account__avatar"]', document, null, XPathResult.ANY_TYPE, null );
+            let iter = document.evaluate('//img[contains(@class,"u-photo")]', document, null, XPathResult.ANY_TYPE, null );
             try {
                 var thisNode = iter.iterateNext();              
                 while (thisNode) {
                   console.log( thisNode.textContent );
-                  thisNode.style.setProperty('filter','blur(20px)')
-                  thisNode = iterator.iterateNext();
+                  thisNode.style.setProperty('filter','blur(4px)')
+                  thisNode = iter.iterateNext();
                 }
             }
             catch (e) {
-                console.log( 'Error: Document tree modified during iteration ' + e );
+                console.log( e );
             }
         }
+        {
+            let iter = document.evaluate('//*[@class="display-name"]', document, null, XPathResult.ANY_TYPE, null );
+            try {
+                var thisNode = iter.iterateNext();              
+                while (thisNode) {
+                  console.log( thisNode.textContent );
+                  thisNode.style.setProperty('filter','blur(4px)')
+                  thisNode = iter.iterateNext();
+                }
+            }
+            catch (e) {
+                console.log( e );
+            }
+        }      
+        {
+            let iter = document.evaluate('//*[@class="h-card"]', document, null, XPathResult.ANY_TYPE, null );
+            try {
+                var thisNode = iter.iterateNext();              
+                while (thisNode) {
+                  console.log( thisNode.textContent );
+                  thisNode.style.setProperty('filter','blur(4px)')
+                  thisNode = iter.iterateNext();
+                }
+            }
+            catch (e) {
+                console.log( e );
+            }
+        }              
+        
     }
 )();
