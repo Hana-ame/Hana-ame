@@ -1,23 +1,22 @@
-javascript:(
-  function blur(xpath){
+javascript:(function(){ 
+  function blurByXpath(xpath){
     let iter = document.evaluate(xpath, document, null, XPathResult.ANY_TYPE, null );
+    console.log(iter)
     try {
-      var thisNode = iter.iterateNext();       
+      var thisNode = iter.iterateNext();    
       while (thisNode) {
-       console.log( thisNode.textContent );
-       thisNode.style.setProperty('filter','blur(4px)')
-       thisNode = iter.iterateNext();
+      console.log( thisNode.textContent );
+      thisNode.style.setProperty('filter','blur(4px)')
+      thisNode = iter.iterateNext();
       }
     }
     catch (e) {
-      console.log( e );
+      console.log(e);
     }
-  }
-  (function(){    
-    blur('//img[contains(@class,"u-photo")]')
-    blur('//*[@class="display-name"]')
-    blur('//*[@class="h-card"]')
-    blur('//bdi')
-    blur('//*[@class="status__avatar"]')
-  })
-);
+  }  
+  blurByXpath('//img[contains(@class,"u-photo")]')
+  blurByXpath('//*[@class="display-name"]')
+  blurByXpath('//*[@class="h-card"]')
+  blurByXpath('//bdi')
+  blurByXpath('//*[@class="status__avatar"]')
+}());
