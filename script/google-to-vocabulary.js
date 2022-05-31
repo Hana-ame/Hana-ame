@@ -8,6 +8,3 @@ javascript:(
         location.href = "https://www.vocabulary.com/dictionary/" + w;
     }
 )();
-
-// https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_Expressions
-// javascript:(function(){var t = location.href;var re =  /q=(\w+)&?/g  ; var arr = re.exec(t);var w = arr[1];location.href = "https://www.vocabulary.com/dictionary/" + w;})();
