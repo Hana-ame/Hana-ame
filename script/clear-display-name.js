@@ -19,4 +19,5 @@ javascript:(function(){
   blurByXpath('//*[@class="h-card"]')
   blurByXpath('//bdi')
   blurByXpath('//*[@class="status__avatar"]')
+  blurByXpath('//*[@class="account__header__tabs__name"]')  
 }());
