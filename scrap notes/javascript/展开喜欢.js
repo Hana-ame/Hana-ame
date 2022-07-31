@@ -84,4 +84,7 @@ async function extendLikes(url){
     };
     
     observer.observe(bodyList, config);
+
+    extendLikes(document.location.href);
+
 })();
