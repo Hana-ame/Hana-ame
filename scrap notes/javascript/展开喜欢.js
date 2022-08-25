@@ -2,7 +2,6 @@
 // @name         毛象
 // @version      0.1
 // @description  展开毛象的喜欢列表
-// @author       misRoute
 // @match        *://wxw.moe/*
 // @match        *://retirenow.top/*
 // @match        *://monado.ren/*
