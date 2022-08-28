@@ -68,6 +68,6 @@ javascript: (
       let nextIndex = arr.findIndex(e => e==window.btoa(url.href))+1;
       if (nextIndex >= arr.length) nextIndex = 0;
       location.href = window.atob(arr[nextIndex]);
-      /* for the time present, it will reload the whole page so not really want to use it, maybe find a way to crawl it with RSS (but i lost the post that explane the RSS...) */
+      /* for the time present, it will reload the whole page so not really want to use it, maybe find a way to crawl it with RSS (but i lost the post that explain the RSS...) */
     }
 })();
