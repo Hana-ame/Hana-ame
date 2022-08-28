@@ -1,5 +1,6 @@
 javascript: (
   async function() {
+    let url = new URL(location.href);
     if (location.href.startsWith("https://oversea.cnki.net")){ /* oversea */ 
       t = location.href.replace("https://oversea.cnki.net", "https://kns.cnki.net");  
       location.href = t;
@@ -30,31 +31,42 @@ javascript: (
         lastNext = hrefNext;
         hrefNext = doc.getElementById('next').href;
       }
-    }else if (url.startsWith(`https://www.vocabulary.com/dictionary/`)){
-      word = url.replace(`https://www.vocabulary.com/dictionary/`,``).toLowerCase();      
+    }else if (url.href.startsWith(`https://www.vocabulary.com/dictionary/`)){
+      word = url.href.replace(`https://www.vocabulary.com/dictionary/`,``).toLowerCase();      
       if (word !== undefined){
         navigator.clipboard.readText()
           .then( (clipText) =>{
             console.log(clipText); 
-            var newText = clipText +'\n * '+'['+word+']'+'('+url+')';
+            var newText = clipText +'\n * '+'['+word+']'+'('+url.href+')';
             console.log(newText); 
             navigator.clipboard.writeText(newText);
           });
       }
-    }else if(url.startsWith(`https://www.google.com`)){
+    }else if(url.href.startsWith(`https://www.google.com`)){
       var re = /q=([\w+-]+)&?/g; 
-      var arr = re.exec(url);
+      var arr = re.exec(url.href);
       word = arr[1];
-      url = `https://www.google.com/search?q=`+word;
+      /* var url = `https://www.google.com/search?q=`+word; */ /* not verified, if the name is shadowed */
+      let url = new URL('https://google.com/search'); /* let should be the first time the name appears in this code block */
+      url.searchParams.set('q', word); 
       word = word.replaceAll('+',' ').toLowerCase();      
       if (word !== undefined){
         navigator.clipboard.readText()
           .then( (clipText) =>{
             console.log(clipText); 
-            var newText = clipText +'\n * '+'['+word+']'+'('+url+')';
+            var newText = clipText +'\n * '+'['+word+']'+'('+url.href+')';
             console.log(newText); 
             navigator.clipboard.writeText(newText);
           });
       }
+    }else if(window.btoa(url.hostname) == 'd3h3Lm1vZQ=='){
+      arr = [
+        `aHR0cHM6Ly93eHcubW9lL3dlYi9ASGFydVVyYXJhL3dpdGhfcmVwbGllcw==`,
+        `aHR0cHM6Ly93eHcubW9lL3dlYi9Aamlhbmd4aWF4aWF4aWEvd2l0aF9yZXBsaWVz`,
+      ];
+      let nextIndex = arr.findIndex(e => e==window.btoa(url.href))+1;
+      if (nextIndex >= arr.length) nextIndex = 0;
+      location.href = window.atob(arr[nextIndex]);
+      /* for the time present, it will reload the whole page so not really want to use it, maybe find a way to crawl it with RSS (but i lost the post that explane the RSS...) */
     }
 })();
