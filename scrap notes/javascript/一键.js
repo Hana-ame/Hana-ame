@@ -8,6 +8,7 @@ javascript: (
       t = location.href.replace("https://kns.cnki.net", "https://oversea.cnki.net"); 
       location.href = t;
     }else if (location.href.startsWith("https://exhentai.org/") || location.href.startsWith("https://e-hentai.org/")){    
+      /* TODO: when fetch failed, add some  handler */
       'use strict';
       var picsNext = document.createElement('div');
       var lastPrev = location.href;
