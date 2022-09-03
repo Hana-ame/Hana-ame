@@ -29,3 +29,8 @@ catch (e) {
 }
 
 [script/clear-display-name.js]
+
+
+----
+草，vimium夹在bookmark会错乱，长度有限制。
+直接点就没问题
