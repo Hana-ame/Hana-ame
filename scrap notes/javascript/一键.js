@@ -69,5 +69,11 @@ javascript: (
       if (nextIndex >= arr.length) nextIndex = 0;
       location.href = window.atob(arr[nextIndex]);
       /* for the time present, it will reload the whole page so not really want to use it, maybe find a way to crawl it with RSS (but i lost the post that explain the RSS...) */
+    }else if(url.hostname == `www.wenku8.net`){
+      let host = document.location.host;
+      let url = encodeURIComponent(document.location.href);
+      console.log(`read://https_${host}/?url=${url}`);
+      /* window.location.href = `read://https_${host}/?url=${url}`; */
+      navigator.clipboard.writeText(`read://https_${host}/?url=${url}`);
     }
 })();
