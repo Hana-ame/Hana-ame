@@ -34,3 +34,10 @@ catch (e) {
 ----
 草，vimium夹在bookmark会错乱，长度有限制。
 直接点就没问题
+
+```js
+const arr =[];
+for(const v of arr){
+    console.log(window.btoa(v));
+}
+```

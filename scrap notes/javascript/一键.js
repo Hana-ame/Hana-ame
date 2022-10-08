@@ -60,20 +60,34 @@ javascript: (
             navigator.clipboard.writeText(newText);
           });
       }
-    }else if(window.btoa(url.hostname) == 'd3h3Lm1vZQ=='){
-      arr = [
-        `aHR0cHM6Ly93eHcubW9lL3dlYi9ASGFydVVyYXJhL3dpdGhfcmVwbGllcw==`,
-        `aHR0cHM6Ly93eHcubW9lL3dlYi9Aamlhbmd4aWF4aWF4aWEvd2l0aF9yZXBsaWVz`,
-      ];
-      let nextIndex = arr.findIndex(e => e==window.btoa(url.href))+1;
-      if (nextIndex >= arr.length) nextIndex = 0;
-      location.href = window.atob(arr[nextIndex]);
-      /* for the time present, it will reload the whole page so not really want to use it, maybe find a way to crawl it with RSS (but i lost the post that explain the RSS...) */
     }else if(url.hostname == `www.wenku8.net`){
       let host = document.location.host;
       let url = encodeURIComponent(document.location.href);
       console.log(`read://https_${host}/?url=${url}`);
       /* window.location.href = `read://https_${host}/?url=${url}`; */
       navigator.clipboard.writeText(`read://https_${host}/?url=${url}`);
+    }else if([`bzNvLmNh`,`bW9uYS5kbw==`,`d3h3Lm1vZQ==`,`d3d3Lnd4dy5tb2U=`].includes(window.btoa(url.hostname))){
+      var blurByXpath = function(xpath){
+        let iter = document.evaluate(xpath, document, null, XPathResult.ANY_TYPE, null );
+        console.log(iter);
+        try {
+          var thisNode = iter.iterateNext();    
+          while (thisNode) {
+          console.log( thisNode.textContent );
+          thisNode.style.setProperty('filter','blur(4px)');
+          thisNode = iter.iterateNext();
+          }
+        }
+        catch (e) {
+          console.log(e);
+        }
+      };
+      blurByXpath('//img[contains(@class,"u-photo")]');
+      blurByXpath('//*[@class="display-name"]');
+      blurByXpath('//*[@class="h-card"]');
+      blurByXpath('//bdi');
+      blurByXpath('//*[@class="status__avatar"]');
+      blurByXpath('//*[@class="account__header__tabs__name"]//small');
+      blurByXpath('//*[@class="public-account-header__tabs__name"]//small');
     }
 })();
