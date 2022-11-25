@@ -51,7 +51,7 @@ imgID = 1;
     }
 
 
-    var picsNext = document.createElement('div');
+    var nextPic = document.createElement('div');
     /* div.textContent = "123"; */
 
     var lastPrev = location.href;
@@ -59,7 +59,7 @@ imgID = 1;
     var genImgID = 1;
 
     const element = document.getElementById('i1');
-    element.appendChild(picsNext);
+    element.appendChild(nextPic);
 
     var hrefNext = document.getElementById('next').href;
     while ( hrefNext != lastNext ) {
@@ -80,7 +80,7 @@ imgID = 1;
         genImgID = genImgID + 1;
         img.id = `img${genImgID}`;
 
-        picsNext.appendChild(img);
+        nextPic.appendChild(img);
 
         lastNext = hrefNext;
         hrefNext = doc.getElementById('next').href;

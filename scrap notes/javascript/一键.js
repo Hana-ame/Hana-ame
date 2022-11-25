@@ -10,11 +10,11 @@ javascript: (
     }else if (location.href.startsWith("https://exhentai.org/") || location.href.startsWith("https://e-hentai.org/")){    
       /* TODO: when fetch failed, add some  handler */
       'use strict';
-      var picsNext = document.createElement('div');
+      var nextPic = document.createElement('div');
       var lastPrev = location.href;
       var lastNext = location.href;
       const element = document.getElementById('i1');
-      element.appendChild(picsNext);
+      element.appendChild(nextPic);
       var hrefNext = document.getElementById('next').href;
       while (hrefNext != lastNext) {
         var doc = await fetch(hrefNext).then(resp => resp.text())
@@ -28,7 +28,7 @@ javascript: (
         let img = document.createElement('img');
         let element = doc.getElementById('img');
         img.src = element.src;
-        picsNext.appendChild(img);
+        nextPic.appendChild(img);
         lastNext = hrefNext;
         hrefNext = doc.getElementById('next').href;
       }
