@@ -16,6 +16,8 @@ github.com > settings > ssh (or something)
 ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 ```
 
+or type "yes"
+
 ## submodule
 
 ```sh
