@@ -6,7 +6,7 @@ git add .;
 git stash;
 
 git checkout main;
-git merge $CUR_BRANCH --no-ff;
+git pull;
 git checkout $CUR_BRANCH;
 
 git stash pop;
