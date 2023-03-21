@@ -22,10 +22,26 @@ ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 git submodule add ssh://root@144.34.219.146:26275/srv/notes
 ```
 
+need to run
+
+```sh
+git submodule init
+git submodule update
+```
+
+TODO: something unsolved
+when edited submodules, how to sync them.
+
 ## remote 
 
 delete branch
 
 ```sh
 git push origin --delete [branch]
+```
+
+would not delete the local branch automatically
+
+```sh
+git branch -d feature/login
 ```
