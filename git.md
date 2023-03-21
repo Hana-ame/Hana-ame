@@ -21,3 +21,11 @@ ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 ```sh
 git submodule add ssh://root@144.34.219.146:26275/srv/notes
 ```
+
+## remote 
+
+delete branch
+
+```sh
+git push origin --delete [branch]
+```
