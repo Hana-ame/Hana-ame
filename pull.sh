@@ -5,7 +5,7 @@ echo $CUR_BRANCH
 git add .;
 git stash;
 
-git checkout main;
+git checkout master;
 git pull;
 git checkout $CUR_BRANCH;
 
