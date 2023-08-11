@@ -1,12 +1,10 @@
 javascript: (
   async function() {
     let url = new URL(location.href);
-    if (location.href.startsWith("https://oversea.cnki.net")){ /* oversea */ 
-      t = location.href.replace("https://oversea.cnki.net", "https://kns.cnki.net");  
-      location.href = t;
-    }else if (location.href.startsWith("https://kns.cnki.net")){
-      t = location.href.replace("https://kns.cnki.net", "https://oversea.cnki.net"); 
-      location.href = t;
+    if (url.href.endsWith('.pdf')){
+      nextHRef = 'extension://ikhdkkncnoglghljlkmcimlnlhkeamad/pdf-viewer/web/viewer.html?file=' + encodeURIComponent(url.href);
+      console.log(nextHRef);
+      /* location.href = nextHRef; */
     }else if (location.href.startsWith("https://exhentai.org/") || location.href.startsWith("https://e-hentai.org/")){    
       /* TODO: when fetch failed, add some  handler */
       'use strict';
