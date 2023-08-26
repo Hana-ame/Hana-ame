@@ -141,18 +141,32 @@
     'position: fixed;',
     'bottom: 0;',
     'left: 0;',
-    'width: 200px;',
-    'height: 100px;',
-    'background-color: rgba(1,1,1,0.1);',
+    'width: 240px;',
+    'height: auto;',
+    'background-color: rgba(1,1,1,0.25);',
   ]
   el.setAttribute('style', styles.join(" "))
   el.innerHTML = `
-    <div v-for="data in datas" key="data.id">
-      {{ data }}
-    </div>  
-
-    <button @click="click">按钮</button>
+    <div>
+      {{ favourites_count }} - {{ favourites.length }}
+    </div>
+    <div v-show="show">
+      <span v-for="data in favourites" key="data.id">
+        <a :href="data.url">
+          <img 
+            :src="data.avatar" 
+            width="48" 
+            height="48" 
+            :alt="data.acct" 
+            :title="data.display_name"
+          >
+        </a>
+      </span>  
+    </div>
+    <!--
     <button @click="click">{{ message }}</button>
+    -->
+    <button @click="click">+</button>
     `
   document.body.append(el)
   const App = {
@@ -160,14 +174,55 @@
       return {
         message: "Hello Element Plus",
         datas: [],
+        oldHref: "",
+        favourites_count: 0,
+        favourites: [],
+        show: true,
       };
     },
     methods: {
       click() {
-        this.message = "123";
         console.log("clicked in vue");
+        this.show = !this.show;
       },
+      getNote(id) {
+        const url = `/api/v1/statuses/${id}`
+        fetch(url).then(r => r.json()).then(r => {
+          console.log("note", r);
+          this.favourites_count = r.favourites_count;
+        })
+      },
+      getFavs(id) {
+        const url = `/api/v1/statuses/${id}/favourited_by`
+        fetch(url).then(r => r.json()).then(r => {
+          console.log("favs", r);
+          this.favourites = r;
+        })
+      },
+      handler(href) {
+        console.log(href)
+        const [host, username, id] = getIdFromHref(href)
+        this.getFavs(id)
+        this.getNote(id)
+      }
     },
+    mounted() {
+      console.log("onMounted")
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (this.oldHref != document.location.href) {
+            this.oldHref = document.location.href;
+            /* Changed ! your code here */
+            this.handler(document.location.href);
+          }
+        });
+      });
+      const config = {
+        childList: true,
+        subtree: true
+      };
+      observer.observe(bodyList, config);
+    }
   };
   setTimeout(() => {
     app = Vue.createApp(App);
