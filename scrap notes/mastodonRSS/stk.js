@@ -18,8 +18,8 @@
 
 (function () {
   'use strict';
-  // utils 
-  function getDateTime() {
+  // utils
+  function currentDateTime() {
     const currentdate = new Date();
     const datetime =
       currentdate.getFullYear() + "/"
@@ -84,11 +84,7 @@
     let href = document.location.href;
     let [host, username, id] = getIdFromHref(href);
     console.log(host, username, id)
-    app.data.datas.append({
-      host,
-      username,
-      id,
-    })
+    new Watcher(id);
   }
 
   // 要用到的元素，每次点击调用click函数
@@ -135,103 +131,138 @@
   script.src = "https://cdn.jsdelivr.net/npm/vue@next";
   document.body.appendChild(script);
 
-  const el = document.createElement('div');
-  el.setAttribute('id', 'app');
-  const styles = [
-    'position: fixed;',
-    'bottom: 0;',
-    'left: 0;',
-    'width: 240px;',
-    'height: auto;',
-    'background-color: rgba(1,1,1,0.25);',
-  ]
-  el.setAttribute('style', styles.join(" "))
-  el.innerHTML = `
-    <div>
-      {{ favourites_count }} - {{ favourites.length }}
-    </div>
-    <div v-show="show">
-      <span v-for="data in favourites" key="data.id">
-        <a :href="data.url">
-          <img 
-            :src="data.avatar" 
-            width="48" 
-            height="48" 
-            :alt="data.acct" 
-            :title="data.display_name"
-          >
-        </a>
-      </span>  
-    </div>
-    <!--
-    <button @click="click">{{ message }}</button>
-    -->
-    <button @click="click">+</button>
-    `
-  document.body.append(el)
-  const App = {
-    data() {
-      return {
-        message: "Hello Element Plus",
-        datas: [],
-        oldHref: "",
-        favourites_count: 0,
-        favourites: [],
-        show: true,
-      };
-    },
-    methods: {
-      click() {
-        console.log("clicked in vue");
-        this.show = !this.show;
-      },
-      getNote(id) {
-        const url = `/api/v1/statuses/${id}`
-        fetch(url).then(r => r.json()).then(r => {
-          console.log("note", r);
-          this.favourites_count = r.favourites_count;
-        })
-      },
-      getFavs(id) {
-        const url = `/api/v1/statuses/${id}/favourited_by`
-        fetch(url).then(r => r.json()).then(r => {
-          console.log("favs", r);
-          this.favourites = r;
-        })
-      },
-      handler(href) {
-        console.log(href)
-        const [host, username, id] = getIdFromHref(href)
-        this.getFavs(id)
-        this.getNote(id)
-      }
-    },
-    mounted() {
-      console.log("onMounted")
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (this.oldHref != document.location.href) {
-            this.oldHref = document.location.href;
-            /* Changed ! your code here */
-            this.handler(document.location.href);
-          }
-        });
-      });
-      const config = {
-        childList: true,
-        subtree: true
-      };
-      observer.observe(bodyList, config);
+  class Watcher {
+    // need this?
+    favsUrl = ""
+    noteUrl = ""
+    id = -1
+    favouritesCount = 0
+
+    constructor(id) {
+      this.favsUrl = `/api/v1/statuses/${id}/favourited_by`
+      this.noteUrl = `/api/v1/statuses/${id}`
+      this.favouritesCount = 0
+      this.id = setInterval(() => this.logger(), 1000*3*60)
     }
-  };
+    logger() {
+      fetch(this.noteUrl).then(r => r.json()).then(note => {
+        if (this.favouritesCount == note.favourites_count) return;
+        this.favouritesCount = note.favourites_count
+        fetch(this.favsUrl).then(r => r.json()).then(favs => {
+          if (note.favourites_count > favs.length)
+            console.log(note.id, note.favourites_count, favs.length, currentDateTime());
+        })
+      })
+    }
+
+  }
+
+
   setTimeout(() => {
+    const el = document.createElement('div');
+    el.setAttribute('id', 'app');
+    const styles = [
+      'position: fixed;',
+      'bottom: 0;',
+      'left: 0;',
+      'width: 240px;',
+      'height: auto;',
+      'background-color: rgba(1,1,1,0.25);',
+    ]
+    el.setAttribute('style', styles.join(" "))
+    el.innerHTML = `
+      <div>
+        {{ favourites_count }} - {{ favourites.length }}
+      </div>
+      <div v-show="show">
+        <span v-for="data in favourites" key="data.id">
+          <a :href="data.url">
+            <img
+              :src="data.avatar"
+              width="48"
+              height="48"
+              :alt="data.acct"
+              :title="data.display_name"
+            >
+          </a>
+        </span>
+      </div>
+      <button @click="click">+</button>
+      <button @click="add">+</button>
+      `
+    document.body.append(el)
+    const App = {
+      data() {
+        return {
+          message: "Hello Element Plus",
+          datas: [],
+          oldHref: "",
+          favourites_count: 0,
+          favourites: [],
+          show: true,
+        };
+      },
+      methods: {
+        click() {
+          console.log("clicked in vue");
+          this.show = !this.show;
+        },
+        add() {
+          const [host, username, id] = getIdFromHref(document.location.href)
+          if (id == "") return;
+          new Watcher(id)
+        },
+        getNote(id) {
+          const url = `/api/v1/statuses/${id}`
+          fetch(url).then(r => r.json()).then(r => {
+            // console.log("note", r);
+            this.favourites_count = r.favourites_count;
+          })
+        },
+        getFavs(id) {
+          const url = `/api/v1/statuses/${id}/favourited_by`
+          fetch(url).then(r => r.json()).then(r => {
+            // console.log("favs", r);
+            this.favourites = r ?? [];
+          })
+        },
+        handler(href) {
+          console.log(href)
+          const [host, username, id] = getIdFromHref(href)
+          if (id == "") return;
+          this.getFavs(id)
+          this.getNote(id)
+        }
+      },
+      mounted() {
+        console.log("onMounted")
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (this.oldHref != document.location.href) {
+              this.oldHref = document.location.href;
+              /* Changed ! your code here */
+              this.handler(document.location.href);
+            }
+          });
+        });
+        const config = {
+          childList: true,
+          subtree: true
+        };
+        observer.observe(bodyList, config);
+      }
+    };
     app = Vue.createApp(App);
     app.mount("#app");
-  }, 1000 * 8);
+  }, 1000 * 5);
 
 })();
 
 /*
   ~~though can finish it in some way, but i should not to continue this.~~
   Although I can finish it in some way, I should not continue this.
+*/
+/*
+  加些啥功能
+    - ...
 */
