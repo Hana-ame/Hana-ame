@@ -68,6 +68,7 @@ NOTE: how to deal with edge of two simulator.
 #### 鼠鼠
 
 鼠鼠是智能体
+*吵死了又是枪声又是痨病鬼的。*
 
 #### 货币
 
