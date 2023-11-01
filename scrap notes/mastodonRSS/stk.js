@@ -125,6 +125,45 @@
   };
   observer.observe(bodyList, config);
   setTimeout(function () { handler(document.location.href); }, 5 * 1000);  //5秒后将会调用执行remind()函数
+  if (document.location.host == 'wxw.moe') {
+    let laststatus = -1
+    function fetchAndPrint(){
+      fetch("/api/v1/accounts/107281745043054138/statuses?exclude_replies=false")
+      .then( r => r.json() )
+      .then( r => {
+        // for(let i=0; i<c; i++){
+          // console.log(r[0])
+          console.log(r)
+        // }
+      })
+    }
+
+    function HaruUrara(){
+      fetch("/api/v1/accounts/107281745043054138")
+      .then(r => r.json())
+      .then(r => {
+        const currentdate = new Date();
+        const datetime = 
+            currentdate.getFullYear() + "/"
+          + (currentdate.getMonth() + 1) + "/"
+          + currentdate.getDate()  + " @ "
+          + currentdate.getHours().toString().padStart(2, '0') + ":"
+          + currentdate.getMinutes().toString().padStart(2, '0') + ":"
+          + currentdate.getSeconds().toString().padStart(2, '0')
+        console.log(r.statuses_count, datetime);
+        if (r.statuses_count != laststatus) {
+          if (laststatus > 0) {
+            new Notification(`${r.statuses_count}   ${datetime}`);
+            // let c = r.statuses_count-laststatus;
+            fetchAndPrint()
+          }
+        }    
+        laststatus = r.statuses_count
+      })
+    }
+    fetchAndPrint()
+    setInterval(HaruUrara, 20*1000);
+  }
 
   let script = document.createElement('script');
   script.setAttribute('type', 'text/javascript');
@@ -149,8 +188,10 @@
         if (this.favouritesCount == note.favourites_count) return;
         this.favouritesCount = note.favourites_count
         fetch(this.favsUrl).then(r => r.json()).then(favs => {
-          if (note.favourites_count > favs.length)
+          if (note.favourites_count > favs.length) {
             console.log(note.id, note.favourites_count, favs.length, currentDateTime());
+            clearInterval(this.id);
+          }
         })
       })
     }
@@ -187,6 +228,9 @@
           </a>
         </span>
       </div>
+      <!--
+      <button @click="click">{{ message }}</button>
+      -->
       <button @click="click">+</button>
       <button @click="add">+</button>
       `
@@ -227,7 +271,7 @@
           })
         },
         handler(href) {
-          console.log(href)
+          // console.log(href)
           const [host, username, id] = getIdFromHref(href)
           if (id == "") return;
           this.getFavs(id)
@@ -261,8 +305,4 @@
 /*
   ~~though can finish it in some way, but i should not to continue this.~~
   Although I can finish it in some way, I should not continue this.
-*/
-/*
-  加些啥功能
-    - ...
 */
