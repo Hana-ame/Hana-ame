@@ -39,3 +39,11 @@ git merge --no-commit --no-ff merge_branch
 设想的只merge某些文件可能还是有点大病。整个project merge过去好像是没啥问题是说？
 要保持目录结构，很烦。
 
+## 删除分支
+
+```sh
+git branch -d [branch]
+
+git push origin --delete [branch]
+git push origin :[branch]
+```
