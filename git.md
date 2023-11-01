@@ -35,3 +35,7 @@ git merge --no-commit --no-ff merge_branch
 [ref](https://stackoverflow.com/questions/4657009/how-to-merge-all-files-manually-in-git)
 
 试了一下其实是可以自动merge到文件夹里面的，不过可能要加一个预备merge，现在试试看。
+需要一步额外的重命名。
+设想的只merge某些文件可能还是有点大病。整个project merge过去好像是没啥问题是说？
+要保持目录结构，很烦。
+
