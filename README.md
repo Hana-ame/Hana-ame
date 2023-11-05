@@ -1,16 +1,15 @@
-### Hi there 👋
+# murmur 
 
-<!--
-**Hana-ame/hana-ame** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+murmur moved here, for not pushing to Hana-ame.github.io every time
 
-Here are some ideas to get you started:
+but it seems has no meaning. 
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+aborted.
+
+## GPT
+
+"Murmur" has been moved here to avoid the need for frequent pushes to Hana-ame.github.io.
+
+However, it seems that this move serves no apparent purpose.
+
+As a result, the operation has been aborted.
