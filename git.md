@@ -63,3 +63,14 @@ clone
 ```sh
 git clone --depth 1 --branch tag_name git@github.com:Hana-ame/Hana-ame.git 
 ```
+
+delete
+```sh
+git tag -d tag_name
+```
+
+delete remote
+```sh
+git push --delete origin v1.0 
+git push origin :refs/tags/<tag>
+```
