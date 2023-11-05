@@ -47,3 +47,19 @@ git branch -d [branch]
 git push origin --delete [branch]
 git push origin :[branch]
 ```
+
+## tag
+
+```sh
+git tag -a tag_name -m "message"
+```
+
+push
+```sh
+git push origin tag_name
+```
+
+clone
+```sh
+git clone --depth 1 --branch tag_name git@github.com:Hana-ame/Hana-ame.git 
+```
