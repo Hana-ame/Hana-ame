@@ -1,5 +1,7 @@
 # 鼠鼠乐园 ～ a project for simulation game
 
+**note**: 学习部分挪到了io里面，能展示。计划暂且不示人
+
 in general, this project will be a simulation game like Rimworld or other 4X games.
 
 here is the plan of this game.
@@ -36,6 +38,27 @@ so maybe you should learn kafka and how to deal with it with python golang or el
 
 NOTE: 想起来了上传特别弱。。.
 NOTE: how to deal with edge of two simulator.
+
+### entities
+
+catagories.
+
+- map
+  - this is the ground entity that shows up and exists in the background.
+  - it accutary the memo of ground truth.
+- pawns
+  - this is 
+  - pawns has property.
+  - it has little **mem** to store some key infomation. it has **inventory** to store some **items** in game
+  - every time, pawns ues it's **sensers** to get the ground that it knwon.
+  - it generate **ambitious** or **aims**
+  - when pawn has an **aim**, it cause the pawn **move**
+  - the pawn get a **move**
+  - then with the time slips. pawn 
+- items
+  - this is the item 
+
+
 
 ## gameplay
 
