@@ -43,6 +43,23 @@ __row["c2"]
 两个下划线开始的行是特殊处理，跟别的文字会报错，其他都是按照string处理
 ```
 
+关于`Tools/funcs.py`
+
+通过写一些辅助函数，可以通过`__funcs.[func]([prams..])`的方式使用。
+有一个example是参考dicts文件夹中的key对调value。
+
+```txt  
+__sub(f"key{index+1}")
+   
+__sub(f"key{index+1}", "file1")
+```
+
+默认访问default.json，如果指定了文件名，那么会访问[filename].json
+
+**!!!注意!!!**
+打包的exe文件只能用sub函数，只有装了py运行才能加其他函数，因为打包不让动态打包
+
+
 ## 可能的问题
 
 Q：找不到dll文件
@@ -50,3 +67,9 @@ A：大概在网上找同名的文件放到当前目录就行
 
 Q：报编码格式错误
 A：都是按UTF8来处理的，csv导出的时候如果有选项选择UTF8
+
+Q：py运行的时候找不到pandas
+A：用pip安装
+
+Q：funcs写了函数不让调用
+A：用py运行read-csv.py

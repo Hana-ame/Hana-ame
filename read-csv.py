@@ -1,8 +1,13 @@
+# import importlib
 import pandas as pd
 from typing import List
-from Tools.my_tools import parse_args, parse_fn
+from Tools.my_tools import parse_args, parse_fn, parse_startswith
 from Tools.my_file import FilePrinter
 
+# 导入辅助functions
+# funcs = eval("importlib.import_module('Tools.funcs')")
+# funcs = importlib.import_module('Tools.funcs')
+from Tools.funcs import * # nope
 
 # 读取 CSV 文件
 file_path = parse_args(lambda x: x.endswith(".csv")) or parse_fn(lambda x: x.endswith("_csv"), lambda x: x[:-4] + ".csv") or "csv.csv"
@@ -27,8 +32,8 @@ with FilePrinter("output.txt") as f:
     # f.print(f"行{index}：{row.iloc[0]} = {row.iloc[1]}")
     # f.print(f"{row.iloc[0]} = {row.iloc[1]}")
     for format in format_arr:
-      if format.startswith("__"):
-        f.print(str(eval(format[2:])))
+      if (source := parse_startswith(format, "__")) is not None:
+        f.print(str(eval(source)))
       else:
         f.print(format)
     f.println()

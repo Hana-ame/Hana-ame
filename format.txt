@@ -3,6 +3,12 @@ __index
 ,    
 可以是表达式
 __index + 2
+  
+__f"key{index+1}"
+  
+__sub(f"key{index+1}")
+   
+__sub(f"key{index+1}", "file1")
 ,   
 第一列是：
 __row.iloc[0]
