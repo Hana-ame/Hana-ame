@@ -1,7 +1,7 @@
 # import importlib
 import pandas as pd
 from typing import List
-from Tools.my_tools import parse_args, parse_fn, parse_startswith
+from Tools.my_tools import parse_args, parse_fn, parse_startswith, parse_endswith
 from Tools.my_file import FilePrinter
 
 # 导入辅助functions
@@ -12,7 +12,7 @@ from Tools.funcs import *  # nope
 # 读取 CSV 文件
 file_path = (
     parse_args(lambda x: x.endswith(".csv"))
-    or parse_fn(lambda x: x.endswith("_csv"), lambda x: x[:-4] + ".csv")
+    or parse_fn(lambda x: x.endswith("_csv"), lambda x: parse_endswith(x, "_csv") + ".csv")
     or "csv.csv"
 )
 format_path = parse_args(lambda x: x.endswith(".txt")) or "format.txt"

@@ -24,7 +24,7 @@ yarn-error.log*
 
 
 *.csv
+!csv.csv
 dist
 *.spec
-output.txt
 *.zip
