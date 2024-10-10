@@ -73,3 +73,6 @@ A：用pip安装
 
 Q：funcs写了函数不让调用
 A：用py运行read-csv.py
+
+Q：funcs写了函数还是不对
+A：必须用py运行，exe并不能load到修改过后的文件
