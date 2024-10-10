@@ -1,16 +1,20 @@
-### Hi there 👋
+# notes
 
-<!--
-**Hana-ame/hana-ame** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+## scrap notes
 
-Here are some ideas to get you started:
+**TODO**
+idk..
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+## swagger
+
+```sh
+git checkout learn/go/swagger
+```
+
+## git
+
+notes for git
+
+```sh
+git checkout git
+```

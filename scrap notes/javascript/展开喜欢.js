@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         毛象
-// @version      0.2.3
+// @version      0.3.0
 // @description  展开毛象的喜欢列表
 // @match        *://wxw.moe/*
 // @match        *://retirenow.top/*
@@ -17,112 +17,121 @@
 (function () {
   'use strict';
 
-  // https://stackoverflow.com/questions/3522090/event-when-window-location-href-changes
-  var oldHref = document.location.href;
+  function getDateTime(){
+    const currentdate = new Date();
+    const datetime = 
+        currentdate.getFullYear() + "/"
+      + (currentdate.getMonth() + 1) + "/"
+      + currentdate.getDate()  + " @ "
+      + currentdate.getHours().toString().padStart(2, '0') + ":"
+      + currentdate.getMinutes().toString().padStart(2, '0') + ":"
+      + currentdate.getSeconds().toString().padStart(2, '0')
+    return datetime
+  }
 
-  // function deleteLikeExtend(){
-  //   let xpath = '//div[@class="focusable detailed-status__wrapper"]';
-  //   let iter = document.evaluate(xpath, document, null, XPathResult.ANY_TYPE, null );
-  //   let node = iter.iterateNext();
-  //   console.log(node);
-  // }
-
-  async function extendLikes(url) {
-    // deleteLikeExtend()
+  function removeLikes(){
     let element = document.getElementById('like-extend');
     // console.log(element)
     while (element != null) {
       element.remove(); // Removes the div with the 'div-02' id
       element = document.getElementById('like-extend');
     }
+  }
 
-    // window.location.hostname
+  function appendLikes(data){
+
+    let div = document.createElement('div');
+    for (const item of data) {
+      let a = document.createElement('a');
+      a.href = item.url;
+      let img = document.createElement('img');
+      img.src = item['avatar'];
+      img.width = 48;
+      img.height = 48;
+      img.alt = item['acct'];
+      img.title = item['acct'] + '\n' + item['display_name'];
+      a.appendChild(img)
+      div.appendChild(a);
+    }
+    div.id = 'like-extend'
+    console.log(div);
+    // thisNode.appendChild(div);
+    // return div;
+    let xpath = '//div[@class="focusable detailed-status__wrapper"]';
+    let iter = document.evaluate(xpath, document, null, XPathResult.ANY_TYPE, null);
+    let node = iter.iterateNext();
+    console.log(node);
+    node.appendChild(div);
+  }
+
+  class Monitor {
+    constructor(id) {
+      this.id = id;
+      this.count = 0;
+      this.status = `/api/v1/statuses/${id}`;
+      this.favourtate_by = `/api/v1/statuses/${id}/favourited_by`;
+    }
+    
+    fetchFavs(){
+      return fetch(this.favourtate_by)
+      .then(r => r.json())
+      .then(d => {
+        appendLikes(d);
+        return d.length;
+      })
+    }
+    fetchStatus(){
+      return fetch(this.status)
+      .then(r => r.json())
+      .then(d => {
+        return d.favourites_count;
+      })
+    }
+    async run(){
+      console.log("run @", getDateTime());
+      const flag = await this.check();
+      if (flag) return;
+      this.flag = setInterval(() => this.check(), 1000*40);
+    }
+    async check(){
+      const length = await this.fetchStatus()
+      if (length == this.count) return
+      this.count = length
+      const count = await this.fetchFavs()
+      if (count < length) {
+        console.log(this.id, getDateTime(), count, length);
+        clearInterval(this.flag);
+        return true;
+      }
+      return false;
+    }
+  }
+
+  function getIdFromHref(url){
     let re = /.*\/\/([\w\.]+)\/web\/([\@\w\-\.]+)\/([0-9]+)$/g;
     let arr = re.exec(url);
-
     if (arr == null) {
       let re = /.*\/\/([\w\.]+)\/([\@\w\-\.]+)\/([0-9]+)$/g;
       arr = re.exec(url);
     }
-
-
-    // 抓包
     if (arr == null) {
-      let re = /.*\/\/([\w\.]+)\/web\/([\@\w\-\.]+)\/([0-9]+)\/favourites$/g;
-      let arr = re.exec(url);
-
-      if (arr == null) return;
-
-      let oriUrl = "https://" + arr[1] + "/web/" + arr[2] + "/" + arr[3] + "/";
-      let favourateUrl = "https://" + arr[1] + "/api/v1/statuses/" + arr[3] + "/favourited_by";
-
-      let id = setInterval(() => {
-        fetch(favourateUrl)
-          .then(r => r.json())
-          .then(r => {
-            var currentdate = new Date();
-            var datetime = "Found HaruUrara: " + currentdate.getDate() + "/"
-              + (currentdate.getMonth() + 1) + "/"
-              + currentdate.getFullYear() + " @ "
-              + currentdate.getHours() + ":"
-              + currentdate.getMinutes() + ":"
-              + currentdate.getSeconds();
-            /* console.log(datetime + " @ " + url); */
-
-            for (const i of r) {
-              if (i.username === 'HaruUrara') {
-                console.log(r);
-                console.log(datetime + " # " + oriUrl);
-                clearInterval(id);
-              }
-            }
-          })
-      }, 1000 * 300);
-      console.log(favourateUrl + " # " + id);
-      return;
-    };
-
-    // console.log(arr);
-    console.log(arr[1]);
-    console.log(arr[2]);
-    console.log(arr[3]);
-
-    let favourateUrl = "https://" + arr[1] + "/api/v1/statuses/" + arr[3] + "/favourited_by";
-
-    fetch(favourateUrl)
-      .then(response => response.json())
-      .then(data => {
-
-        console.log(data);
-        let div = document.createElement('div');
-        for (const item of data) {
-          let a = document.createElement('a');
-          a.href = item.url;
-          let img = document.createElement('img');
-          img.src = item['avatar'];
-          img.width = 48;
-          img.height = 48;
-          img.alt = item['acct'];
-          img.title = item['acct'] + '\n' + item['display_name'];
-          a.appendChild(img)
-          div.appendChild(a);
-        }
-        div.id = 'like-extend'
-        console.log(div);
-        // thisNode.appendChild(div);
-        // return div;
-        let xpath = '//div[@class="focusable detailed-status__wrapper"]';
-        let iter = document.evaluate(xpath, document, null, XPathResult.ANY_TYPE, null);
-        let node = iter.iterateNext();
-        console.log(node);
-
-        node.appendChild(div);
-
-      });
-
-
+      return "";
+    }
+    return arr[3];  
   }
 
+  function handler(href){
+    removeLikes();
+    const id = getIdFromHref(href);
+    if (id === "") return;
+    console.log(href, id);
+    const m = new Monitor(id);
+    m.run()
+  }
+
+
+  // https://stackoverflow.com/questions/3522090/event-when-window-location-href-changes
+  var oldHref = document.location.href;
   // window.onload = function() {
   //(function() {
   var bodyList = document.querySelector("body")
@@ -132,18 +141,16 @@
       if (oldHref != document.location.href) {
         oldHref = document.location.href;
         /* Changed ! your code here */
-        extendLikes(document.location.href);
+        handler(document.location.href);
       }
     });
   });
-
   var config = {
     childList: true,
     subtree: true
   };
-
   observer.observe(bodyList, config);
   //})();
-  setTimeout(function () { extendLikes(document.location.href); }, 1000);  //5秒后将会调用执行remind()函数
+  setTimeout(function () { handler(document.location.href); }, 1000);  //5秒后将会调用执行remind()函数
 
 })();
