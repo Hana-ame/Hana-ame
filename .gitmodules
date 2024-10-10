@@ -1,3 +1,7 @@
 [submodule "Tools"]
 	path = Tools
 	url = git@github.com:Hana-ame/Tools.git
+
+[submodule "Tools"]
+	path = src/Tools
+	url = git@github.com:Hana-ame/Tools.git
