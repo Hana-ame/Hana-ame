@@ -1,6 +1,19 @@
-c1,c2,c3,c4
-a,1,,
-b,2,// ,1
-c,3,,
-d,4,,2
-e,5,,
+s
+import os
+""
+# 读取文件列表
+file_list_path = 'filelist.txt'  # 文件列表的路径
+""
+# 打开文件列表并读取每一行
+"with open(file_list_path, 'r') as file:"
+files = file.readlines()
+""
+# 检查文件是否存在
+for file in files:
+# 去掉行末的换行符
+file_path = file.strip()
+""
+if os.path.isfile(file_path):  # 检查文件是否存在
+"print(f""文件存在: {file_path}"")"
+else:
+"print(f""文件不存在: {file_path}"")"

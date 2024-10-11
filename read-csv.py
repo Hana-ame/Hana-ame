@@ -12,7 +12,9 @@ from Tools.funcs import *  # nope
 # 读取 CSV 文件
 file_path = (
     parse_args(lambda x: x.endswith(".csv"))
-    or parse_fn(lambda x: x.endswith("_csv"), lambda x: parse_endswith(x, "_csv") + ".csv")
+    or parse_fn(
+        lambda x: x.endswith("_csv"), lambda x: parse_endswith(x, "_csv") + ".csv"
+    )
     or "csv.csv"
 )
 format_path = parse_args(lambda x: x.endswith(".txt")) or "format.txt"

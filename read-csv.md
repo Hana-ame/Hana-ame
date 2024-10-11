@@ -76,3 +76,6 @@ A：用py运行read-csv.py
 
 Q：funcs写了函数还是不对
 A：必须用py运行，exe并不能load到修改过后的文件
+
+
+不会有多余的行数
