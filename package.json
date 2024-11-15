@@ -14,7 +14,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && cp -r build/* Hana-ame.github.io/",
+    "build": "react-scripts build && cp -r build/* Hana-ame.github.io/ && cd Hana-ame.github.io && git add . && git commit -am \"npm run build\" && git push",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
