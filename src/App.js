@@ -7,21 +7,23 @@ import About from './About';
 const App = () => {
   return (
     <Router>
-      <nav>
-        <ul>
+      <nav className="bg-blue-500 p-4">
+        <ul className="flex space-x-4">
           <li>
-            <Link to="/">首页</Link>
+            <Link to="/" className="text-white hover:text-gray-200">首页</Link>
           </li>
           <li>
-            <Link to="/about">关于我们</Link>
+            <Link to="/about" className="text-white hover:text-gray-200">关于我们</Link>
           </li>
         </ul>
       </nav>
 
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-      </Routes>
+      <div className="p-4">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+        </Routes>
+      </div>
     </Router>
   );
 };
