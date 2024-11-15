@@ -1,25 +1,31 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+import React, { useState } from 'react';
+import Home from './Home';
+import About from './About';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const App = () => {
+    const [currentView, setCurrentView] = useState('home'); // 默认视图
+
+    const renderView = () => {
+        switch (currentView) {
+            case 'home':
+                return <Home />;
+            case 'about':
+                return <About />;
+            default:
+                return <Home />;
+        }
+    };
+
+    return (
+        <div>
+            <nav>
+                <button onClick={() => setCurrentView('home')}>首页</button>
+                <button onClick={() => setCurrentView('about')}>关于我们</button>
+            </nav>
+            {renderView()}
+        </div>
+    );
+};
 
 export default App;
