@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { UPLOAD_URL } from '@/misc/consts';
+import { UPLOAD_URL, uploadFileInChunks } from './consts';
 
 
 const FileUpload = () => {
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState('');
+    const [link, setLink] = useState('');
 
     const handleFileChange = (event) => {
         setFile(event.target.files[0]);
@@ -26,7 +27,9 @@ const FileUpload = () => {
         try {
             const response = await fetch(UPLOAD_URL, {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': file.type, // 设置 MIME 类型
+                },            
             });
 
             if (!response.ok) {
@@ -34,14 +37,21 @@ const FileUpload = () => {
             }
 
             const data = await response.json();
-            setMessage('文件上传成功！');
+
             console.log(data); // 打印服务器响应
+
+            const context = await uploadFileInChunks(file, data.uploadUrl)
+
+            setMessage('文件上传成功！');
+            setLink(`https://upload.moonchan.xyz/api/`+context.id+`/`+file.name);
+            
         } catch (error) {
             console.error('上传失败:', error);
             setMessage('文件上传失败，请重试。');
         } finally {
-            setUploading(false);
+            // setUploading(false);
         }
+
     };
 
     return (
@@ -67,6 +77,7 @@ const FileUpload = () => {
                 {uploading ? '上传中...' : '上传文件'}
             </button>
             {message && <p className="mt-2 text-red-500">{message}</p>}
+            {link && <a className="mt-2 text-red-500" href={link}>{link}</a>}
         </div>
     );
 };
