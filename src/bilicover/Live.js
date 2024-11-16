@@ -14,7 +14,6 @@ const Live = ({ id }) => {
                     `https://apiv2.magecorn.com/bilicover/get?type=live&id=${id}&client=2.6.0`, 
                     {
                         method: 'GET',
-                        mode: 'no-cors',
                     }
                 );
                 if (!response.ok) {

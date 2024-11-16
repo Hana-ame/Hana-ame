@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import JSONDisplay from "./JSONDisplay"
-import B23 from "./B23"
-import BV from "./BV"
+import React, { useEffect, useState } from 'react';
+import JSONDisplay from "./JSONDisplay";
+import B23 from "./B23";
+import BV from "./BV";
 import Live from './Live';
 
 const BiliCover = () => {
-    const [url, setUrl] = useState("https://b23.tv/X8hj6OY");
+    const [url, setUrl] = useState("");
     const [b23id, setB23id] = useState("");
     const [bvid, setBvid] = useState("");
     const [liveid, setLiveid] = useState("");
@@ -13,39 +13,43 @@ const BiliCover = () => {
     const handleChange = (e) => {
         const newUrl = e.target.value; // 获取输入的 URL
         setUrl(newUrl); // 更新输入框的 URL
-
-        {
-            // 使用正则表达式提取形如 b23.tv/sss 的连接
-            const regex = /https?:\/\/(?:www\.)?b23\.tv\/(\w+)/; // 正则表达式
-            const match = newUrl.match(regex); // 匹配
-
-            if (match) {
-                setB23id(match[1]); // 提取并更新状态
-            }
-        }
-
-        {
-            // 使用正则表达式提取形如 b23.tv/sss 的连接
-            const regex = /https?:\/\/(?:www\.)?bilibili\.com\/video\/(\w+)/; // 正则表达式
-            const match = newUrl.match(regex); // 匹配
-
-            if (match) {
-                setBvid(match[1]); // 提取并更新状态
-            }
-        }       
-        
-        {
-            // 使用正则表达式提取形如 https://live.bilibili.com/958617?live_from=79004 的连接
-            const regex = /https?:\/\/live\.bilibili\.com\/(\w+)/; // 正则表达式
-            const match = newUrl.match(regex); // 匹配
-
-            if (match) {
-                setLiveid(match[1]); // 提取并更新状态
-            }
-        }
-
+        extractIds(newUrl); // 提取 ID
     };
 
+    const extractIds = (url) => {
+        const b23Regex = /https?:\/\/(?:www\.)?b23\.tv\/(\w+)/;
+        const bvidRegex = /https?:\/\/(?:www\.)?bilibili\.com\/video\/(\w+)/;
+        const liveRegex = /https?:\/\/live\.bilibili\.com\/(\w+)/;
+
+        const b23Match = url.match(b23Regex);
+        const bvidMatch = url.match(bvidRegex);
+        const liveMatch = url.match(liveRegex);
+
+        setB23id(b23Match ? b23Match[1] : "");
+        setBvid(bvidMatch ? bvidMatch[1] : "");
+        setLiveid(liveMatch ? liveMatch[1] : "");
+    };
+
+    const handlePaste = (event) => {
+        // 阻止默认事件
+        event.preventDefault();
+        // 获取剪贴板内容
+        const clipboardData = event.clipboardData || window.clipboardData;
+        const pastedData = clipboardData.getData('Text'); // 获取文本
+
+        setUrl(pastedData); // 更新输入框的 URL
+        extractIds(pastedData); // 提取 ID
+    };
+
+    useEffect(() => {
+        // 添加粘贴事件监听器
+        window.addEventListener('paste', handlePaste);
+        
+        // 清理事件监听器
+        return () => {
+            window.removeEventListener('paste', handlePaste);
+        };
+    });
 
     return (
         <div>
@@ -56,9 +60,9 @@ const BiliCover = () => {
                 placeholder="输入 URL"
                 style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
             />
-            {b23id !== "" && <B23 id={b23id} />}
-            {bvid !== "" && <BV id={bvid} />}
-            {liveid !== "" && <Live id={liveid} />}
+            {b23id && <B23 id={b23id} />}
+            {bvid && <BV id={bvid} />}
+            {liveid && <Live id={liveid} />}
         </div>
     );
 };
