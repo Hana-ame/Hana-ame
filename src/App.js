@@ -23,7 +23,7 @@ const App = () => {
     {
       path: "/number-converter",
       element: <NumberConverter />,
-      title: "NumberConverter"
+      title: "数制转换"
     },
     {
       path: "/avd",

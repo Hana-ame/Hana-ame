@@ -123,3 +123,10 @@ Number Converter with Formatted DisplayClick to open component
 ## 不能用
 
 由于精度的原因输入数字多了就会取整到不知道什么地方去。
+
+
+
+
+## BIGINT 的问题
+
+只要加入无视就好。

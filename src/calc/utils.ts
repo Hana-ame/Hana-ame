@@ -13,7 +13,7 @@ export function myStrip(str: string) {
     return str.split("_").join("")
 }
 
-export function BigIntWithBase(raw: string, base: number) {
+export function BigIntWithBase(raw: string, base?: number) {
     switch (base) {
         case 16:
             return BigInt("0x" + raw)
