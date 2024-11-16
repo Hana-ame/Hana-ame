@@ -6,37 +6,61 @@ import About from './About';
 import NumberConverter from './calc/NumberConverter';
 import DataFetcher from './avd/DataFetcher';
 import FileUpload from './upload/FileUpload';
+import BiliCover from './bilicover/BiliCover';
 
 const App = () => {
+  const router = [
+    {
+      path: "/",
+      element: <Home />,
+      title: "首页"
+    },
+    {
+      path: "/about",
+      element: <About />,
+      title: "关于我们"
+    },
+    {
+      path: "/number-converter",
+      element: <NumberConverter />,
+      title: "NumberConverter"
+    },
+    {
+      path: "/avd",
+      element: <DataFetcher />,
+      title: "AVD"
+    },
+    {
+      path: "/upload",
+      element: <FileUpload />,
+      title: "上传文件"
+    },
+    {
+      path: "/bilicover",
+      element: <BiliCover />,
+      title: "Bilibili封面"
+    }
+  ];
+  
   return (
     <Router>
       <nav className="bg-blue-500 p-4">
         <ul className="flex space-x-4">
-          <li>
-            <Link to="/" className="text-white hover:text-gray-200">首页</Link>
-          </li>
-          <li>
-            <Link to="/about" className="text-white hover:text-gray-200">关于我们</Link>
-          </li>
-          <li>
-            <Link to="/number-converter" className="text-white hover:text-gray-200">NumberConverter</Link>
-          </li>
-          <li>
-            <Link to="/avd" className="text-white hover:text-gray-200">AVD</Link>
-          </li>
-          <li>
-            <Link to="/upload" className="text-white hover:text-gray-200">上传文件</Link>
-          </li>
+          {router.map((route) => (
+            <li key={route.path}>
+              <Link to={route.path} className="text-white hover:text-gray-200">
+                {route.title}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
 
       <div className="p-4">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/number-converter" element={<NumberConverter />} />
-          <Route path="/avd" element={<DataFetcher />} />
-          <Route path="/upload" element={<FileUpload />} />
+          {router.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
         </Routes>
       </div>
     </Router>
