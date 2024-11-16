@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import JSONDisplay from "./JSONDisplay";
 import B23 from "./B23";
 import BV from "./BV";
 import Live from './Live';

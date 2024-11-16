@@ -1,69 +1,66 @@
+import React from "react";
+import {worker} from '../Tools/concurrent/concurrent'
+
+
 export const UPLOAD_URL = "https://upload.moonchan.xyz/api/upload"
 
-export async function uploadFileInChunks(file: File, endpoint: string) {
-    let lastResponse;
-    const chunkSize = 1024 * 1024; // 256 KB
-    // const totalChunks = Math.ceil(file.size / chunkSize);
-    for (let i = 0; i < file.size; i+=chunkSize) {
-        const start = i;
-        const end = Math.min(start + chunkSize, file.size);
-        const chunk = file.slice(start, end); // 获取文件块
 
-        const contentRange = `bytes ${start}-${end - 1}/${file.size}`;
-        const contentLength = chunk.size;
+export async function uploadFileInChunks(
+    file: File, 
+    endpoint: string, 
+    setProgress: React.Dispatch<React.SetStateAction<number>>,
+) {
+    const MAX_CONCURRENT_UPLOADS = 1;
+    const MAX_RETRIES = 3;
+    const CHUNK_SIZE = 1024 * 1024; // 1MB chunks
 
-        try {
-            const response = await fetch(endpoint, {
-                method: 'PUT',
-                headers: {
-                    'Content-Length': contentLength.toString(),
-                    'Content-Range': contentRange,
-                },
-                body: chunk,
-            });
+    // 上传单个分块的函数
+    async function uploadChunk(i: number) {
+        const start = i*CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const fileChunk = file.slice(start, end);
 
-            if (!response.ok) {
-                throw new Error(`上传失败: ${response.statusText}`);
+        let err: Error | null = null; // 允许 err 为 null
+        for (let i=0; i<MAX_RETRIES; i++) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Length': (start - end).toString(),
+                        'Content-Range': `bytes ${start}-${end - 1}/${file.size}`,
+                    },
+                    body: fileChunk,
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.statusText}`);
+                }
+    
+                const responseData = await response.json() ;
+                // process[i] = true
+                setProgress((process: number)=>{ return process+1; })
+                return responseData
+            } catch (error) {
+                err = error as Error
             }
+        }
 
-            // 如果是最后一个块，记录响应
-            if (end >= file.size) {
-                lastResponse = await response.json(); // 获取最后一个请求的 JSON 响应
-            }
-
-
-            console.log(`成功上传块 ${i + 1} / ${Math.ceil(file.size / chunkSize)}`);
-        } catch (error) {
-            console.error(error);
-            break; // 发生错误时停止上传
+        if (err) {
+            throw err
         }
     }
-        
-    console.log('所有块上传完成');
-    return lastResponse;
+
+
+    const length = Math.ceil(file.size/CHUNK_SIZE)
+    setProgress(0)
+
+    const tasks = Array.from({ length: length }, (_, i) => async () => {
+        return await uploadChunk(i);
+    });
+
+    const results = await Promise.all(
+        Array.from({length: MAX_CONCURRENT_UPLOADS}, () => worker(tasks))
+    )
+
+    return results.flat().find(x => x.id)
 }
-
-// async function uploadChunk(chunk: ,chunkSize: number, fileSize: number, endpoint: string) {
-//     for (let i = 0; i < 10; i++) {
-//         try {
-//             const response = await fetch(endpoint, {
-//                 method: 'PUT',
-//                 headers: {
-//                     'Content-Length': contentLength.toString(),
-//                     'Content-Range': contentRange,
-//                 },
-//                 body: chunk,
-//             });
-
-//             if (!response.ok) {
-//                 throw new Error(`上传失败: ${response.statusText}`);
-//             }
-
-//             console.log(`成功上传块 ${i + 1} / ${totalChunks}`);
-//         } catch (error) {
-//             console.error(error);
-//             continue;
-//         }
-
-//     }
-// }
