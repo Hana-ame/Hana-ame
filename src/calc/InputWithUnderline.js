@@ -40,25 +40,14 @@ const InputWithUnderline = ({ value, placeholder }) => {
     };
 
     return (
-        <div className="flex flex-col items-center">
-            <input
-                type="text"
-                value={myFormat(value)}
-                // onChange={handleChange}
-                onClick={copyToClipboard}
-                placeholder={placeholder}
-                className={`border border-gray-300 p-2 rounded mb-2 w-full ${isCopied ? 'bg-green-200' : ''}`} // 根据状态改变背景色
-            />
-            {/* <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                onClick={copyToClipboard}
-            >
-                复制内容
-            </button> */}
-            {/* <p className="mt-4">
-                格式化后的内容: {formatInputValue(inputValue)}
-            </p> */}
-        </div>
+        <input
+            type="text"
+            value={myFormat(value)}
+            // onChange={handleChange}
+            onClick={copyToClipboard}
+            placeholder={placeholder}
+            className={`border border-gray-300 p-2 rounded mb-2 w-full ${isCopied ? 'bg-green-200' : ''}`} // 根据状态改变背景色
+        />
     );
 };
 
