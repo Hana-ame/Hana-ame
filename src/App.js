@@ -4,6 +4,8 @@ import { HashRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import Home from './Home';
 import About from './About';
 import NumberConverter from './calc/NumberConverter';
+import DataFetcher from './avd/DataFetcher';
+import FileUpload from './upload/FileUpload';
 
 const App = () => {
   return (
@@ -19,6 +21,12 @@ const App = () => {
           <li>
             <Link to="/number-converter" className="text-white hover:text-gray-200">NumberConverter</Link>
           </li>
+          <li>
+            <Link to="/avd" className="text-white hover:text-gray-200">AVD</Link>
+          </li>
+          <li>
+            <Link to="/upload" className="text-white hover:text-gray-200">上传文件</Link>
+          </li>
         </ul>
       </nav>
 
@@ -27,6 +35,8 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/number-converter" element={<NumberConverter />} />
+          <Route path="/avd" element={<DataFetcher />} />
+          <Route path="/upload" element={<FileUpload />} />
         </Routes>
       </div>
     </Router>

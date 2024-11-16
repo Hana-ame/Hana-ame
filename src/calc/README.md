@@ -118,3 +118,8 @@ Number Converter with Formatted DisplayClick to open component
 修改分组的分隔符（比如用 - 代替空格）
 添加数值范围限制
 添加更多的格式化选项
+
+
+## 不能用
+
+由于精度的原因输入数字多了就会取整到不知道什么地方去。

@@ -1,0 +1,1 @@
+export const UPLOAD_URL = "https://upload.moonchan.xyz/upload"
