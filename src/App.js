@@ -2,7 +2,7 @@
 import React from 'react';
 import { HashRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import Home from './Home';
-import About from './About';
+import About from './markdown/About';
 import NumberConverter from './calc/NumberConverter';
 import DataFetcher from './avd/DataFetcher';
 import FileUpload from './upload/FileUpload';

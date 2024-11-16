@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { UPLOAD_URL, uploadFileInChunks } from './consts';
 
 const FileUpload = () => {
@@ -9,13 +9,13 @@ const FileUpload = () => {
   const [link, setLink] = useState('');
 
   // 重置状态
-  const resetState = () => {
-    setFile(null);
-    setUploading(false);
-    setProgress(0);
-    setMessage({ type: '', text: '' });
-    setLink('');
-  };
+  // const resetState = () => {
+  //   setFile(null);
+  //   setUploading(false);
+  //   setProgress(0);
+  //   setMessage({ type: '', text: '' });
+  //   setLink('');
+  // };
 
   // 验证文件
   const validateFile = (file) => {
