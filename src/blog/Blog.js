@@ -1,37 +1,52 @@
 import { useEffect, useState } from "react";
-import BlogCard from "./BlogCard";
-import BlogCardLazy from "./BlogCardLazy";
+import BlogPage from "./BlogPage";
 import { fetchWithProxy } from "../Tools/utils";
 
 const Blog = () => {
-    const [blogs, setBlogs] = useState([])
+    const URL = "https://raw.githubusercontent.com/Hana-ame/Hana-ame/refs/heads/notes/main.json"
+    const [main, setMain] = useState([])
+    const [cnt, setCnt] = useState(1)
+
     useEffect(() => {
         async function getResponse() {
-            const response = await fetchWithProxy("https://raw.githubusercontent.com/Hana-ame/Hana-ame/notes/json/1.json", {
+            const response = await fetchWithProxy(URL, {
                 method: "GET",
                 headers: {
                     "Cache-Control": "no-store",
                 }
             })
 
-            const blogs = await response.json();
+            const main = await response.json();
 
-            setBlogs(blogs)
+            setMain(main)
         }
 
         getResponse()
     }, [])
 
+    const handleShowNext = () => {
+        setCnt(prevCnt => prevCnt + 1); // 每次点击增加 1
+    };
+
+
     return (
         <div className="p-4">
-            <h1 className="text-3xl font-bold mb-6">我的博客</h1>
-            {blogs.map((blog) => (
-                <BlogCardLazy
-                    key={blog.path}
-                    url={"https://raw.githubusercontent.com/Hana-ame/Hana-ame/notes/" + blog.path}
-                    title={blog.file_name}
+            {main && main.files?.slice(0, cnt).map((path) => (
+                <BlogPage
+                    key={path}
+                    prefix={main.prefix}
+                    url={main.prefix + path}
                 />
             ))}
+            {main && main.files?.length > cnt && ( // 如果还有更多文件
+                <button
+                    onClick={handleShowNext}
+                    className="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+                >
+                    显示下一页
+                </button>
+            )}
+
         </div>
     );
 };

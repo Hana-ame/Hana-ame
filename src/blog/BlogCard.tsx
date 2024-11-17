@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ContentRender from "./ContentRender"
 
 export interface Blog {
     title?: string;
@@ -36,7 +37,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
                 </div>
             )}
             <pre className="text-gray-700">
-                {isExpanded ? blog.content : `${blog.content.substring(0, 100)}${blog.content.length > 100? '...': ''}`}
+                {isExpanded ? <ContentRender content={blog.content} /> : `${blog.content.substring(0, 100)}${blog.content.length > 100? '...': ''}`}
             </pre>
             {blog.content.length > 100 && (
                 <button

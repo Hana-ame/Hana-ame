@@ -4,3 +4,5 @@ npm install --save typescript @types/node @types/react @types/react-dom @types/j
 
 # 创建 tsconfig.json
 npx tsc --init
+
+npm install -D @types/node
