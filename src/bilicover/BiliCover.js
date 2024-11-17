@@ -9,12 +9,6 @@ const BiliCover = () => {
     const [bvid, setBvid] = useState("");
     const [liveid, setLiveid] = useState("");
 
-    const handleChange = (e) => {
-        const newUrl = e.target.value; // 获取输入的 URL
-        setUrl(newUrl); // 更新输入框的 URL
-        extractIds(newUrl); // 提取 ID
-    };
-
     const extractIds = (url) => {
         const b23Regex = /https?:\/\/(?:www\.)?b23\.tv\/(\w+)/;
         const bvidRegex = /https?:\/\/(?:www\.)?bilibili\.com\/video\/(\w+)/;
@@ -29,6 +23,12 @@ const BiliCover = () => {
         setLiveid(liveMatch ? liveMatch[1] : "");
     };
 
+    const handleChange = (e) => {
+        const newUrl = e.target.value; // 获取输入的 URL
+        setUrl(newUrl); // 更新输入框的 URL
+        extractIds(newUrl); // 提取 ID
+    };
+
     const handlePaste = (event) => {
         // 阻止默认事件
         event.preventDefault();
@@ -39,6 +39,23 @@ const BiliCover = () => {
         setUrl(pastedData); // 更新输入框的 URL
         extractIds(pastedData); // 提取 ID
     };
+
+    const handleMouseEnter = (event) => {
+        // 在鼠标悬停时全选内容
+        event.target.select();
+    };
+
+    const handleDrop = (event) => {
+        event.preventDefault(); // 阻止默认行为
+        const data = event.dataTransfer.getData('text'); // 获取拖拽的数据
+        setUrl(data); // 将拖拽的内容设置到输入框中
+        extractIds(data); // 提取 ID
+    };
+
+    const handleDragOver = (event) => {
+        event.preventDefault(); // 阻止默认行为，以允许 drop 事件
+    };
+
 
     useEffect(() => {
         // 添加粘贴事件监听器
@@ -51,11 +68,16 @@ const BiliCover = () => {
     });
 
     return (
-        <div>
+        <div className='h-full'
+            onDrop={handleDrop} // 绑定 drop 事件
+            onDragOver={handleDragOver} // 绑定 dragOver 事件
+        >
             <input
                 type="text"
                 value={url}
                 onChange={handleChange}
+                onMouseEnter={handleMouseEnter} // 绑定鼠标悬停事件
+
                 placeholder="输入 URL"
                 style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
             />
