@@ -22,6 +22,7 @@ const ContentRender: React.FC<ContentRenderProps> = ({ content }) => {
                             key={index}
                             src={line}
                             alt={line} // 这里可以根据需要修改 alt 属性的内容
+                            referrerPolicy='no-referrer'
                             className="mt-2 max-w-full h-auto"
                         />
                     );

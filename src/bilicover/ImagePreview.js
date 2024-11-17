@@ -4,9 +4,9 @@ const ImagePreview = ({ imageUrl }) => {
     const [copyMessage, setCopyMessage] = useState("");
 
     const copyImageUrl = () => {
-        navigator.clipboard.writeText(imageUrl)
+        navigator.clipboard.writeText(imageUrl.replace(/^https:/, 'http:'))
             .then(() => {
-                setCopyMessage("图片地址已复制: " + imageUrl); // 更新状态以显示消息
+                setCopyMessage("图片地址已复制: " + imageUrl.replace(/^https:/, 'http:')); // 更新状态以显示消息
                 setTimeout(() => setCopyMessage(""), 3000); // 3秒后清除消息
             })
             .catch(err => {
