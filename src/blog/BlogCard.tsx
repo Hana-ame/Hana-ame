@@ -12,17 +12,18 @@ interface BlogCardProps {
 }
 
 const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
-
-    const [isExpanded, setIsExpanded] = useState(false);
+    const LENGTH = 100;
+    const [isExpanded, setIsExpanded] = useState(blog.content.length <= LENGTH);
 
     const toggleExpand = () => {
-        setIsExpanded(!isExpanded);
+        // setIsExpanded(!isExpanded);
+        setIsExpanded(true);
     };
 
     return (
         <div
             className={
-                `mb-4 p-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 ${blog.content.length > 100? 'cursor-pointer': ''}`
+                `mb-4 p-4 border border-gray-300 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 ${blog.content.length > 100 && !isExpanded ? 'cursor-pointer': ''}`
             }
             onClick={toggleExpand}
         >
@@ -36,10 +37,10 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog }) => {
                     ))}
                 </div>
             )}
-            <pre className="text-gray-700">
+            <div className="text-gray-700">
                 {isExpanded ? <ContentRender content={blog.content} /> : `${blog.content.substring(0, 100)}${blog.content.length > 100? '...': ''}`}
-            </pre>
-            {blog.content.length > 100 && (
+            </div>
+            {blog.content.length > 100 && !isExpanded && (
                 <button
                     className="mt-2 text-blue-500 hover:underline"
                 >
