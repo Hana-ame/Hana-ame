@@ -1,7 +1,7 @@
 // src/App.js
 import React from 'react';
-import { HashRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import Home from './Home';
+import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
+import Blog from './blog/Blog';
 import Browser from './browser/Browser';
 import NumberConverter from './calc/NumberConverter';
 import DataFetcher from './avd/DataFetcher';
@@ -13,7 +13,7 @@ const App = () => {
   const router = [
     {
       path: "/",
-      element: <Home />,
+      element: <Blog />,
       title: "首页"
     },
     {
@@ -50,14 +50,21 @@ const App = () => {
 
   return (
     <Router>
-      <div className="h-screen flex flex-col"> {/* 使用 h-screen 确保占满整个视口高度 */}
-        <nav className="bg-blue-500 p-4">
-          <ul className="flex space-x-4">
+      <div className="flex flex-col"> {/* 使用 h-screen 确保占满整个视口高度 */}
+        <nav className="bg-blue-500 overflow-x-auto whitespace-nowrap">
+          <ul className="flex h-full">
             {router.map((route) => (
               <li key={route.path}>
-                <Link to={route.path} className="text-white hover:text-gray-200">
+                <NavLink
+                  to={route.path}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'p-4 bg-white text-blue-500 h-full flex items-center justify-center px-4' // 高亮样式
+                      : 'p-4 text-white hover:text-gray-200 h-full flex items-center justify-center px-4'
+                  }
+                >
                   {route.title}
-                </Link>
+                </NavLink>
               </li>
             ))}
           </ul>
