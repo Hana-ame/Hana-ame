@@ -1,7 +1,11 @@
-// ContentRender.js
+// ContentRender.tsx
 import React from 'react';
 
-const ContentRender = ({ content }) => {
+interface ContentRenderProps {
+    content: string; // 定义 content 的类型
+}
+
+const ContentRender: React.FC<ContentRenderProps> = ({ content }) => {
     // 按行分割内容
     const lines = content.split('\n');
 
@@ -17,7 +21,7 @@ const ContentRender = ({ content }) => {
                         <img
                             key={index}
                             src={line}
-                            alt={line}
+                            alt={line} // 这里可以根据需要修改 alt 属性的内容
                             className="mt-2 max-w-full h-auto"
                         />
                     );
@@ -32,7 +36,6 @@ const ContentRender = ({ content }) => {
             })}
         </div>
     );
-
-}
+};
 
 export default ContentRender;
