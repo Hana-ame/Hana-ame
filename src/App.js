@@ -2,11 +2,12 @@
 import React from 'react';
 import { HashRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import Home from './Home';
-import About from './markdown/About';
+import Browser from './browser/Browser';
 import NumberConverter from './calc/NumberConverter';
 import DataFetcher from './avd/DataFetcher';
 import FileUpload from './upload/FileUpload';
 import BiliCover from './bilicover/BiliCover';
+import Sign from './sign/Sign';
 
 const App = () => {
   const router = [
@@ -16,8 +17,8 @@ const App = () => {
       title: "首页"
     },
     {
-      path: "/about",
-      element: <About />,
+      path: "/browser",
+      element: <Browser />,
       title: "关于我们"
     },
     {
@@ -38,32 +39,40 @@ const App = () => {
     {
       path: "/bilicover",
       element: <BiliCover />,
-      title: "Bilibili封面"
+      title: "bilibili封面"
+    },
+    {
+      path: "/sign",
+      element: <Sign />,
+      title: "sign"
     }
   ];
-  
+
   return (
     <Router>
-      <nav className="bg-blue-500 p-4">
-        <ul className="flex space-x-4">
-          {router.map((route) => (
-            <li key={route.path}>
-              <Link to={route.path} className="text-white hover:text-gray-200">
-                {route.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <div className="h-screen flex flex-col"> {/* 使用 h-screen 确保占满整个视口高度 */}
+        <nav className="bg-blue-500 p-4">
+          <ul className="flex space-x-4">
+            {router.map((route) => (
+              <li key={route.path}>
+                <Link to={route.path} className="text-white hover:text-gray-200">
+                  {route.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      <div className="p-4">
-        <Routes>
-          {router.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-        </Routes>
+        <div className="flex-1 p-4"> {/* 使用 flex-1 使内容区域占据剩余空间 */}
+          <Routes>
+            {router.map((route) => (
+              <Route key={route.path} path={route.path} element={route.element} />
+            ))}
+          </Routes>
+        </div>
       </div>
     </Router>
+
   );
 };
 
