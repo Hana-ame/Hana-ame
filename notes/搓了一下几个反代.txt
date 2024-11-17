@@ -1,0 +1,5 @@
+ex,s.ex
+nyaa,sukebei
+
+proxy
+话说早知道把debug信息传回来就好了。

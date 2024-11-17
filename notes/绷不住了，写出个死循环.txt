@@ -1,0 +1,5 @@
+commit hash是9c1a0e7
+检查一下
+从Tag的那个地方开始就不行了，热更新不准，可能有概率触发？
+
+https://upload.moonchan.xyz/api/01LLWEUU25CWHLYJA4OBD3QP4277KPW76N/image.png

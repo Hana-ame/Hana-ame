@@ -1,3 +1,0 @@
-# kafka
-
-the learning notes.

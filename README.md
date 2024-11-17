@@ -1,20 +1,3 @@
 # notes
 
-## scrap notes
-
-**TODO**
-idk..
-
-## swagger
-
-```sh
-git checkout learn/go/swagger
-```
-
-## git
-
-notes for git
-
-```sh
-git checkout git
-```
+这里写notes，最后是在react-blog里面被抓走的

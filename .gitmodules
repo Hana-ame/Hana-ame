@@ -1,3 +1,4 @@
-[submodule "notes"]
-	path = notes
-	url = ssh://root@144.34.219.146:26275/srv/notes
+[submodule "Hana-ame"]
+	path = Hana-ame
+	url = git@github.com:Hana-ame/Hana-ame.git
+	branch = notes

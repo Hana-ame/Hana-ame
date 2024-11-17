@@ -1,0 +1,17 @@
+proxy.moonchan.xyz
+
+usage:
+
+https://proxy.moonchan.xyz/path/to/file?proxy_host=[true_host]&proxy_origin=[fake_origin]&proxy_referer=[fake_referer]
+
+也可以用
+
+X-Host
+X-Origin
+X-Referer
+这三个头来override
+
+返回的这三个头是正式使用的三个头
+
+其他所有权限开了最大。
+
