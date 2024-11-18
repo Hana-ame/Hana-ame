@@ -70,12 +70,29 @@ const CanvasComponent = () => {
             m.initImages({
                 'background': 'https://upload.moonchan.xyz/api/01LLWEUU2LRX4IM56ORJFIBC3OE3YTMPN7/bg000.jpg',
                 'dialogueBox': 'https://upload.moonchan.xyz/api/01LLWEUU7LESNYUQKX5VDJGMVDZY3SRS7I/main_gallery.png',
-
             })
+            m.initDialogue([
+                {
+                    name:"a",
+                    text:"测试",
+                },{
+                    name:"a",
+                    text:"123",
+                },{
+                    name:"a",
+                    text:"321",
+                },{
+                    name:"a",
+                    text:"测试测试测试测试",
+                },{
+                    name:"a",
+                    text:"3111",
+                }
+            ])
 
             setTimeout(() => {
                 m.initInput();
-            }, 5000)
+            }, 1000)
         }
 
         test()
