@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { fetchWithProxy } from '../Tools/utils'
 import FileIframe from './FileIframe';
+
+import { fetchWithProxy } from '../Tools/Proxy/utils'
 
 const Browser = () => {
     const [url, setUrl] = useState(null);

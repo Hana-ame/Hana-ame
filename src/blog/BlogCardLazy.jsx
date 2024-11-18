@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import BlogCard from "./BlogCard"
-import { fetchWithProxy } from "../Tools/utils";
+import { fetchWithProxy } from "../Tools/Proxy/utils";
 
 const BlogCardLazy = ({ title, url }) => {
     const [tags, setTags] = useState([]);
@@ -24,6 +24,8 @@ const BlogCardLazy = ({ title, url }) => {
 
         getResponse()
     }, [])
+
+    if (content === 'loading') return <div>loading...</div>
 
     return (<BlogCard blog={{title, content, tags}}></BlogCard>)
 }

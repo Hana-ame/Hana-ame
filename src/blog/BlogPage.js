@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import BlogCardLazy from "./BlogCardLazy";
-import { fetchWithProxy } from "../Tools/utils";
+import { fetchWithProxy } from "../Tools/Proxy/utils";
 
 const Blog = ({ prefix, url }) => {
     const [blogs, setBlogs] = useState([])

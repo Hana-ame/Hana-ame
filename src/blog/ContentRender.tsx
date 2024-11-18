@@ -1,5 +1,6 @@
 // ContentRender.tsx
 import React from 'react';
+import CustomImage from '../Tools/CustomImage'
 
 interface ContentRenderProps {
     content: string; // 定义 content 的类型
@@ -13,12 +14,12 @@ const ContentRender: React.FC<ContentRenderProps> = ({ content }) => {
         <div>
             {lines.map((line, index) => {
                 // 使用正则表达式检查是否为 URL
-                const urlRegex = /(https?:\/\/[^\s]+)/;
+                const urlRegex = /^(https?:\/\/[^\s]+)/;
 
                 if (urlRegex.test(line)) {
                     // 如果是 URL，则返回图像元素
                     return (
-                        <img
+                        <CustomImage
                             key={index}
                             src={line}
                             alt={line} // 这里可以根据需要修改 alt 属性的内容

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import BlogPage from "./BlogPage";
-import { fetchWithProxy } from "../Tools/utils";
+import { fetchWithProxy } from "../Tools/Proxy/utils";
 
 const Blog = () => {
     const URL = "https://raw.githubusercontent.com/Hana-ame/Hana-ame/refs/heads/notes/main.json"

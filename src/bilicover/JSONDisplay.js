@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchWithProxy } from '@/Tools/utils'
+import { fetchWithProxy } from '@/Tools/Proxy/utils'
 
 const JSONDisplay = ({ url }) => {
     const [data, setData] = useState(null);

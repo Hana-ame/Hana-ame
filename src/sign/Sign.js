@@ -1,12 +1,11 @@
 // https://github.com/kjur/jsrsasign/tree/master
 // import {RSA} from 'react-native-rsa-native';
+import CustomImage from '../Tools/CustomImage'
 
 const Sign = () => {
-    return (
-        <div>
-            13213213211
-        </div>
-    )
+    return (<div>
+        
+    </div>)
 }
 
 export default Sign;
