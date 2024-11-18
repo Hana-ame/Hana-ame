@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import BlogPage from "./BlogPage";
+import BlogPage from "./BlogPageLazy";
 import { fetchWithProxy } from "../Tools/Proxy/utils";
 
 const Blog = () => {
@@ -12,7 +12,7 @@ const Blog = () => {
             const response = await fetchWithProxy(URL, {
                 method: "GET",
                 headers: {
-                    "Cache-Control": "no-store",
+                    "Cache-Control": "no-cache",
                 }
             })
 

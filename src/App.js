@@ -70,7 +70,7 @@ const App = () => {
           </ul>
         </nav>
 
-        <div className="flex-1 p-4"> {/* 使用 flex-1 使内容区域占据剩余空间 */}
+        <div className="flex-1 p-1"> {/* 使用 flex-1 使内容区域占据剩余空间 */}
           <Routes>
             {router.map((route) => (
               <Route key={route.path} path={route.path} element={route.element} />

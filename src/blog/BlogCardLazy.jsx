@@ -10,9 +10,6 @@ const BlogCardLazy = ({ title, url }) => {
         async function getResponse() {
             const response = await fetchWithProxy(url, {
                 method: "GET",
-                headers: {
-                    "Cache-Control": "no-store",
-                }
             });
 
             const content = await response.text();

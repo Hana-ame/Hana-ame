@@ -78,7 +78,7 @@ const BiliCover = () => {
                 onChange={handleChange}
                 onMouseEnter={handleMouseEnter} // 绑定鼠标悬停事件
 
-                placeholder="输入 URL"
+                placeholder="输入 URL, 或者直接按 Ctrl+V, 或者拖动连接到此页面"
                 style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
             />
             {b23id && <B23 id={b23id} />}

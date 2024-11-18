@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import BlogCardLazy from "./BlogCardLazy";
 import { fetchWithProxy } from "../Tools/Proxy/utils";
 
-const Blog = ({ prefix, url }) => {
+const BlogPageLazy = ({ prefix, url }) => {
     const [blogs, setBlogs] = useState([])
     useEffect(() => {
         async function getResponse() {
             const response = await fetchWithProxy(url, {
                 method: "GET",
                 headers: {
-                    "Cache-Control": "no-store",
+                    "Cache-Control": "no-cache",
                 }
             })
 
@@ -34,4 +34,4 @@ const Blog = ({ prefix, url }) => {
     );
 };
 
-export default Blog;
+export default BlogPageLazy;
