@@ -1,3 +1,5 @@
+// 用来测试CORS的，没啥问题，已经好了。
+
 import React, { useState, useEffect } from 'react';
 
 function DataFetcher() {

@@ -4,7 +4,7 @@ import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 import Blog from './blog/Blog';
 import Browser from './browser/Browser';
 import NumberConverter from './calc/NumberConverter';
-import DataFetcher from './avd/DataFetcher';
+import CanvasComponent from './avd/CanvasComponent';
 import FileUpload from './upload/FileUpload';
 import BiliCover from './bilicover/BiliCover';
 import Sign from './sign/Sign';
@@ -28,7 +28,7 @@ const App = () => {
     },
     {
       path: "/avd",
-      element: <DataFetcher />,
+      element: <CanvasComponent />,
       title: "AVD"
     },
     {
