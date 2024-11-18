@@ -50,7 +50,7 @@ const CanvasComponent = () => {
 
             const ctx = m.getContext();
 
-            ctx.font = 'bold 50px Consolas'; // 设置字体大小和字体类型
+            ctx.font = 'bold 24px Consolas'; // 设置字体大小和字体类型
 
             //     // ctx.scale(2, 2); // 将绘制区域在 x 和 y 方向上都缩放 2 倍
             //     ctx.fillText('Hello, Canvas!啊啊', 50, 50); // 这里的坐标会被缩放
