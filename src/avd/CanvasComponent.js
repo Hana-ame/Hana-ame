@@ -93,21 +93,28 @@ const CanvasComponent = () => {
                     name: "",
                     text: "这是随一，很可爱",
                     characters: [
-                        { name: "c2", positionX: 1000, positionY: 100 },
+                        { name: "c2", positionX: 250, positionY: 100 },
                     ],            
                 },{
                     name: "",
                     text: "这也是随一，很可爱",
                     characters: [
-                        { name: "c1", positionX: 1000, positionY: 100 },
+                        { name: "c1", positionX: 250, positionY: 100 },
                     ],            
                 },{
                     name: "",
                     text: "这两个都是随一，很可爱",
                     characters: [
-                        { name: "c1", positionX: 500, positionY: 100 },
-                        { name: "c2", positionX: 1500, positionY: 100 },
+                        { name: "c1", positionX: 50, positionY: 100 },
+                        { name: "c2", positionX: 550, positionY: 100 },
                     ],            
+                },{
+                    name: "watashi",
+                    text: "啊我甚至不知道为什么代码写成这样也能work.要自己修一下。。"
+                },{
+                    name: "watashi",
+                    text: "清理work吗，可能不work，竟然work了。是我肤浅了，GPT爹",
+                    characters: []
                 }
             ])
 
