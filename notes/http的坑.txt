@@ -4,3 +4,6 @@
 大部分都修了，cors也做了
 差不多都成了
 http的部分
+
+哦,host还没作对.
+话说nginx是不是没pass host 头.
