@@ -1,10 +1,10 @@
 import CanvasManager from "../Tools/canvas/canvasmanager";
-import DialogManager from "./DialogManager";
+import ScriptManager from "./ScriptManager";
 
 class AVDManager extends CanvasManager {
     private images?: Record<string, HTMLImageElement>;
-    private clickCount: number = 0; // 用于记录点击次数，控制绘制顺序
-    private dialogManager?: DialogManager; // 使用对话管理器
+    private clickCount: number = 0; // 用于记录点击次数
+    private scriptManager?: ScriptManager; // 使用脚本管理器  
     private typingInterval: number = 50; // 打字速度（毫秒）
     private isTyping: boolean = false; // 用于控制打字机状态
     private currentText: string = ""; // 当前显示的文字
@@ -19,10 +19,10 @@ class AVDManager extends CanvasManager {
 
     // 初始化点击事件
     async initInput() {
-        this.canvas.addEventListener("click", (event) => {
+        this.canvas.addEventListener('click', (event) => {
             const rect = this.canvas.getBoundingClientRect();
-            const rawX = event.clientX - rect.left; // 鼠标点击的 X 坐标
-            const rawY = event.clientY - rect.top; // 鼠标点击的 Y 坐标
+            const rawX = event.clientX - rect.left;
+            const rawY = event.clientY - rect.top;
 
             const [x, y] = this.transformCoordinates(rawX, rawY);
 
@@ -34,27 +34,28 @@ class AVDManager extends CanvasManager {
 
     // 点击事件的实现
     onClick() {
-        if (!this.images || !this.dialogManager) return;
-
+        if (!this.images || !this.scriptManager) return;
+        
         if (this.isTyping) {
             // 如果文字正在打字机效果中，直接显示完整文字
             this.finishTyping();
             return;
         }
-
+        
         if (this.clickCount === 0) {
             // 第一次点击，显示背景
             this.drawBackgroundImage();
         } else {
-            // 显示对话框和姓名
-            const dialogue = this.dialogManager.getNextDialogue();
-            if (dialogue) {
-                this.startTyping(dialogue.name + " " + dialogue.index, dialogue.text);
+            // 获取下一条对话和立绘信息
+            const script = this.scriptManager.getNextScript();
+            if (script) {
+                this.startTyping(script.name + " " + script.index, script.text);
+                this.showCharacters(script.characterStates);
             } else {
                 // 对话结束，重置状态
                 this.clear();
                 this.clickCount = 0; // 重置点击计数
-                this.dialogManager.reset(); // 重置对话管理器
+                this.scriptManager.reset();
                 return;
             }
         }
@@ -66,12 +67,11 @@ class AVDManager extends CanvasManager {
     async initImages(images: Record<string, string>) {
         const promises: Promise<void>[] = [];
         this.images = {};
-        
+
         for (const key in images) {
             const promise = new Promise<void>((resolve, reject) => {
-                const value = images[key];
                 const img = new Image();
-                img.src = value;
+                img.src = images[key];
                 img.onload = () => {
                     this.images![key] = img;
                     resolve();
@@ -83,11 +83,17 @@ class AVDManager extends CanvasManager {
 
         await Promise.all(promises);
     }
-    
-    // 初始化对话管理器
-    initDialogue(dialogueData: { name: string; text: string }[]) {
-        this.dialogManager = new DialogManager(dialogueData);
+
+
+    // 初始化脚本管理器
+    initScriptManager(dialogueData: {
+        name: string;
+        text: string;
+        characters?: { name: string; positionX: number; positionY: number }[];
+    }[]) {
+        this.scriptManager = new ScriptManager(dialogueData);
     }
+
     // 开始打字机效果
     startTyping(name: string, text: string) {
         this.isTyping = true;
@@ -145,10 +151,31 @@ class AVDManager extends CanvasManager {
         }
     }
 
+
+    // 显示立绘
+    showCharacters(characterStates: { name: string; positionX: number; positionY: number }[]) {
+        // 绘制每个立绘
+        characterStates.forEach(({ name, positionX, positionY }) => {
+            this.drawCharacter(name, positionX, positionY);
+        });
+
+        // // 保持对话框绘制在最前
+        // this.drawDialogueBox();
+    }
+
+    // 绘制立绘
+    drawCharacter(name: string, positionX: number, positionY: number) {
+        if (!this.images || !this.images[name]) return;
+
+        const img = this.images[name];
+
+        this.drawImage(img, positionX, positionY);
+    }
+
     // 绘制背景图像
     drawBackgroundImage() {
         if (this.images && this.images["background"]) {
-            this.clear(); // 清空画布
+            this.clear();
             this.drawImage(this.images["background"], 0, 0, this.baseWidth, this.baseHeight);
         }
     }

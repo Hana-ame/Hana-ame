@@ -70,8 +70,10 @@ const CanvasComponent = () => {
             m.initImages({
                 'background': 'https://upload.moonchan.xyz/api/01LLWEUU2LRX4IM56ORJFIBC3OE3YTMPN7/bg000.jpg',
                 'dialogueBox': 'https://upload.moonchan.xyz/api/01LLWEUU7LESNYUQKX5VDJGMVDZY3SRS7I/main_gallery.png',
+                'c1': 'https://upload.moonchan.xyz/api/01LLWEUU5FPZ7ZWIFZN5DIVS27ONL4RII3/随一立绘.png',
+                'c2': 'https://upload.moonchan.xyz/api/01LLWEUUYMMYE5CZOYHBBKH55CZEMQ7AFV/随一魔法装.png',
             })
-            m.initDialogue([
+            m.initScriptManager([
                 {
                     name:"a",
                     text:"测试",
@@ -87,6 +89,25 @@ const CanvasComponent = () => {
                 },{
                     name:"a",
                     text:"3111",
+                },{
+                    name: "",
+                    text: "这是随一，很可爱",
+                    characters: [
+                        { name: "c2", positionX: 1000, positionY: 100 },
+                    ],            
+                },{
+                    name: "",
+                    text: "这也是随一，很可爱",
+                    characters: [
+                        { name: "c1", positionX: 1000, positionY: 100 },
+                    ],            
+                },{
+                    name: "",
+                    text: "这两个都是随一，很可爱",
+                    characters: [
+                        { name: "c1", positionX: 500, positionY: 100 },
+                        { name: "c2", positionX: 1500, positionY: 100 },
+                    ],            
                 }
             ])
 
