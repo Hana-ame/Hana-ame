@@ -32,7 +32,7 @@ class AVDManager extends CanvasManager {
             // 显示对话框和姓名
             const dialogue = this.dialogManager.getNextDialogue();
             if (dialogue) {
-                this.showDialogue(dialogue.name, dialogue.text);
+                this.showDialogue(dialogue.name + " " + dialogue.index, dialogue.text);
             } else {
                 // 对话结束，重置状态
                 this.clear();
