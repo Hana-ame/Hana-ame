@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import datetime
+from pathlib import Path
 
 # 指定文件夹路径和每个文件的最大条目数
 folder_path = 'notes'
@@ -11,13 +12,13 @@ files_info = []
 # 遍历文件夹
 for filename in os.listdir(folder_path):
     if filename.endswith('.txt'):
-        file_path = os.path.join(folder_path, filename)
+        file_path = Path(os.path.join(folder_path, filename))
         creation_time = os.path.getctime(file_path)
         modification_time = os.path.getmtime(file_path)
         name_without_extension = os.path.splitext(filename)[0]
 
         files_info.append({
-            'path': file_path,
+            'path': file_path.as_posix(),
             'creation_date': datetime.fromtimestamp(creation_time).isoformat(),
             'modification_date': datetime.fromtimestamp(modification_time).isoformat(),
             'file_name': name_without_extension
@@ -49,7 +50,7 @@ with open(main_json_path, 'r', encoding='utf-8') as main_json_file:
 json_files = [f for f in os.listdir(json_dir) if f.endswith('.json')]
 
 # 创建文件路径列表
-json_file_paths = [os.path.join(json_dir, file) for file in json_files]
+json_file_paths = [Path(os.path.join(json_dir, file)).as_posix() for file in json_files]
 
 # 更新 files 项目
 data['files'] = json_file_paths
