@@ -18,20 +18,34 @@ const ContentRender: React.FC<ContentRenderProps> = ({ content }) => {
                     if (match) {
                         switch (match[1].length) {
                             case 1:
-                                return <h1>{match[2]}</h1>;
+                                return <h1><ContentRender content={match[2]} /></h1>;
                             case 2:
-                                return <h2>{match[2]}</h2>;
+                                return <h2><ContentRender content={match[2]} /></h2>;
                             case 3:
-                                return <h3>{match[2]}</h3>;
+                                return <h3><ContentRender content={match[2]} /></h3>;
                             case 4:
-                                return <h4>{match[2]}</h4>;
+                                return <h4><ContentRender content={match[2]} /></h4>;
                             case 5:
-                                return <h5>{match[2]}</h5>;
+                                return <h5><ContentRender content={match[2]} /></h5>;
                             default:
-                                return <h6>{match[2]}</h6>; 
+                                return <h6><ContentRender content={match[2]} /></h6>;
                         }
                     }
                 }
+
+                if (/^\[(.*)\]\((https?:\/\/[^\s]+)\)/.test(line)) {
+                    // 算了匹配两次就两次吧。
+                    const match = /\[(.*)\]\((https?:\/\/[^\s]+)\)/.exec(line);
+                    if (match)
+                        return (
+                            <a href={match[2]!}
+                                className="text-blue-500 hover:text-green-500 underline"
+                            >
+                                {match[1]!}
+                            </a>
+                        );
+                }
+
 
                 if (/^\!\[(.*)\]\((https?:\/\/[^\s]+)\)/.test(line)) {
                     // 算了匹配两次就两次吧。
@@ -47,6 +61,7 @@ const ContentRender: React.FC<ContentRenderProps> = ({ content }) => {
                             />
                         );
                 }
+
                 if (/^(https?:\/\/[^\s]+)/.test(line)) {
                     // 如果是 URL，则返回图像元素
                     return (
