@@ -7,6 +7,7 @@ import NumberConverter from './calc/NumberConverter';
 import CanvasComponent from './avd/CanvasComponent';
 import FileUpload from './upload/FileUpload';
 import BiliCover from './bilicover/BiliCover';
+import GetProxyURL from './getProxyURL/GetProxyURL';
 import Sign from './sign/Sign';
 
 const App = () => {
@@ -42,9 +43,9 @@ const App = () => {
       title: "bilibili封面"
     },
     {
-      path: "/sign",
-      element: <Sign />,
-      title: "sign"
+      path: "/get-proxy-url",
+      element: <GetProxyURL />,
+      title: "GetProxyURL"
     }
   ];
 
