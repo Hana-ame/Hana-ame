@@ -2,7 +2,7 @@
 import React from 'react';
 import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 import Blog from './blog/Blog';
-import Browser from './browser/Browser';
+import Browser from './browser/RequestForm';
 import NumberConverter from './calc/NumberConverter';
 import CanvasComponent from './avd/CanvasComponent';
 import FileUpload from './upload/FileUpload';
