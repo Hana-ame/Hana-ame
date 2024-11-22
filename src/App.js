@@ -20,7 +20,7 @@ const App = () => {
     {
       path: "/browser",
       element: <Browser />,
-      title: "关于我们"
+      title: "RocketMan(工事中)"
     },
     {
       path: "/number-converter",
@@ -30,7 +30,7 @@ const App = () => {
     {
       path: "/avd",
       element: <CanvasComponent />,
-      title: "AVD"
+      title: "AVD(工事中)"
     },
     {
       path: "/upload",
@@ -45,7 +45,7 @@ const App = () => {
     {
       path: "/get-proxy-url",
       element: <GetProxyURL />,
-      title: "GetProxyURL"
+      title: "GetProxyURL(工事中)"
     }
   ];
 
