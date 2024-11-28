@@ -1,64 +1,48 @@
 import React, { useEffect, useState } from 'react';
-import { getProxyURL } from '@/Tools/Proxy/utils.ts'
+import { getProxyURL } from '@/Tools/Proxy/utils.ts';
 
-const BiliCover = () => {
+const GetProxyURL = () => {
     const [url, setUrl] = useState("");
     const [proxyURL, setProxyURL] = useState("");
+    const httpsRegex = /https:\/\/[^\s/$.?#].[^\s]*/; // 提取URL的正则表达式
 
+    // 统一处理函数
+    const updateURL = (inputUrl) => {
+        setUrl(inputUrl); // 更新输入框的 URL
+        const match = inputUrl.match(httpsRegex);
+        setProxyURL(getProxyURL(match ? match : "")); // 提取并更新代理 URL
+    };
 
     const handleChange = (e) => {
         const value = e.target.value; // 获取输入的 URL
-        setUrl(value); // 更新输入框的 URL
-        const httpsRegex = /https:\/\/[^\s/$.?#].[^\s]*/;
-
-        const match = url.match(httpsRegex);
-
-        setProxyURL(getProxyURL(match ? match[0] : "")); // 提取 ID
+        updateURL(value); // 调用统一处理函数
     };
 
     const handlePaste = (event) => {
-        event.preventDefault();
+        event.preventDefault(); // 阻止默认粘贴行为
         const clipboardData = event.clipboardData || window.clipboardData;
-        const pastedData = clipboardData.getData('Text'); // 获取文本
-
-        setUrl(pastedData); // 更新输入框的 URL
-        const httpsRegex = /https:\/\/[^\s/$.?#].[^\s]*/;
-
-        const match = url.match(httpsRegex);
-
-        setProxyURL(getProxyURL(match ? match[0] : "")); // 提取 ID
-    };
-
-    const handleMouseEnter = (event) => {
-        // 在鼠标悬停时全选内容
-        event.target.select();
+        const pastedData = clipboardData.getData('Text'); // 获取剪贴板中的文本
+        updateURL(pastedData); // 调用统一处理函数
     };
 
     const handleDrop = (event) => {
         event.preventDefault(); // 阻止默认行为
         const data = event.dataTransfer.getData('text'); // 获取拖拽的数据
-        setUrl(data); // 将拖拽的内容设置到输入框中
-        const httpsRegex = /https:\/\/[^\s/$.?#].[^\s]*/;
-
-        const match = url.match(httpsRegex);
-        
-        setProxyURL(getProxyURL(match ? match[0] : "")); // 提取 ID
+        updateURL(data); // 调用统一处理函数
     };
 
     const handleDragOver = (event) => {
         event.preventDefault(); // 阻止默认行为，以允许 drop 事件
     };
 
-
     useEffect(() => {
         // 添加粘贴事件监听器
         window.addEventListener('paste', handlePaste);
-
-        // 清理事件监听器
         return () => {
+            // 清理事件监听器
             window.removeEventListener('paste', handlePaste);
         };
-    });
+    }, []);
 
     return (
         <div className='h-screen'
@@ -68,22 +52,19 @@ const BiliCover = () => {
             <input
                 type="text"
                 value={url}
-                onChange={handleChange}
-                onMouseEnter={handleMouseEnter} // 绑定鼠标悬停事件
-
+                onChange={handleChange} // 绑定输入框变化事件
                 placeholder="输入 URL, 或者直接按 Ctrl+V, 或者拖动连接到此页面"
                 style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
             />
             <input
                 type="text"
                 value={proxyURL}
-                onMouseEnter={handleMouseEnter} // 绑定鼠标悬停事件
                 readOnly
-                placeholder=""
+                placeholder="GPT是我爹"
                 style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
             />
         </div>
     );
 };
 
-export default BiliCover;
+export default GetProxyURL;

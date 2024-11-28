@@ -45,7 +45,7 @@ const App = () => {
     {
       path: "/get-proxy-url",
       element: <GetProxyURL />,
-      title: "GetProxyURL(工事中)"
+      title: "GetProxyURL"
     }
   ];
 
