@@ -1,5 +1,23 @@
 [
     {
+        "path": "notes/2024年12月2日.txt",
+        "creation_date": "2024-12-02T22:35:30.971819",
+        "modification_date": "2024-12-02T22:35:30.971819",
+        "file_name": "2024年12月2日"
+    },
+    {
+        "path": "notes/凯利公式.txt",
+        "creation_date": "2024-12-02T22:32:53.854795",
+        "modification_date": "2024-12-02T22:32:53.854795",
+        "file_name": "凯利公式"
+    },
+    {
+        "path": "notes/傅里叶.txt",
+        "creation_date": "2024-12-02T21:39:14.677614",
+        "modification_date": "2024-12-02T20:22:49.413736",
+        "file_name": "傅里叶"
+    },
+    {
         "path": "notes/讨饭.txt",
         "creation_date": "2024-12-02T16:55:53.788152",
         "modification_date": "2024-12-02T16:55:53.788152",
@@ -130,23 +148,5 @@
         "creation_date": "2024-11-19T23:41:49.652318",
         "modification_date": "2024-11-19T23:41:49.652318",
         "file_name": "4"
-    },
-    {
-        "path": "notes/高度.txt",
-        "creation_date": "2024-11-19T23:41:49.506559",
-        "modification_date": "2024-11-19T23:41:49.506559",
-        "file_name": "高度"
-    },
-    {
-        "path": "notes/天天看二次元@241118.txt",
-        "creation_date": "2024-11-19T23:41:49.498169",
-        "modification_date": "2024-11-19T23:41:49.498169",
-        "file_name": "天天看二次元@241118"
-    },
-    {
-        "path": "notes/喷了这个canvas的fillText.txt",
-        "creation_date": "2024-11-19T23:41:49.492178",
-        "modification_date": "2024-11-19T23:41:49.492178",
-        "file_name": "喷了这个canvas的fillText"
     }
 ]

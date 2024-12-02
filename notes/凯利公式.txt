@@ -1,0 +1,30 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 定义函数
+def f(x):
+  return (1-x)*(1+2*x)
+
+# 生成x坐标数据
+x = np.linspace(0, 1, 100)  # 在区间[-5, 5]上生成100个等间距的点
+
+# 计算对应的y坐标数据
+y = f(x)
+
+# 绘制函数图像
+plt.plot(x, y)
+
+# 添加标题和标签
+plt.title('函数 y = x^2 + 2x + 1')
+plt.xlabel('x')
+plt.ylabel('y')
+
+# 显示图像
+plt.grid(True) # 添加网格线，方便观察
+plt.show()
+
+
+"""
+也就是说凯利公式是抛物线问题啊。草。
+事件为什么是独立的。
+"""
