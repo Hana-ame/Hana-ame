@@ -1,0 +1,7 @@
+## [最全面的Zookeeper论文解读 深入浅出底层原理_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1e2S6YqEpC/?spm_id_from=333.1007.tianma.2-1-4.click&vd_source=24bb70c2b6dd1ed56ce52cee12837b54)
+读太多会活锁掉。
+写特别多的场景，读特别多的场景。
+https://upload.moonchan.xyz/api/01LLWEUU256DGAYWSMBFCZWOPW54SQJIC4/image.png
+幂等。
+cache
+redis，fork线程，切换，非常优雅。
