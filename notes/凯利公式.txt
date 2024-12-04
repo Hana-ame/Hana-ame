@@ -1,5 +1,10 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
+matplotlib.rcParams['font.sans-serif']=['SimHei']
+matplotlib.rcParams['axes.unicode_minus']=False
+
 
 # 定义函数
 def f(x):
