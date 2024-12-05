@@ -1,15 +1,21 @@
 [
     {
+        "path": "notes/2024年12月6日.txt",
+        "creation_date": "2024-12-06T00:49:44.174965",
+        "modification_date": "2024-12-06T00:49:44.174965",
+        "file_name": "2024年12月6日"
+    },
+    {
+        "path": "notes/2024年12月4日.txt",
+        "creation_date": "2024-12-06T00:49:41.405093",
+        "modification_date": "2024-12-06T00:49:41.405093",
+        "file_name": "2024年12月4日"
+    },
+    {
         "path": "notes/2024年12月3日.txt",
         "creation_date": "2024-12-04T15:02:22.447539",
         "modification_date": "2024-12-04T15:02:22.447539",
         "file_name": "2024年12月3日"
-    },
-    {
-        "path": "notes/2024年12月4日.txt",
-        "creation_date": "2024-12-04T15:02:20.351870",
-        "modification_date": "2024-12-04T15:02:20.351870",
-        "file_name": "2024年12月4日"
     },
     {
         "path": "notes/凯利公式.txt",
@@ -142,11 +148,5 @@
         "creation_date": "2024-11-19T23:42:06.716543",
         "modification_date": "2024-11-19T23:42:06.716543",
         "file_name": "天天看二次元@241119"
-    },
-    {
-        "path": "notes/好想死.txt",
-        "creation_date": "2024-11-19T23:42:06.351622",
-        "modification_date": "2024-11-19T23:42:06.351622",
-        "file_name": "好想死"
     }
 ]
