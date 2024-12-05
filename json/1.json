@@ -1,5 +1,11 @@
 [
     {
+        "path": "notes/2024年12月06日.txt",
+        "creation_date": "2024-12-06T00:56:15.821062",
+        "modification_date": "2024-12-06T00:56:15.821062",
+        "file_name": "2024年12月06日"
+    },
+    {
         "path": "notes/2024年12月6日.txt",
         "creation_date": "2024-12-06T00:49:44.174965",
         "modification_date": "2024-12-06T00:49:44.174965",
@@ -142,11 +148,5 @@
         "creation_date": "2024-11-20T00:26:14.226651",
         "modification_date": "2024-11-20T00:26:14.226651",
         "file_name": "HSSH 2024年11月20日"
-    },
-    {
-        "path": "notes/天天看二次元@241119.txt",
-        "creation_date": "2024-11-19T23:42:06.716543",
-        "modification_date": "2024-11-19T23:42:06.716543",
-        "file_name": "天天看二次元@241119"
     }
 ]
