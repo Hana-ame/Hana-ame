@@ -1,8 +1,14 @@
 [
     {
+        "path": "notes/2024年12月07日.txt",
+        "creation_date": "2024-12-07T13:24:09.823387",
+        "modification_date": "2024-12-07T13:24:09.823387",
+        "file_name": "2024年12月07日"
+    },
+    {
         "path": "notes/2024年12月06日.txt",
-        "creation_date": "2024-12-06T23:32:10.380365",
-        "modification_date": "2024-12-06T23:32:10.380365",
+        "creation_date": "2024-12-06T23:49:39.403495",
+        "modification_date": "2024-12-06T23:49:39.403495",
         "file_name": "2024年12月06日"
     },
     {
@@ -142,11 +148,5 @@
         "creation_date": "2024-11-20T00:26:14.231651",
         "modification_date": "2024-11-20T00:26:14.231651",
         "file_name": "http的坑"
-    },
-    {
-        "path": "notes/HSSH 2024年11月20日.txt",
-        "creation_date": "2024-11-20T00:26:14.226651",
-        "modification_date": "2024-11-20T00:26:14.226651",
-        "file_name": "HSSH 2024年11月20日"
     }
 ]
