@@ -84,6 +84,7 @@ const BiliCover = () => {
             {b23id && <B23 id={b23id} />}
             {bvid && <BV id={bvid} />}
             {liveid && <Live id={liveid} />}
+            <div>后端支持(无断):<a className="text-blue-500 hover:text-green-500 underline" href="https://bilicover.magecorn.com/help">https://bilicover.magecorn.com/help</a></div>
         </div>
     );
 };

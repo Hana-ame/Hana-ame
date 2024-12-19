@@ -94,7 +94,7 @@ const ExImage = ({ path, showNext }) => {
                 <div>
                     <img
                         src={imageSrc}
-                        alt="Content"
+                        alt="加载失败，请点击重新加载并等待至多10秒"
                         onLoad={() => {
                             if (id >= 0) clearInterval(id);
                             setLoaded(true);
@@ -116,7 +116,7 @@ const ExImage = ({ path, showNext }) => {
             {abort && onErrorPath && (
                 <ExImage path={onErrorPath} showNext={false} />
             )}
-            {showNext && nextPath && (
+            {showNext && nextPath && nextPath !== path && (
                 <ExImage path={nextPath} showNext={true} />
             )}
         </>
