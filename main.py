@@ -51,9 +51,10 @@ json_files = [f for f in os.listdir(json_dir) if f.endswith('.json')]
 
 # 创建文件路径列表
 json_file_paths = [Path(os.path.join(json_dir, file)).as_posix() for file in json_files]
+json_file_paths.sort()
 
 # 更新 files 项目
-data['files'] = json_file_paths.sort()
+data['files'] = json_file_paths
 
 # 将更新后的内容写回 main.json
 with open(main_json_path, 'w', encoding='utf-8') as main_json_file:
