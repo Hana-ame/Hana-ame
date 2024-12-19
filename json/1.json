@@ -1,5 +1,11 @@
 [
     {
+        "path": "notes/2024年12月19日.txt",
+        "creation_date": "2024-12-19T13:36:52.815489",
+        "modification_date": "2024-12-19T13:36:52.815489",
+        "file_name": "2024年12月19日"
+    },
+    {
         "path": "notes/还有这事.txt",
         "creation_date": "2024-12-19T13:24:58.122752",
         "modification_date": "2024-12-19T13:24:58.122752",
@@ -142,11 +148,5 @@
         "creation_date": "2024-12-19T13:24:58.122752",
         "modification_date": "2024-12-19T13:24:58.122752",
         "file_name": "看看v"
-    },
-    {
-        "path": "notes/之前还想usb线通信.txt",
-        "creation_date": "2024-12-19T13:24:58.122752",
-        "modification_date": "2024-12-19T13:24:58.122752",
-        "file_name": "之前还想usb线通信"
     }
 ]
