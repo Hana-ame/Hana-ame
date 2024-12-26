@@ -1,3 +1,4 @@
+import os
 import datetime
 
 today = datetime.date.today()
@@ -10,3 +11,4 @@ try:
     print(f"File '{filename}' created successfully.")
 except FileExistsError:
     print(f"Error: File '{filename}' already exists.")
+os.system(f'code {filename}')
