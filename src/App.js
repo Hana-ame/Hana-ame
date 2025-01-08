@@ -6,9 +6,10 @@ import NumberConverter from './calc/NumberConverter';
 import CanvasComponent from './avd/CanvasComponent';
 import FileUpload from './upload/FileUpload';
 import BiliCover from './bilicover/BiliCover';
-import GetProxyURL from './getProxyURL/GetProxyURL';
+import GetProxyURL from './getProxyURL/GetProxyURLV2';
 import Sign from './sign/Sign';
 import SComponent from './exhentai/Exhentai'; // 导入处理 /s/ 路径的组件
+import CardWrapper from './card/CardWrapper'
 
 const App = () => {
   const router = [
@@ -59,7 +60,19 @@ const App = () => {
       element: <SComponent />, // 处理这些路径的组件
       title: "S路径处理",
       visible: false,
-    }
+    },
+    // {
+    //   path: "/gallerytorrents",
+    //   element: <TComponent />, 
+    //   title: "实在下不到种子的处理方法",
+    //   visible: true,
+    // }
+    {
+      path: "/card", // 匹配所有以 /s/ 开头的路径
+      element: <CardWrapper />, // 处理这些路径的组件
+      title: "card",
+      visible: true,
+    },
   ];
 
   return (

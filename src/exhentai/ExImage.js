@@ -93,6 +93,7 @@ const ExImage = ({ path, showNext }) => {
             {!abort && imageSrc && (
                 <div>
                     <img
+                        className="w-full"
                         src={imageSrc}
                         alt="加载失败，请点击重新加载并等待至多10秒"
                         onLoad={() => {

@@ -1,25 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { getProxyURL } from '@/Tools/Proxy/utils.ts';
+// 访问archive的接入点是POST archive.php?[参数] data是 dltype=org&dlcheck=Download+Original+Archive
+// 暂时只做torrent的。
+// 感觉太不安全了，弃用
 
-const GetProxyURL = () => {
+import React, { useState, useEffect } from 'react';
+import Torrents from './Torrents';
+
+const TComponent = () => {
+    const [gid, setGid] = useState("");
+    const [t, setT] = useState("");
     const [url, setUrl] = useState("");
-    const [proxyURL, setProxyURL] = useState("");
-    const [proxyReferer, setProxyReferer] = useState(""); // 新的状态来存储 proxy_referer 的值
     const httpsRegex = /https:\/\/[^\s/$.?#].[^\s]*/; // 提取URL的正则表达式
 
     // 统一处理函数
     const updateURL = (inputUrl) => {
         setUrl(inputUrl); // 更新输入框的 URL
-        const match = inputUrl.match(httpsRegex);
-        let newProxyURL = getProxyURL(match ? match : "");
-
-        // 如果有 proxyReferer，则将其作为参数附加到 proxyURL 上
-        if (proxyReferer) {
-            const refererParam = encodeURIComponent(proxyReferer);
-            newProxyURL += (newProxyURL.includes('?') ? '&' : '?') + `proxy_referer=${refererParam}`;
+        const match = inputUrl.match(httpsRegex); // string
+        try {
+            const urlParams = new URLSearchParams(new URL(match).search);
+            const t = urlParams.get('t');
+            const gid = urlParams.get('gid');
+            setGid(gid);
+            setT(t);
+        } catch (e) {
+            console.log(e)
         }
-
-        setProxyURL(newProxyURL); // 提取并更新代理 URL
     };
 
     const handleChange = (e) => {
@@ -28,7 +32,7 @@ const GetProxyURL = () => {
     };
 
     const handlePaste = (event) => {
-        // event.preventDefault(); // 阻止默认粘贴行为
+        event.preventDefault(); // 阻止默认粘贴行为
         const clipboardData = event.clipboardData || window.clipboardData;
         const pastedData = clipboardData.getData('Text'); // 获取剪贴板中的文本
         updateURL(pastedData); // 调用统一处理函数
@@ -65,22 +69,9 @@ const GetProxyURL = () => {
                 placeholder="输入 URL, 或者直接按 Ctrl+V, 或者拖动连接到此页面"
                 style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
             />
-            <input
-                type="text"
-                value={proxyReferer}
-                onChange={(e) => setProxyReferer(e.target.value)} // 绑定 proxy_referer 变化事件
-                placeholder="输入 referer URL"
-                style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-            />
-            <input
-                type="text"
-                value={proxyURL}
-                readOnly
-                placeholder="GPT是我爹"
-                style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-            />
+            {gid && t && <Torrents gid={gid} t={t} />}
         </div>
     );
 };
 
-export default GetProxyURL;
+export default TComponent;
