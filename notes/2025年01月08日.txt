@@ -1,0 +1,23 @@
+CREATE TABLE messages (
+    id BIGINT PRIMARY KEY,
+    receiver VARCHAR(255) NOT NULL,
+    sender VARCHAR(255) NOT NULL,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+-- 为了将当前时间戳作为主键，我们将用一个触发器来自动设置
+
+-- 定义一个触发器函数来生成时间戳并将其设置为 id
+CREATE OR REPLACE FUNCTION set_timestamp_id()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.id := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 创建一个触发器在插入之前执行 set_timestamp_id 函数
+CREATE TRIGGER before_insert_messages
+BEFORE INSERT ON messages
+FOR EACH ROW
+EXECUTE FUNCTION set_timestamp_id();

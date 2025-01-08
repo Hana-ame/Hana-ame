@@ -1,0 +1,40 @@
+在特定、指定规则下对
+
+引っ張ってるのは
+知らない
+
+https://i0.hdslb.com/bfs/garb/7759dbcd978bbf01e8da4e70f100c715b198e0b4.png
+
+接下来说的是假设，真的只是假设而已，这份假设没有可以验证的方法，因此也不可能变成假设之外的其他东西。
+say，人们的爱恋是这样一种错败，它来自于自我的扩展，这次扩展，事实上你可以将它等同于一种存在于人类种族中因为自我驯化的社会性带来的，X的普遍多发的精神病。
+
+ヘッドブロック和参数冻结
+
+话说现在是真的想不起来之前再说什么了
+
+上回说到用概率采样来取代param本身的精度，这样的话应该会节约显存，并且
+本来也是dropout的
+这种应该是算法上的
+
+
+构造设计
+性能会有影响，草。
+
+https://img13.chkaja.com/files/20240905/9aee4730848378ed.jpg
+ https://img13.chkaja.com/files/20240905/4ca2a60993d9f4cd.jpeg
+
+
+
+Ctrl + Shift + P
+> java home
+config java runtime 
+
+Compiler 
+
+pom.xml
+
+要按apply settings
+
+感觉是mem里面有一份。。s
+
+行吧，能用var了。
