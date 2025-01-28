@@ -1,9 +1,21 @@
 [
     {
+        "path": "notes/2025年01月26日.txt",
+        "creation_date": "2025-01-28T12:55:30.455622",
+        "modification_date": "2025-01-28T12:55:30.455622",
+        "file_name": "2025年01月26日"
+    },
+    {
         "path": "notes/2025年01月11日.txt",
-        "creation_date": "2025-01-11T15:17:11.275372",
-        "modification_date": "2025-01-11T15:17:11.275372",
+        "creation_date": "2025-01-28T12:55:28.358697",
+        "modification_date": "2025-01-28T12:55:28.358697",
         "file_name": "2025年01月11日"
+    },
+    {
+        "path": "notes/2025年01月24日.txt",
+        "creation_date": "2025-01-26T21:54:47.280275",
+        "modification_date": "2025-01-26T21:54:47.280275",
+        "file_name": "2025年01月24日"
     },
     {
         "path": "notes/2025年01月10日.txt",
@@ -136,17 +148,5 @@
         "creation_date": "2024-12-19T13:24:58.122752",
         "modification_date": "2024-12-19T13:24:58.122752",
         "file_name": "2024年11月26日"
-    },
-    {
-        "path": "notes/好想死.txt",
-        "creation_date": "2024-12-19T13:24:58.122752",
-        "modification_date": "2024-12-19T13:24:58.122752",
-        "file_name": "好想死"
-    },
-    {
-        "path": "notes/1.txt",
-        "creation_date": "2024-12-19T13:24:58.122752",
-        "modification_date": "2024-12-19T13:24:58.122752",
-        "file_name": "1"
     }
 ]
