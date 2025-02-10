@@ -99,7 +99,7 @@ const App = () => {
       userVisibleOnly: true,
       applicationServerKey: process.env.REACT_APP_VAPID_PUBLIC_KEY
     });
-    
+
     // 发送订阅信息到服务器
     await fetch('/api/push-subscribe', {
       method: 'POST',
@@ -108,20 +108,16 @@ const App = () => {
     });
   };
 
+  // 在App.js中添加
   useEffect(() => {
-    // 注册Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
-        .then(registration => {
-          console.log('SW registered:', registration);
-          setupPushSubscription(registration);
-        })
-        .catch(error => {
-          console.error('SW注册失败:', error);
-        });
+        .then(reg => console.log('SW注册成功:', reg))
+        .catch(err => console.error('SW注册失败:', err));
     }
   }, []);
+
 
   return (
     <Router>

@@ -13,14 +13,14 @@ export default function NotificationButton() {
     if (permission === 'granted') {
       new Notification('测试通知', {
         body: '您有一条新消息！',
-        icon: '/logo192.png'
+        icon: 'https://avemujica.bang-dream.com/wordpress/wp-content/themes/avemujica/img/moon-r.svg'
       });
     }
   };
 
   return (
     <div>
-      <button 
+      <button   
         onClick={requestPermission}
         style={{ marginRight: 10 }}
       >
