@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithProxy } from '@/Tools/Proxy/utils'
 import BV from './BV';
+import Live from './Live';
 
 const B23 = ({ id }) => {
-    const [data, setData] = useState(null);
+    const [bv, setBV] = useState(null);
+    const [live, setLive] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -31,12 +33,14 @@ const B23 = ({ id }) => {
                 const url = new URL(urlString);
 
                 // 获取 pathname
-                const pathname = url.pathname; // 结果是 '/video/BV12s1mYcEJW'
+                // const pathname = url.pathname; // 结果是 '/video/BV12s1mYcEJW'
 
                 // 提取 'video/' 之后的部分
-                const videoId = pathname.split('/video/')[1]; // 结果是 'BV12s1mYcEJW'
+                const bv = url.pathname.split('/video/')[1]; // 结果是 'BV12s1mYcEJW'
+                const live = url.pathname.split('/')[1];
 
-                setData(videoId);
+                setBV(bv);
+                setLive(live);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -56,7 +60,8 @@ const B23 = ({ id }) => {
     }
 
     return (
-        <BV id={data} />
+        bv ? <BV id={bv} /> : <Live id={live}></Live>
+        
     );
 };
 

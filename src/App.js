@@ -10,6 +10,7 @@ import GetProxyURL from './getProxyURL/GetProxyURLV2';
 import Sign from './sign/Sign';
 import SComponent from './exhentai/Exhentai'; // 导入处理 /s/ 路径的组件
 import CardWrapper from './card/CardWrapper'
+import Chat from './chat/App';
 
 const App = () => {
   const router = [
@@ -71,6 +72,12 @@ const App = () => {
       path: "/card", // 匹配所有以 /s/ 开头的路径
       element: <CardWrapper />, // 处理这些路径的组件
       title: "card",
+      visible: true,
+    },
+    {
+      path: "/chat", // 匹配所有以 /s/ 开头的路径
+      element: <Chat />, // 处理这些路径的组件
+      title: "chat",
       visible: true,
     },
   ];
