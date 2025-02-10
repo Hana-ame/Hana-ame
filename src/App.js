@@ -1,4 +1,7 @@
 import React from 'react';
+import { useEffect } from 'react';
+import { NotificationProvider } from './contexts/NotificationContext';
+
 import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 import Blog from './blog/Blog';
 import Browser from './browser/RequestForm';
@@ -11,6 +14,8 @@ import Sign from './sign/Sign';
 import SComponent from './exhentai/Exhentai'; // 导入处理 /s/ 路径的组件
 import CardWrapper from './card/CardWrapper'
 import Chat from './chat/App';
+import FileUploader from './upload/FileUploader';
+import Test from './Test'
 
 const App = () => {
   const router = [
@@ -70,17 +75,53 @@ const App = () => {
     // }
     {
       path: "/card", // 匹配所有以 /s/ 开头的路径
-      element: <CardWrapper />, // 处理这些路径的组件
+      element: <Test />, // 处理这些路径的组件
       title: "card",
       visible: true,
     },
     {
       path: "/chat", // 匹配所有以 /s/ 开头的路径
       element: <Chat />, // 处理这些路径的组件
-      title: "chat",
+      title: "Chat (Groq)",
+      visible: true,
+    },
+    {
+      path: "/file-uploader",
+      element: <FileUploader />,
+      title: "上传文件(WSL)",
       visible: true,
     },
   ];
+
+  // 这是啥
+  const setupPushSubscription = async (registration) => {
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: process.env.REACT_APP_VAPID_PUBLIC_KEY
+    });
+    
+    // 发送订阅信息到服务器
+    await fetch('/api/push-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription)
+    });
+  };
+
+  useEffect(() => {
+    // 注册Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(registration => {
+          console.log('SW registered:', registration);
+          setupPushSubscription(registration);
+        })
+        .catch(error => {
+          console.error('SW注册失败:', error);
+        });
+    }
+  }, []);
 
   return (
     <Router>
