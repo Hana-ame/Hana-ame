@@ -1,5 +1,17 @@
 [
     {
+        "path": "notes/2024年12月28日.txt",
+        "creation_date": "2024-12-29T02:09:42.114465",
+        "modification_date": "2024-12-29T02:09:42.114465",
+        "file_name": "2024年12月28日"
+    },
+    {
+        "path": "notes/2024年12月27日.txt",
+        "creation_date": "2024-12-27T19:35:37.464498",
+        "modification_date": "2024-12-27T19:35:37.464498",
+        "file_name": "2024年12月27日"
+    },
+    {
         "path": "notes/2024年12月26日.txt",
         "creation_date": "2024-12-26T18:00:16.602564",
         "modification_date": "2024-12-26T18:00:16.602564",
@@ -136,17 +148,5 @@
         "creation_date": "2024-12-19T13:24:58.122752",
         "modification_date": "2024-12-19T13:24:58.122752",
         "file_name": "用镜像的都是什么神人啊"
-    },
-    {
-        "path": "notes/喷了这个canvas的fillText.txt",
-        "creation_date": "2024-12-19T13:24:58.122752",
-        "modification_date": "2024-12-19T13:24:58.122752",
-        "file_name": "喷了这个canvas的fillText"
-    },
-    {
-        "path": "notes/凯利公式.txt",
-        "creation_date": "2024-12-19T13:24:58.122752",
-        "modification_date": "2024-12-19T13:24:58.122752",
-        "file_name": "凯利公式"
     }
 ]

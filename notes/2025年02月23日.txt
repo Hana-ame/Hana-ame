@@ -1,0 +1,11 @@
+## [引爆整个AI圈的神经网络架构KAN，究竟是啥？-虎嗅网](https://www.huxiu.com/article/3032946.html)
+
+上图中的（a）和（b）比较了两层的MLP和两层的KAN
+
+对MLP来说，激活函数是在节点上的，是固定的。权重在边上，是可学的。
+
+对KAN来说，激活函数是在边上的，是可学的。节点上只是一个单纯的加法，把所有input的信号加起来而已。
+
+## [ロストワンの号哭 / covered by memoto【歌ってみた】 - YouTube](https://www.youtube.com/watch?v=guGssGbyXvU&list=RDW8bWP-E7IJE&index=2)
+![ロストワンの号哭 / covered by memoto【歌ってみた】 - YouTube](https://img.youtube.com/vi/guGssGbyXvU/maxresdefault.jpg)
+啊啊啊丈育！！！！哭写错了器

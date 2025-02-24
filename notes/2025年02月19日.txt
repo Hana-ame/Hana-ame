@@ -14,3 +14,56 @@ GRPO=选拔考试
 https://upload.moonchan.xyz/api/01LLWEUU3CUZ2VUEUCOZB2P7ZWVHQPC3VR/image.png
 
 会自己变长
+
+https://upload.moonchan.xyz/api/01LLWEUUZ4ROYOBXQRA5EZEYMC6HD5B4AS/image.png
+
+做拒绝采样,做数据,的中间模型
+
+https://upload.moonchan.xyz/api/01LLWEUUZ4ROYOBXQRA5EZEYMC6HD5B4AS/image.png
+
+https://upload.moonchan.xyz/api/01LLWEUU7KCJFYQFXGJNGZ4P6PQJLP4WBO/image.png
+
+小模型效果不好是因为难训练,用大模型SFT的小模型效果好很多
+
+应该是其中某种逻辑结构.
+
+也就是不只是语言的集合,如果是逻辑的集合会
+
+之前模型的基础性能也不行,
+
+
+还好,挺好懂得的.
+
+
+
+读一波技术报告应该都能跟上,本身并不是很复杂的东西,只是知道能猜但是不能否决不知道是什么东西.
+
+
+负载均衡.
+
+应该改有很多是训练时的问题.也就是求解过程.
+现在应该知道这些token单单是表达关系式了,投影,通过非线性分割的
+
+https://upload.moonchan.xyz/api/01LLWEUU6KE5H5COZFFVE3J7WZUCKTP7J4/image.png
+
+不过在搞竞赛的人眼里我是智障吧.
+
+h很难,因为要是一个不留神没有跟着所有人一起发展的话这个时代有的东西马上就会不一样了
+
+【Flash Attention 为什么那么快？原理讲解】 https://www.bilibili.com/video/BV1UT421k7rA/?share_source=copy_web&vd_source=ff8155b02e2a44b5165c7f5b92c37a25
+https://upload.moonchan.xyz/api/01LLWEUU2RCZ46BE6CFNAK6Z32V5LHXQP5/image.png
+
+也就是说是流程优化
+存算之间换复杂度
+
+矩阵运算肯定可以优化,这个是稍微有点数学功底的人就看得出来的
+计算机架构有优化,这也是看得出来的
+
+## [粛聖!! ロリ神レクイエム☆ / あまかみこのみ（0.9さい）（cover） - YouTube](https://www.youtube.com/watch?v=tUm_sr4H3P4)
+![粛聖!! ロリ神レクイエム☆ / あまかみこのみ（0.9さい）（cover） - YouTube](https://img.youtube.com/vi/tUm_sr4H3P4/maxresdefault.jpg)
+このみ的话真的也好看
+
+## [NVIDIA’s AI: 100x Faster Virtual Characters! - YouTube](https://www.youtube.com/watch?v=Y2JJylfbuKM)
+![NVIDIA’s AI: 100x Faster Virtual Characters! - YouTube](https://img.youtube.com/vi/Y2JJylfbuKM/maxresdefault.jpg)
+
+啊。
