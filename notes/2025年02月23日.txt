@@ -9,3 +9,74 @@
 ## [ロストワンの号哭 / covered by memoto【歌ってみた】 - YouTube](https://www.youtube.com/watch?v=guGssGbyXvU&list=RDW8bWP-E7IJE&index=2)
 ![ロストワンの号哭 / covered by memoto【歌ってみた】 - YouTube](https://img.youtube.com/vi/guGssGbyXvU/maxresdefault.jpg)
 啊啊啊丈育！！！！哭写错了器
+
+Mathematical aspects: Although we have presented preliminary mathematical analysis of KANs (Theorem 2.1), our mathematical understanding of them is still very limited. The Kolmogorov-Arnold representation theorem has been studied thoroughly in mathematics, but the theorem corresponds to KANs with shape 
+[
+n
+,
+2
+⁢
+n
++
+1
+,
+1
+]
+, which is a very restricted subclass of KANs. Does our empirical success with deeper KANs imply something fundamental in mathematics? An appealing generalized Kolmogorov-Arnold theorem could define “deeper” Kolmogorov-Arnold representations beyond depth-2 compositions, and potentially relate smoothness of activation functions to depth. Hypothetically, there exist functions which cannot be represented smoothly in the original (depth-2) Kolmogorov-Arnold representations, but might be smoothly represented with depth-3 or beyond. Can we use this notion of “Kolmogorov-Arnold depth” to characterize function classes?
+数学方面：尽管我们已经对 KANs 进行了初步的数学分析（定理 2.1），但我们对其的数学理解仍然非常有限。Kolmogorov-Arnold 表示定理在数学中已被深入研究，但该定理对应于形状为 
+[
+n
+,
+2
+⁢
+n
++
+1
+,
+1
+]
+ 的 KANs，这是 KANs 的一个非常受限的子类。我们与更深层次的 KANs 在经验上的成功是否意味着数学中的某些基本原理？一个吸引人的广义 Kolmogorov-Arnold 定理可以定义“更深”的 Kolmogorov-Arnold 表示，超越深度-2 的组合，并且可能将激活函数的平滑性与深度联系起来。假设存在无法在原始（深度-2）Kolmogorov-Arnold 表示中平滑表示的函数，但可能在深度-3 或更高层次上平滑表示。我们能否使用“Kolmogorov-Arnold 深度”这一概念来表征函数类？
+
+Algorithmic aspects: We discuss the following:
+算法方面：我们讨论以下内容：
+
+(1) Accuracy. Multiple choices in architecture design and training are not fully investigated so alternatives can potentially further improve accuracy. For example, spline activation functions might be replaced by radial basis functions or other local kernels. Adaptive grid strategies can be used.
+(1) 准确性。在架构设计和训练中的多个选择尚未完全研究，因此替代方案可能进一步提高准确性。例如，样条激活函数可能被径向基函数或其他局部核替换。可以使用自适应网格策略。
+(2) Efficiency. One major reason why KANs run slowly is because different activation functions cannot leverage batch computation (large data through the same function). Actually, one can interpolate between activation functions being all the same (MLPs) and all different (KANs), by grouping activation functions into multiple groups (“multi-head”), where members within a group share the same activation function.
+(2) 效率。KAN 运行缓慢的主要原因之一是不同的激活函数无法利用批量计算（通过同一函数处理大量数据）。实际上，可以通过将激活函数分组为多个组（“多头”），其中组内成员共享相同的激活函数，在所有激活函数都相同（MLPs）和所有都不同（KANs）之间进行插值。
+(3) Hybrid of KANs and MLPs. KANs have two major differences compared to MLPs:
+(i) activation functions are on edges instead of on nodes,
+(i) 激活函数位于边而非节点上，
+(ii) activation functions are learnable instead of fixed.
+(ii) 激活函数是可学习的而不是固定的。
+Which change is more essential to explain KAN’s advantage? We present our preliminary results in Appendix B where we study a model which has (ii), i.e., activation functions are learnable (like KANs), but not (i), i.e., activation functions are on nodes (like MLPs). Moreover, one can also construct another model with fixed activations (like MLPs) but on edges (like KANs).
+哪个变化对于解释 KAN 的优势更为关键？我们在附录 B 中展示了我们的初步结果，其中我们研究了一个具有（ii）的模型，即激活函数是可学习的（如 KANs），但不具有（i），即激活函数在节点上（如 MLPs）。此外，还可以构建另一个具有固定激活函数（如 MLPs）但位于边上的模型（如 KANs）。
+(3) KANs 与 MLPs 的混合。与 MLPs 相比，KANs 有两个主要区别：
+(4) Adaptivity. Thanks to the intrinsic locality of spline basis functions, we can introduce adaptivity in the design and training of KANs to enhance both accuracy and efficiency: see the idea of multi-level training like multigrid methods as in [115, 116], or domain-dependent basis functions like multiscale methods as in [117].
+(4) 适应性。由于样条基函数的内禀局部性，我们可以在 KAN 的设计和训练中引入适应性，以增强准确性和效率：参见类似于[115, 116]中的多级训练（如多重网格方法）或类似于[117]中的域相关基函数（如多尺度方法）的想法。
+Application aspects: We have presented some preliminary evidences that KANs are more effective than MLPs in science-related tasks, e.g., fitting physical equations and PDE solving. We would like to apply KANs to solve Navier-Stokes equations, density functional theory, or any other tasks that can be formulated as regression or PDE solving. We would also like to apply KANs to machine-learning-related tasks, which would require integrating KANs into current architectures, e.g., transformers – one may propose “kansformers” which replace MLPs by KANs in transformers.
+应用方面：我们提出了一些初步证据，表明 KAN 在科学相关任务中比 MLP 更有效，例如拟合物理方程和偏微分方程求解。我们希望将 KAN 应用于求解 Navier-Stokes 方程、密度泛函理论或任何可以表述为回归或偏微分方程求解的任务。我们还想将 KAN 应用于机器学习相关任务，这需要将 KAN 集成到当前架构中，例如 transformers——可以提出“kansformers”，在 transformers 中将 MLP 替换为 KAN。
+
+KAN as a “language model” for AI + Science The reason why large language models are so transformative is because they are useful to anyone who can speak natural language. The language of science is functions. KANs are composed of interpretable functions, so when a human user stares at a KAN, it is like communicating with it using the language of functions. This paragraph aims to promote the AI-Scientist-Collaboration paradigm rather than our specific tool KANs. Just like people use different languages to communicate, we expect that in the future KANs will be just one of the languages for AI + Science, although KANs will be one of the very first languages that would enable AI and human to communicate. However, enabled by KANs, the AI-Scientist-Collaboration paradigm has never been this easy and convenient, which leads us to rethink the paradigm of how we want to approach AI + Science: Do we want AI scientists, or do we want AI that helps scientists? The intrinsic difficulty of (fully automated) AI scientists is that it is hard to make human preferences quantitative, which would codify human preferences into AI objectives. In fact, scientists in different fields may feel differently about which functions are simple or interpretable. As a result, it is more desirable for scientists to have an AI that can speak the scientific language (functions) and can conveniently interact with inductive biases of individual scientist(s) to adapt to a specific scientific domain.
+KAN 作为 AI + 科学领域的“语言模型” 大型语言模型之所以具有变革性，是因为它们对任何能够使用自然语言的人来说都是有用的。科学语言是函数。KAN 由可解释的函数组成，因此当人类用户凝视 KAN 时，就像用函数语言与之交流。本段旨在推广 AI-科学家-合作范式，而不是我们特定的工具 KAN。就像人们使用不同的语言进行交流一样，我们期望在未来 KAN 将成为 AI + 科学的一种语言，尽管 KAN 将是使 AI 和人类能够交流的非常早期的语言之一。然而，得益于 KAN，AI-科学家-合作范式从未如此简单和方便，这使我们重新思考我们想要如何接近 AI + 科学的范式：我们想要 AI 科学家，还是我们想要帮助科学家的 AI？(完全自动化) AI 科学家的内在困难在于，很难将人类偏好量化，这将把人类偏好编码成 AI 目标。 实际上，不同领域的科学家可能对哪些函数简单或可解释有不同的看法。因此，科学家更希望拥有一种能够说科学语言（函数）并能方便地与个别科学家的归纳偏见互动以适应特定科学领域的 AI。
+
+Final takeaway: Should I use KANs or MLPs?
+最终总结：我应该使用 KANs 还是 MLPs？
+
+Currently, the biggest bottleneck of KANs lies in its slow training. KANs are usually 10x slower than MLPs, given the same number of parameters. We should be honest that we did not try hard to optimize KANs’ efficiency though, so we deem KANs’ slow training more as an engineering problem to be improved in the future rather than a fundamental limitation. If one wants to train a model fast, one should use MLPs. In other cases, however, KANs should be comparable or better than MLPs, which makes them worth trying. The decision tree in Figure 6.1 can help decide when to use a KAN. In short, if you care about interpretability and/or accuracy, and slow training is not a major concern, we suggest trying KANs, at least for small-scale AI + Science problems.
+当前，KANs 最大的瓶颈在于其缓慢的训练过程。在相同参数数量的情况下，KANs 通常比 MLPs 慢 10 倍。尽管如此，我们承认我们并没有努力优化 KANs 的效率，因此我们认为 KANs 的缓慢训练更像是未来需要改进的工程问题，而不是根本性的限制。如果想要快速训练模型，应该使用 MLPs。然而，在其他情况下，KANs 应该与 MLPs 相当甚至更好，这使得它们值得一试。图 6.1 中的决策树可以帮助决定何时使用 KAN。简而言之，如果您关心可解释性和/或准确性，并且训练速度不是主要问题，我们建议尝试 KANs，至少对于小规模的 AI + Science 问题。
+
+
+
+https://r2.misskey-square.net/misskey-square/files/webpublic-4bd96b6d-d2ae-4113-9dfe-4e0890b54029.png
+
+## [拿自己的芙宝试了一下AI不太会弄_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV13arHYdEur/?vd_source=24bb70c2b6dd1ed56ce52cee12837b54)
+
+## [AI手办 人活着就是为了伊莉雅！_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Y3reYZEdh?buvid=XX981F49ADE2BAEE9856015E13F144711A12E&from_spmid=united.player-video-detail.relatedvideo.0&is_story_h5=false&mid=C%2FWHy8LmyyHYl4Z5w85xsw%3D%3D&plat_id=116&share_from=ugc&share_medium=android&share_plat=android&share_session_id=f879febf-b0c5-4d7c-95ca-b1af11068ca8&share_source=COPY&share_tag=s_i&spmid=united.player-video-detail.0.0&timestamp=1740058508&unique_k=gkhhNzg&up_id=8217459&vd_source=24bb70c2b6dd1ed56ce52cee12837b54)
+
+进来的时候先处理了，再说。
+如果是多用途的话。
+
+啊啊不是nin乱叫是nin的猫乱叫啊
+啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊
+好尬，我不活了
