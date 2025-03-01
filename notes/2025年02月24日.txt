@@ -1,0 +1,11 @@
+## [DeepSeek接入猫娘｜实时语音交互桌宠【演示】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ZkP9emEe2/?)
+## [超中意的相亲对象因为我是单亲家庭给我发了卡，心态已崩 - 卓明谷 - Stage1st - stage1/s1 游戏动漫论坛](https://bbs.saraba1st.com/2b/thread-2247360-1-1.html)
+## [Day 2 - DeepSeek开源周第二天：DeepEP混合专家训练及推理优化_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1gvP8eKEpo/?)
+## [LLM张老师的个人空间-LLM张老师个人主页-哔哩哔哩视频](https://space.bilibili.com/3546611527453161)
+
+如果说下个样本形式出现的训练文本是本质，定义了某种从这个token到下个token的方式。
+那么为什么拥有大量数据的搜索引擎，公众号等没有凭借词频统计
+选择token和reject token的能力。
+之前想的是选择什么序列作为输入序列。
+那么这样子其实和moe差不多，输入不同moe之后。
+词向量怎么变成句子意思。
