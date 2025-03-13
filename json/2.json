@@ -1,5 +1,11 @@
 [
     {
+        "path": "notes/2025年01月09日.txt",
+        "creation_date": "2025-01-09T23:06:35.174619",
+        "modification_date": "2025-01-09T23:06:35.174619",
+        "file_name": "2025年01月09日"
+    },
+    {
         "path": "notes/2025年01月08日.txt",
         "creation_date": "2025-01-08T21:56:06.319485",
         "modification_date": "2025-01-08T21:56:06.319485",
@@ -142,11 +148,5 @@
         "creation_date": "2024-12-19T13:24:58.122752",
         "modification_date": "2024-12-19T13:24:58.122752",
         "file_name": "2"
-    },
-    {
-        "path": "notes/2024年12月09日.txt",
-        "creation_date": "2024-12-19T13:24:58.122752",
-        "modification_date": "2024-12-19T13:24:58.122752",
-        "file_name": "2024年12月09日"
     }
 ]
