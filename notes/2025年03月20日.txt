@@ -1,0 +1,10 @@
+ https://dnsexit.com/
+申请一个domaiin
+
+nginx加上
+
+先设置root在设置
+
+不能127.0。0.1以外的
+
+## [现在都这样不演了不挺好的么 - 卓明谷 - Stage1st - stage1/s1 游戏动漫论坛](https://bbs.saraba1st.com/2b/thread-2250338-1-1.html)
