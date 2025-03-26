@@ -29,7 +29,7 @@ const App = () => {
       path: "/browser",
       element: <Browser />,
       title: "RocketMan(工事中)",
-      visible: true,
+      visible: false,
     },
     {
       path: "/number-converter",
@@ -41,7 +41,7 @@ const App = () => {
       path: "/avd",
       element: <CanvasComponent />,
       title: "AVD(工事中)",
-      visible: true,
+      visible: false,
     },
     {
       path: "/upload",
@@ -77,7 +77,7 @@ const App = () => {
       path: "/card", // 匹配所有以 /s/ 开头的路径
       element: <Test />, // 处理这些路径的组件
       title: "card",
-      visible: true,
+      visible: false,
     },
     {
       path: "/chat", // 匹配所有以 /s/ 开头的路径
@@ -121,7 +121,7 @@ const App = () => {
 
   return (
     <Router>
-      <div className="flex flex-col">
+      <div className="flex flex-col h-screen">
         <nav className="bg-blue-500 overflow-x-auto whitespace-nowrap">
           <ul className="flex h-full">
             {router.map((route) => (
@@ -141,7 +141,7 @@ const App = () => {
           </ul>
         </nav>
 
-        <div className="flex-1 p-1">
+        <div className="flex-1 h-full p-1 overflow-auto">
           <Routes>
             {router.map((route) => (
               <Route key={route.path} path={route.path} element={route.element} />

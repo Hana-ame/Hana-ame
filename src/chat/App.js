@@ -28,7 +28,7 @@ function App() {
         };
 
         const body = {
-            model: 'llama-3.3-70b-versatile',
+            model: 'deepseek-r1-distill-llama-70b',
             messages: [...history, message],
             temperature,
             max_completion_tokens: maxTokens,
@@ -59,7 +59,7 @@ function App() {
     };
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-full bg-gray-100">
             {/* 左侧历史记录 */}
             <div className="w-3/4 bg-white p-4 overflow-y-auto">
                 <h2 className="text-lg font-bold mb-4">历史记录</h2>

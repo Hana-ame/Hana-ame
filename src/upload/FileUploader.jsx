@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import FileInfo from './FileInfo';
 
-export default function FileUploader() {
+export default function IFrame() {
+  return <iframe
+    src="https://chat.moonchan.xyz/api/files/upload"
+    className="w-full h-full flex-grow border-0"
+    title="Content"
+  />
+
+}
+
+export function FileUploader() {
   const [files, setFiles] = useState([]);
   // const [uploadResults, setUploadResults] = useState([]);
 

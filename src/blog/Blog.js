@@ -30,7 +30,7 @@ const Blog = () => {
 
 
     return (
-        <div className="p-4">
+        <div className="p-4 h-full overflow-y-scroll">
             {main && main.files?.slice(0, cnt).map((path) => (
                 <BlogPage
                     key={path}

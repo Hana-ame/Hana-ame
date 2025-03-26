@@ -68,7 +68,7 @@ const BiliCover = () => {
     });
 
     return (
-        <div className='h-screen'
+        <div className='h-full'
             onDrop={handleDrop} // 绑定 drop 事件
             onDragOver={handleDragOver} // 绑定 dragOver 事件
         >

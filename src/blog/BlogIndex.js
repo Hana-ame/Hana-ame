@@ -28,7 +28,7 @@ const blogs = [
 
 const BlogIndex = () => {
     return (
-        <div className="p-4">
+        <div className="p-4 h-full">
             <h1 className="text-3xl font-bold mb-6">我的博客</h1>
             {blogs.map((blog) => (
                 <BlogCard key={blog.id} blog={blog} />

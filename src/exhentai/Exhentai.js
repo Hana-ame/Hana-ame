@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ExImage from './ExImage';
+import ExImage from './ExImage-DS';
 
 const SComponent = () => {
     const location = useLocation();
