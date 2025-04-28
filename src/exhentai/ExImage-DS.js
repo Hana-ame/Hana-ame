@@ -96,7 +96,8 @@ const ExImage = ({ path, showNext }) => {
                     {!loaded && <div className="loading-controls">
                         <button
                             onClick={() => setAbort(true)}
-                            className="reload-button"
+                            // className="reload-button"
+                            className="px-6 py-3 bg-blue-500 text-white font-bold rounded shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200"
                         >
                             重新加载
                         </button>

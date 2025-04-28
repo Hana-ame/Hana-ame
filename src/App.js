@@ -16,6 +16,10 @@ import CardWrapper from './card/CardWrapper'
 import Chat from './chat/App';
 import FileUploader from './upload/FileUploader';
 import Test from './Test'
+import LatexEditor from './latex/Latex';
+import MathEditor from './latex/MathJax';
+import Pics from './pics/Pics';
+import RedirectPage from './redirect/Redirect';
 
 const App = () => {
   const router = [
@@ -91,6 +95,28 @@ const App = () => {
       title: "上传文件(WSL)",
       visible: true,
     },
+    { // 只实现了加上$$ 
+      path: "/latex",
+      element: <LatexEditor />,
+      title: "latex",
+      visible: true,
+    },
+    { // 这个 有点做不出来。草
+      path: "/mathjax",
+      element: <MathEditor />,
+      title: "test",
+      visible: false,
+    },{
+      path: "/pics",
+      element: <Pics />,
+      title: "pics",
+      visible: true,
+    },{
+      path: "/redirect",
+      element: <RedirectPage />,
+      title: "重定向",
+      visible: false,
+    },
   ];
 
   // 这是啥
@@ -141,13 +167,13 @@ const App = () => {
           </ul>
         </nav>
 
-        <div className="flex-1 h-full p-1 overflow-auto">
+        <main className="flex-1 h-full p-1 overflow-auto">
           <Routes>
             {router.map((route) => (
               <Route key={route.path} path={route.path} element={route.element} />
             ))}
           </Routes>
-        </div>
+        </main>
       </div>
     </Router>
   );
