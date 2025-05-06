@@ -24,10 +24,10 @@ import RedirectPage from './redirect/Redirect';
 const App = () => {
   const router = [
     {
-      path: "/",
+      path: "/blog",
       element: <Blog />,
       title: "首页",
-      visible: true,
+      visible: false,
     },
     {
       path: "/browser",
