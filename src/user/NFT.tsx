@@ -1,5 +1,11 @@
+import Helmet from "react-helmet";
+import { useParams } from "react-router";
+
 
 export default function NftTabContent() {
+
+    const { id } = useParams();
+
     const list = [
         "https://proxy.moonchan.xyz/large/006v119zgy1i160nm4if8j30z025swrt.jpg?proxy_host=wx1.sinaimg.cn&proxy_referer=http%3A%2F%2Fweibo.com",
         "https://proxy.moonchan.xyz/large/006v119zgy1i160nmlyddj30z025s15b.jpg?proxy_host=wx3.sinaimg.cn&proxy_referer=http%3A%2F%2Fweibo.com",
@@ -10,8 +16,13 @@ export default function NftTabContent() {
     ]
     return (
         <div className="grid grid-cols-3 gap-4">
+            <Helmet>
+                <title>{`用户 ${id} 的个人主页`}</title>
+                <meta name="description" content={`用户 ${id} 的NFT收藏`} />
+            </Helmet>
+
             {/* NFT缩略图 */}
-            {list.map((v,i) => (
+            {list.map((v, i) => (   
                 <img
                     key={i}
                     src={v}
