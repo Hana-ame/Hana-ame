@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-
+/* 
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -42,4 +42,30 @@
 
 .read-the-docs {
   color: #888;
+} */
+
+.character {
+  width: 300px;
+  transition:
+      opacity 0.3s ease-out,
+      transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* 平滑曲线 */
+  transform-style: preserve-3d;
+  cursor: pointer;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
+  /* 增加立体投影 */
+  transform: rotateY(0) rotateX(0) scale(1); /* 回正 */
+}
+
+/* 悬停时透明度与初始角度 */
+.character:hover {
+  opacity: 1 !important;
+  transform: rotateY(15deg) rotateX(10deg) scale(1.1);
+  /* 初始倾斜角度[4](@ref) */
+}
+
+/* 鼠标移出时添加回弹动画 */
+.character:not(:hover) {
+  transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* 弹性曲线 */
+  transform: rotateY(0) rotateX(0) scale(1); /* 回正 */
 }
