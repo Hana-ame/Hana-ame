@@ -19,7 +19,11 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    "jsx": "preserve",  // 保留 JSX 供 Babel 处理
+    "allowJs": true,    // 允许引入 JS/JSX 文件
+    "esModuleInterop": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts" ,"**/*.tsx", "**/*.jsx"] 
 }
