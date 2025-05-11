@@ -12,8 +12,8 @@ function App() {
           <div className="flex justify-between h-16">
             {/* 左侧导航项 */}
             <div className="flex space-x-8">
-              <NavLink to="/"  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                  Home
+              <NavLink to="/" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                Home
               </NavLink>
               <NavLink to="/explore" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700">
                 Explore
@@ -21,14 +21,17 @@ function App() {
               <NavLink to="/create" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700">
                 Create
               </NavLink>
+              <NavLink to="/fortune" className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700">
+                占卜
+              </NavLink>
             </div>
 
             {/* 右侧用户信息 */}
-            <div className="flex items-center">
-              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500">
+            <NavLink to="/profile" className="flex items-center hover:cursor-pointer">
+              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 hover:cursor-pointer">
                 <UserIcon className="h-6 w-6" />
               </button>
-            </div>
+            </NavLink>
           </div>
         </div>
       </nav>

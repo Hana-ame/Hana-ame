@@ -10,18 +10,19 @@ import DetailsPage from './deepseek/DetailsPage.tsx';
 import LayoutWithSidebar from './explore/Sidebar.tsx';
 import Contents from './deepseek/Contents.tsx';
 import Editor from './explore/Editor.tsx';
-import FullPageScroll from './deepseek/FullPageScroll.jsx';
-import GraphicComponent from './deepseek/GraphicComponent.tsx';
 import StepAnimation from './deepseek/StepAnimation.jsx';
 import App from './App.tsx';
 import FortuneTellerAnimation from './deepseek/FortuneTellerAnimation.jsx';
-
+import ChatInterface  from './deepseek/ChatInterface.jsx';
+import AnimatedImg from './components/AnimatedImg.tsx';
+import AdminLayout from './deepseek/AdminLayout.tsx';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} >
-          <Route path="test" element={<StepAnimation />} />
+          <Route index element={<ChatInterface />} />
+          <Route path="test" element={<AnimatedImg />} /> 
           <Route path="test2" element={<FortuneTellerAnimation />} />
           <Route path="explore" element={<LayoutWithSidebar />}>
             <Route index element={<Contents />} />
@@ -36,8 +37,10 @@ createRoot(document.getElementById('root')!).render(
           <Route path="create" element={<Outlet />}>
             {/* 上传处？ */}
           </Route>
-          <Route path="uranai" element={<Outlet />} >
+          <Route path="fortune" element={<StepAnimation />} >
           </Route>
+          <Route path="profile" element={<AdminLayout />} />
+
           <Route path="user/:id" element={<User />} >
             <Route path='home' element={<Home />} />
             <Route path='posts' element={<PostsTabContent />} />

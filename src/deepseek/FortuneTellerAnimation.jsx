@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { gsap, Power2 } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useIntersectionObserver } from '../hooks/useIntersectionObserver';
 
 gsap.registerPlugin(ScrollTrigger);
 

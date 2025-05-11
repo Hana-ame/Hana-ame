@@ -1,7 +1,5 @@
 // GraphicComponent.tsx
-import React from 'react';
-import gsap from 'gsap';
-
+// 测试动画效果用，不是很好用。
 const GraphicComponent = () => (
     <svg width="400" height="400" viewBox="0 0 400 400">
         <Frame />
