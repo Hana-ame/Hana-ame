@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { LockClosedIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
 import { NavLink, useNavigate  } from 'react-router'
-import { getCookie } from '../Tools/getCookie';
+// import { getCookie } from '../Tools/getCookie';
 
 function Login() {
 

@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from 'react-router'
 import { Cog6ToothIcon } from '@heroicons/react/24/outline'
-import { getCookie } from '../Tools/getCookie'
 function AdminLayout() {
 
     const nop = false;

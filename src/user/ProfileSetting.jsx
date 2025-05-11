@@ -2,22 +2,28 @@
 
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { uploadfile } from '../utils/upload';
-import { resolveConfig } from 'vite';
-import { getCookie } from '../Tools/getCookie'
+import getCookie from '../utils/getCookie'
+import { useNavigate } from 'react-router';
 
 function ProfileSetting() {
 
-    const username = getCookie("username")
+    const navigate = useNavigate();
+    const username = getCookie("username");
+
 
     const [avatar, setAvatar] = useState('https://example.com/default-avatar.jpg');
     const [banner, setBanner] = useState('https://example.com/default-banner.jpg');
 
     useEffect(() => {
-        fetch("https://chat.moonchan.xyz/dapp/user/" + username).then(resp => resp.json()).then(data => {
-            console.log(data);
-            setAvatar(data.avatar ?? "");
-            setBanner(data.banner ?? "");
-        })
+        if (username) {
+            fetch("https://chat.moonchan.xyz/dapp/user/" + username).then(resp => resp.json()).then(data => {
+                console.log(data);
+                setAvatar(data.avatar ?? "");
+                setBanner(data.banner ?? "");
+            })
+        } else {
+            navigate("/login")
+        }
     })
 
 
