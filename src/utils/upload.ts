@@ -1,4 +1,4 @@
-const ENDPOINT = 'https://chat.moonchan.xyz/api/files/upload';
+const ENDPOINT = 'https://upload.moonchan.xyz/api/upload';
 
 export function uploadfile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -11,7 +11,7 @@ export function uploadfile(file: File): Promise<string> {
       }
       return response.json();
     }).then((data) => {
-      resolve(`https://chat.moonchan.xyz/api/files/${data.id}/${file.name}`);
+      resolve(`https://upload.moonchan.xyz/api/${data.id}/${file.name}`);
     }).catch((error) => {
       reject(error);
     });

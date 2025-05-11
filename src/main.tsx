@@ -15,7 +15,10 @@ import App from './App.tsx';
 import FortuneTellerAnimation from './deepseek/FortuneTellerAnimation.jsx';
 import ChatInterface  from './deepseek/ChatInterface.jsx';
 import AnimatedImg from './components/AnimatedImg.tsx';
-import AdminLayout from './deepseek/AdminLayout.tsx';
+import AdminLayout from './user/AdminLayout.tsx';
+import Login from './user/Login.jsx';
+import ProfileSetting from './user/ProfileSetting.jsx';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
@@ -39,7 +42,11 @@ createRoot(document.getElementById('root')!).render(
           </Route>
           <Route path="fortune" element={<StepAnimation />} >
           </Route>
-          <Route path="profile" element={<AdminLayout />} />
+          <Route path="profile" element={<AdminLayout />}>
+            <Route index element={<ProfileSetting />} />
+          </Route>
+          <Route path="login" element={<Login />} />
+          <Route path="signup" element={<Login />} />
 
           <Route path="user/:id" element={<User />} >
             <Route path='home' element={<Home />} />
