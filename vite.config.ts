@@ -14,4 +14,10 @@ export default defineConfig({
     // tsconfigPaths(),
 
   ],
+  // css: {
+  //   modules: {
+  //     localsConvention: 'camelCaseOnly' // CSS Modules 类名转换规则
+  //   }
+  // }
+
 })
