@@ -2,8 +2,8 @@
 
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { uploadfile } from '../utils/upload';
-import getCookie from '../utils/getCookie'
-import { useNavigate } from 'react-router';
+import { getCookie } from '../utils/getCookie'
+import { useNavigate, NavLink } from 'react-router';
 
 function ProfileSetting() {
 
@@ -17,14 +17,14 @@ function ProfileSetting() {
     useEffect(() => {
         if (username) {
             fetch("https://chat.moonchan.xyz/dapp/user/" + username).then(resp => resp.json()).then(data => {
-                console.log(data);
-                setAvatar(data.avatar ?? "");
-                setBanner(data.banner ?? "");
+                console.log(data, data.avatar, data.banner);
+                setAvatar(data.avatar);
+                setBanner(data.banner);
             })
         } else {
             navigate("/login")
         }
-    })
+    }, [])
 
 
     const setAvatarCallback = useCallback((url) => {
@@ -41,7 +41,7 @@ function ProfileSetting() {
         })
 
     }
-        , []);
+        , [banner, avatar]);
     const setBannerCallback = useCallback((url) => {
         setBanner(url);
         fetch("https://chat.moonchan.xyz/dapp/user/" + username, {
@@ -55,13 +55,14 @@ function ProfileSetting() {
             }
         })
     }
-        , []);
+        , [banner, avatar]);
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-gray-100 w-full">
+            <NavLink to={"/user/" + username + "/home"} className="text-gray-600 underline decoration-blue-500 underline-offset-4 hover:decoration-2">去主页</NavLink>
             <h1 className="text-2xl font-bold mb-4">头像设置</h1>
-            <ImageUploader emitter={setAvatarCallback} />
+            <ImageUploader emitter={setAvatarCallback} initImage={avatar} />
             <h1 className="text-2xl font-bold mb-4">banner设置</h1>
-            <ImageUploader emitter={setBannerCallback} />
+            <ImageUploader emitter={setBannerCallback} initImage={banner} />
         </div>
     );
     // return (
@@ -75,7 +76,7 @@ function ProfileSetting() {
 }
 
 
-function ImageUploader({ emitter }) {
+function ImageUploader({ emitter, initImage }) {
     const [previewImage, setPreviewImage] = useState(null)
 
     const fileInputRef = useRef(null);
@@ -132,7 +133,7 @@ function ImageUploader({ emitter }) {
 
             {/* 右侧预览区域 */}
             <div className="w-full md:w-48">
-                {previewImage ? (
+                {(previewImage) ? (
                     <div className="relative group">
                         <img
                             src={previewImage}

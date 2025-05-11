@@ -1,9 +1,9 @@
 import { useRef, type MouseEvent } from 'react';
 
-export default function AnimatedImg({ src = "https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDJ8fGltZ3xlbnwwfHx8fDE2OTY5NzE1NTg&ixlib=rb-4.0.3&q=80&w=1080", alt = "Image" }: { src?: string, alt?: string }) {
-
+export default function Animated({ children=<></> }) {
+    
     const characterRef = useRef<HTMLImageElement>(null);
-    const sensitivity = 45; // 视角灵敏度系数
+    const sensitivity = 30; // 视角灵敏度系数
 
     const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
         const target = characterRef.current;
@@ -70,7 +70,7 @@ export default function AnimatedImg({ src = "https://images.unsplash.com/photo-1
 
 
     return (
-        <img
+        <div
             ref={characterRef}
             className="w-full h-full aspect-square object-cover rounded-lg"
             style={{
@@ -80,10 +80,8 @@ export default function AnimatedImg({ src = "https://images.unsplash.com/photo-1
                 transition: 'transform 0.3s, opacity 0.3s', // 平滑过渡[7,8](@ref)
                 transformStyle: 'preserve-3d' // 启用3D变换上下文[9](@ref)
             }}
-            src={src}
-            alt={alt}
             onMouseOut={handleMouseLeave}
             onMouseMove={handleMouseMove}
-        />  
+        >{children}</div>  
     );
-};
+}

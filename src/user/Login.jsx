@@ -1,28 +1,39 @@
 import { useState } from 'react'
-import { LockClosedIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
-import { NavLink, useNavigate  } from 'react-router'
-// import { getCookie } from '../Tools/getCookie';
+import { LockClosedIcon, UserIcon } from '@heroicons/react/24/outline'
+import { NavLink, useNavigate } from 'react-router'
+import { setCookie, setCrossDomainCookie} from '../utils/getCookie';
 
 function Login() {
 
+  const navitage = useNavigate()
 
-  const [email, setEmail] = useState('')
+  // 状态管理改用username[4,6](@ref)
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!email.includes('@')) {
-      setError('请输入有效的邮箱地址')
+    // 用户名非空验证[3](@ref)
+    if (!username.trim()) {
+      setError('用户名不能为空')
       return
     }
-    if (password.length < 6) {
-      setError('密码至少需要6位')
-      return
-    }
-    // 这里添加实际登录逻辑
-    console.log('Login attempt:', { email, password })
-    setError('')
+    // 保持密码长度验证[9](@ref)
+    // if (password.length < 6) {
+    //   setError('密码至少需要6位')
+    //   return
+    // }
+    // 模拟登录逻辑[1](@ref)
+    fetch("https://chat.moonchan.xyz/dapp/login", {
+      method: "POST",
+      body: username,
+    }).then(r => r.json()).then(r => {
+      setCookie("username", r.username)
+      setCrossDomainCookie("username",r.username,30,"chat.moonchan.xyz")
+      navitage("/profile")
+    })
+
   }
 
   return (
@@ -43,19 +54,20 @@ function Login() {
               </div>
             )}
 
-            {/* 邮箱输入 */}
+            {/* 用户名输入区块[8](@ref) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                邮箱
+                用户名
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
-                <EnvelopeIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <UserIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"  // 改为普通文本输入
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="your@email.com"
+                  placeholder="请输入用户名"
+                  autoComplete="username" // 添加自动填充标识[9](@ref)
                 />
               </div>
             </div>

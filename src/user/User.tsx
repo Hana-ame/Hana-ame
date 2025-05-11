@@ -1,9 +1,16 @@
 import { NavLink, Outlet, useParams } from "react-router";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ProfilePage() {
-    const { id } = useParams(); // 获取路由参数[1](@ref)
-    const { bannerURL, avatorURL } = { bannerURL: "https://proxy.moonchan.xyz/bfs/sycp/sanlian/image/b5dc75478ed74673a4c8116950e64b8e.jpeg?proxy_host=i0.hdslb.com", avatorURL: "https://proxy.moonchan.xyz/bfs/sycp/sanlian/image/b5dc75478ed74673a4c8116950e64b8e.jpeg?proxy_host=i0.hdslb.com" };
+    const { id: username } = useParams(); // 获取路由参数[1](@ref)
+    const [banner, setBanner] = useState("")
+    const [avatar, setAvatar] = useState("")
+    useEffect(() => {
+        fetch("https://chat.moonchan.xyz/dapp/user/"+username).then(r => r.json()).then(r => {
+            setBanner(r.banner)
+            setAvatar(r.avatar)
+        })
+    },[username])
     // const [activeTab, setActiveTab] = useState('home');
     const [followers] = useState(1200);
     const [following] = useState(856);
@@ -13,10 +20,10 @@ export default function ProfilePage() {
             {/* Banner区域 */}
             <div className="relative h-48 rounded-t-xl"
                 style={{
-                    backgroundImage: bannerURL && `url(${bannerURL})`,
+                    backgroundImage: banner && `url(${banner})`,
                 }}>
                 <img
-                    src={avatorURL}
+                    src={avatar}
                     className="absolute -bottom-16 left-8 w-32 h-32 rounded-full border-4 border-white shadow-lg"
                     alt="User Avatar"
                 />
@@ -26,7 +33,7 @@ export default function ProfilePage() {
             <div className="mt-20 bg-white rounded-b-xl shadow-sm px-8 pt-6 pb-8">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-800">@{id}</h1>
+                        <h1 className="text-3xl font-bold text-gray-800">@{username}</h1>
                         <div className="flex space-x-6 mt-4">
                             <div>
                                 <span className="block text-2xl font-bold text-gray-900">{followers}</span>
