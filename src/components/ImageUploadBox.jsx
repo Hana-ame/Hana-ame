@@ -17,9 +17,7 @@ import clsx from 'clsx';
 // };
 import { uploadFile } from '../utils/upload';
 
-const ImageUploadBox = ({ emit = (url = "") => { } }) => { // 接受 uploadFile 函数作为 prop
-
-    // console.log(uploadfile);
+const ImageUploadBox = ({ handleUploadURL = (url = "") => { return } }) => { // 接受 uploadFile 函数作为 prop
 
     const fileInputRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -41,7 +39,7 @@ const ImageUploadBox = ({ emit = (url = "") => { } }) => { // 接受 uploadFile 
                 const url = await uploadFile(file);
                 setUploadedImageUrl(url); // 设置上传成功后的 URL
                 setSelectedFile(null); // 清除选中的文件对象    
-                emit(url);
+                handleUploadURL(url);
             } catch (err) {
                 console.error("Upload failed:", err);
                 setError("文件上传失败");
@@ -51,8 +49,8 @@ const ImageUploadBox = ({ emit = (url = "") => { } }) => { // 接受 uploadFile 
                 setIsUploading(false);
             }
         } else if (!uploadFile) {
-             console.error("uploadFile function is not provided.");
-             setError("缺少上传处理函数");
+            console.error("uploadFile function is not provided.");
+            setError("缺少上传处理函数");
         }
     };
 
@@ -74,7 +72,7 @@ const ImageUploadBox = ({ emit = (url = "") => { } }) => { // 接受 uploadFile 
     const handleDragOver = (event) => {
         event.preventDefault();
         if (!isUploading) {
-           setIsDragging(true);
+            setIsDragging(true);
         }
     };
 
@@ -108,7 +106,7 @@ const ImageUploadBox = ({ emit = (url = "") => { } }) => { // 接受 uploadFile 
             // 默认外观 (边框, 背景, 悬停效果) - 仅在没有特定状态覆盖时应用
             // Note: The default background is needed when there's no image
             "border-gray-400 bg-white hover:border-blue-500 hover:bg-gray-50":
-               !isUploading && !isDragging && !error && !uploadedImageUrl,
+                !isUploading && !isDragging && !error && !uploadedImageUrl,
 
             // 光标样式
             "cursor-pointer": !isUploading, // 默认光标，除非上传中
@@ -147,42 +145,42 @@ const ImageUploadBox = ({ emit = (url = "") => { } }) => { // 接受 uploadFile 
                 {isUploading ? (
                     // 上传中显示
                     <div className="flex flex-col items-center text-center">
-                         <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l2.049-2.049z"></path>
                         </svg>
                         <p className="mt-2 text-sm text-blue-600">上传中...</p>
                         {/* 如果需要，可以在这里显示文件名或其他信息 */}
-                         {/* {selectedFile && <p className="mt-1 text-xs text-gray-500 truncate w-full text-center">{selectedFile.name}</p>} */}
+                        {/* {selectedFile && <p className="mt-1 text-xs text-gray-500 truncate w-full text-center">{selectedFile.name}</p>} */}
                     </div>
                 ) : error ? (
-                     // 错误时显示
+                    // 错误时显示
                     <div className="flex flex-col items-center text-center text-red-600">
-                         <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <p className="mt-2 text-sm">{error}</p>
-                         <p className="mt-1 text-xs text-gray-500">点击重试</p>
+                        <p className="mt-1 text-xs text-gray-500">点击重试</p>
                     </div>
                 ) : uploadedImageUrl ? (
-                     // 上传成功有图片时，显示图片
-                     <img
-                         src={uploadedImageUrl}
-                         alt="Uploaded preview"
-                         // 使用 max-w-full 和 max-h-full 确保图片不超出父容器
-                         // object-contain 确保图片保持长宽比并完整显示在容器内
-                         className="max-w-full max-h-full object-contain"
-                     />
+                    // 上传成功有图片时，显示图片
+                    <img
+                        src={uploadedImageUrl}
+                        alt="Uploaded preview"
+                        // 使用 max-w-full 和 max-h-full 确保图片不超出父容器
+                        // object-contain 确保图片保持长宽比并完整显示在容器内
+                        className="max-w-full max-h-full object-contain"
+                    />
                 ) : (
-                     // 默认状态：没有上传，没有图片，没有错误
-                     <>
+                    // 默认状态：没有上传，没有图片，没有错误
+                    <>
                         {/* 一个简单的上传图标 */}
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="mt-2 text-sm text-gray-600">拖拽图片到此处</p>
                         <p className="mt-1 text-xs text-gray-500">或点击选择文件</p>
-                     </>
+                    </>
                 )}
             </div>
         </div>

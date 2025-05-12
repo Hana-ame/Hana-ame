@@ -18,18 +18,21 @@ import AdminLayout from './user/AdminLayout.tsx';
 import Login from './user/Login.jsx';
 import ProfileSetting from './user/ProfileSetting.jsx';
 import SignUp from './user/Signup.jsx'
-import Test from './deepseek/Test.tsx';
+import Test from './deepseek/Test.jsx';
+import UploadPicture from './create/UploadPicture.jsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} >
+          {/* 聊天。不知道有什么用 */}
           <Route index element={<ChatInterface />} />
           <Route path="test" element={<Sidebar></Sidebar>}>
             <Route index element={<Test />}></Route>
           </Route>
           <Route path="test2" element={<FortuneTellerAnimation />} />
+          {/* 游览 */}
           <Route path="explore" element={<Sidebar />}>
             <Route index element={<Contents />} />
             <Route path="pic2pic" element={<Contents />} />
@@ -39,9 +42,12 @@ createRoot(document.getElementById('root')!).render(
           <Route path='editor' element={<Sidebar />}>
             <Route index element={<Editor />} />
           </Route>
+          {/* 创作 */}
           <Route path="create" element={<Sidebar />}>
-            {/* 上传处？ */}
+            <Route path='upload' element={<UploadPicture />} />
+            <Route path="pic2pic" element={<Contents />} />
           </Route>
+          {/* 占卜 */}
           <Route path="fortune" element={<StepAnimation />} >
           </Route>
           <Route path="profile" element={<AdminLayout />}>

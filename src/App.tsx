@@ -7,7 +7,7 @@ function App() {
   return (
 
     <div className="bg-white">
-      <nav className="fixed bg-white shadow-sm w-full z-50">
+      <header className="fixed bg-white shadow-sm w-full z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             {/* 左侧导航项 */}
@@ -34,7 +34,7 @@ function App() {
             </NavLink>
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* 主内容区 - 使用Outlet渲染子路由 */}
       {/* <div className='h-16'></div> */}
