@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { uploadfile } from "../utils/upload";
+import { uploadFile } from "../utils/upload";
 import { getStatus, img2img } from "../utils/liblib";
 
 const Editor = () => {
@@ -114,7 +114,7 @@ const ImageUploader = ({ imageSrc, setImageSrc }: { imageSrc: string, setImageSr
             return;
         }
         // setLeftLoading(true);
-        const leftImageUrl = await uploadfile(file)
+        const leftImageUrl = await uploadFile(file)
         // setLeftLoading(false);
         setImageSrc(leftImageUrl);
     };

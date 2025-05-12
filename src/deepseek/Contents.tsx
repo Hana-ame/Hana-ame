@@ -1,4 +1,3 @@
-import Animated from "../components/Animated";
 import { NavLink } from "react-router";
 
 export default function Contents() {
@@ -11,14 +10,14 @@ export default function Contents() {
         author: `Artist ${i + 1}`
     }));
 
-    return (<>
-        <div className="container mx-auto p-4">
-            <div className="grid grid-cols-4 gap-4">
+    return (
+        <main className="container mx-auto p-6">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
                 {sampleImages.map((img, index) => (
-                    <NavLink to={`/explore/${img.id}`}><Animated>
+                    <NavLink to={`/explore/${img.id}`}>
                         <div
                             key={index}
-                            className="relative overflow-hidden rounded-lg transition-transform"
+                            className="relative rounded-lg transition-transform background-green"
                         >
                             <img
                                 src={img.src}
@@ -30,10 +29,10 @@ export default function Contents() {
                                 <p className="text-white font-medium">{img.title}</p>
                             </div>
                         </div>
-                    </Animated></NavLink>
+                    </NavLink>
                 ))}
             </div>
-        </div>
-    </>)
+        </main>
+    )
 
 }

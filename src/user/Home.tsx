@@ -1,6 +1,6 @@
 import Helmet from "react-helmet";
 import { NavLink, useParams } from "react-router";
-import Animated from '../components/Animated'
+import Animated from '../deepseek/Animated'
 
 
 export default function Home() {

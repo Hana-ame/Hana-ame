@@ -1,6 +1,6 @@
 const ENDPOINT = 'https://upload.moonchan.xyz/api/upload';
 
-export function uploadfile(file: File): Promise<string> {
+export function uploadFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     fetch(ENDPOINT, {
       method: 'PUT',

@@ -1,7 +1,7 @@
 // ProfileSetting
 
 import { useCallback, useState, useRef, useEffect } from 'react'
-import { uploadfile } from '../utils/upload';
+import { uploadFile } from '../utils/upload';
 import { getCookie } from '../utils/getCookie'
 import { useNavigate, NavLink } from 'react-router';
 
@@ -92,7 +92,7 @@ function ImageUploader({ emitter, initImage }) {
                 return;
             }
 
-            uploadfile(file).then((url) => {
+            uploadFile(file).then((url) => {
                 setPreviewImage(url);
                 emitter(url);
             }).catch((error) => {
