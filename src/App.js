@@ -13,7 +13,7 @@ import GetProxyURL from './getProxyURL/GetProxyURLV2';
 import Sign from './sign/Sign';
 import SComponent from './exhentai/Exhentai'; // 导入处理 /s/ 路径的组件
 import CardWrapper from './card/CardWrapper'
-import Chat from './chat/App';
+import Chat from './chat/App.tsx';
 import FileUploader from './upload/FileUploader';
 import Test from './Test'
 import LatexEditor from './latex/Latex';
