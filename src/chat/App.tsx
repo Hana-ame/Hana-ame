@@ -1,9 +1,7 @@
-// gemini 2.5pro 0506
-
 // App.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { FiSend, FiTrash2, FiUser, FiCpu, FiSettings, FiChevronDown } from 'react-icons/fi'; // Example icons
+import { FiSend, FiTrash2, FiUser, FiCpu, FiSettings, FiChevronDown, FiStopCircle } from 'react-icons/fi';
 
 // --- Type Definitions ---
 interface Message {
@@ -11,15 +9,28 @@ interface Message {
     content: string;
 }
 
-interface ChatCompletionChoice {
-    message: Message;
-    // Add other potential fields like finish_reason, index if needed
+// Streamed chunk structure (example, adjust based on actual API)
+interface StreamChoiceDelta {
+    content?: string;
+    role?: 'assistant'; // Usually only in the first chunk
 }
 
-interface ChatCompletionResponse {
-    choices: ChatCompletionChoice[];
-    // Add other potential fields like id, created, model, usage if needed
+interface StreamChoice {
+    delta: StreamChoiceDelta;
+    finish_reason?: string | null;
+    index: number;
+    // logprobs?: any; // If needed
 }
+
+interface StreamChunk {
+    id?: string;
+    object?: string;
+    created?: number;
+    model?: string;
+    choices: StreamChoice[];
+    // usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number }; // Often at the end with [DONE]
+}
+
 
 interface EndpointConfig {
     id: string;
@@ -36,8 +47,6 @@ const ENDPOINTS_CONFIG: EndpointConfig[] = [
         name: 'Groq',
         url: 'https://moonchan.xyz/groq',
         models: [
-            { id: 'compound-beta', name: 'Compound Beta' },
-            { id: 'compound-beta-mini', name: 'Compound Beta Mini' },
             { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B' },
             { id: 'gemma2-9b-it', name: 'Gemma 2 Instruct' },
             { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B' },
@@ -73,7 +82,7 @@ const ENDPOINTS_CONFIG: EndpointConfig[] = [
             { id: 'Qwen/Qwen2.5-VL-32B-Instruct', name: 'Qwen2.5-VL-32B-Instruct' },
             { id: 'chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8', name: 'Llama-4-Maverick-17B-128E-Instruct-FP8' },
         ],
-        defaultModelId: 'gpt-3.5-turbo',
+        defaultModelId: 'deepseek-ai/DeepSeek-V3-0324',
     },
     // Add more endpoints here
 ];
@@ -83,28 +92,24 @@ function App() {
     const [input, setInput] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    // API and Model Selection
     const [selectedEndpointId, setSelectedEndpointId] = useState<string>(ENDPOINTS_CONFIG[0].id);
     const [selectedModelId, setSelectedModelId] = useState<string>(ENDPOINTS_CONFIG[0].defaultModelId);
 
-    // Parameters
-    const [temperature, setTemperature] = useState<number>(0.7); // Common default
-    const [maxTokens, setMaxTokens] = useState<number>(1024);
+    const [temperature, setTemperature] = useState<number>(0.7);
+    const [maxTokens, setMaxTokens] = useState<number>(1024); // Note: Groq ignores max_tokens with stream=true
     const [topP, setTopP] = useState<number>(1);
-    const [stop, setStop] = useState<string>('');
+    const [stop, setStop] = useState<string>(''); // Assumed to be a single string or null
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const currentEndpoint = ENDPOINTS_CONFIG.find(ep => ep.id === selectedEndpointId) || ENDPOINTS_CONFIG[0];
     const availableModels = currentEndpoint.models;
 
     useEffect(() => {
-        // When endpoint changes, update model to its default if current model isn't available
         const currentEpConfig = ENDPOINTS_CONFIG.find(ep => ep.id === selectedEndpointId);
-        if (currentEpConfig) {
-            if (!currentEpConfig.models.find(m => m.id === selectedModelId)) {
-                setSelectedModelId(currentEpConfig.defaultModelId);
-            }
+        if (currentEpConfig && !currentEpConfig.models.find(m => m.id === selectedModelId)) {
+            setSelectedModelId(currentEpConfig.defaultModelId);
         }
     }, [selectedEndpointId, selectedModelId]);
 
@@ -112,74 +117,186 @@ function App() {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [history]);
+    }, [history]); // Scrolls when history array itself changes or items are added/removed
+
+    // Scroll when content of the last message changes (streaming)
+    useEffect(() => {
+        if (history.length > 0) {
+            const lastMessage = history[history.length - 1];
+            if (lastMessage.role === 'assistant' && isLoading) { // Only scroll if assistant is actively streaming
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    }, [history, isLoading]);
+
 
     const handleEndpointChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newEndpointId = e.target.value;
         setSelectedEndpointId(newEndpointId);
         const newEndpointConfig = ENDPOINTS_CONFIG.find(ep => ep.id === newEndpointId);
         if (newEndpointConfig) {
-            setSelectedModelId(newEndpointConfig.defaultModelId); // Set to default model of new endpoint
+            setSelectedModelId(newEndpointConfig.defaultModelId);
         }
     };
 
+    const stopStreaming = useCallback(() => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            console.log("Streaming stopped by user.");
+            // setIsLoading(false); // The fetch catch block will handle this
+        }
+    }, []);
+
     const sendMessage = useCallback(async () => {
-        if (!input.trim() || isLoading) return;
+        if (!input.trim()) return;
+        if (isLoading) { // If already loading, abort previous and start new one
+            stopStreaming();
+        }
 
-        const userMessage: Message = {
-            role: 'user',
-            content: input,
-        };
+        const userMessage: Message = { role: 'user', content: input };
+        const messagesForAPI = [...history, userMessage];
 
-        setHistory(prevHistory => [...prevHistory, userMessage]);
+        setHistory(prevHistory => [...prevHistory, userMessage, { role: 'assistant', content: '' }]);
         setInput('');
         setIsLoading(true);
 
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+
+        // Groq ignores max_tokens with stream=true, but other APIs might not.
+        // For robust handling, you might adjust params per endpoint.
         const body = {
             model: selectedModelId,
-            messages: [...history, userMessage], // send current history + new user message
+            messages: messagesForAPI,
             temperature,
-            max_completion_tokens: maxTokens,
+            ...(currentEndpoint.id.includes('groq') ? {} : { max_completion_tokens: maxTokens }), // Conditionally add maxTokens
             top_p: topP,
-            stop: stop || null,
-            stream: false, // Keep as false for simple handling
+            stop: stop ? stop.split(',').map(s => s.trim()).filter(Boolean) : null, // Handle comma-separated stop sequences
+            stream: true,
         };
 
         try {
             const response = await fetch(currentEndpoint.url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // Add any other necessary headers, e.g., Authorization
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+                signal,
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
-                throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorData.message || JSON.stringify(errorData)}`);
+                let errorContent = `API Error: ${response.status} ${response.statusText}`;
+                try {
+                    const errorDataText = await response.text();
+                    const errorData = JSON.parse(errorDataText);
+                    errorContent += ` - ${errorData.error?.message || errorData.message || JSON.stringify(errorData)}`;
+                } catch (e) {
+                    // If parsing errorData failed or reading text failed initially
+                    errorContent += ` (Failed to parse error details: ${e instanceof Error ? e.message : String(e)})`;
+                }
+                setHistory(prev => {
+                    const newHistory = [...prev];
+                    if (newHistory.length > 0 && newHistory[newHistory.length - 1].role === 'assistant') {
+                        newHistory[newHistory.length - 1].content = errorContent;
+                    }
+                    return newHistory;
+                });
+                setIsLoading(false); // Ensure loading is false on error
+                return;
             }
 
-            const data = (await response.json()) as ChatCompletionResponse;
-            if (data.choices && data.choices.length > 0) {
-                setHistory(prevHistory => [...prevHistory, data.choices[0].message]);
-            } else {
-                throw new Error('No choices returned from API');
+            if (!response.body) throw new Error('Response body is null');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+
+            let doneReading = false;
+            while (!doneReading) {
+                if (signal.aborted) { // Check for abort signal within the loop
+                    console.log("Streaming aborted during read loop.");
+                    throw new DOMException("Aborted by user", "AbortError");
+                }
+                const { value, done } = await reader.read();
+                doneReading = done;
+                const chunk = decoder.decode(value, { stream: !doneReading }); // stream: true until the last chunk
+
+                const lines = chunk.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        const jsonData = line.substring(5).trim();
+                        if (jsonData === '[DONE]') {
+                            doneReading = true;
+                            break;
+                        }
+                        if (!jsonData) continue;
+
+                        try {
+                            const parsedChunk = JSON.parse(jsonData) as StreamChunk;
+                            let contentChunk = "";
+                            if (parsedChunk.choices && parsedChunk.choices[0]?.delta?.content) {
+                                contentChunk = parsedChunk.choices[0].delta.content;
+                            }
+
+                            if (contentChunk) {
+                                setHistory(prev => {
+                                    const newHistory = [...prev];
+                                    const lastMsgIndex = newHistory.length - 1;
+                                    if (lastMsgIndex >= 0 && newHistory[lastMsgIndex].role === 'assistant') {
+                                        newHistory[lastMsgIndex].content += contentChunk;
+                                    }
+                                    return newHistory;
+                                });
+                            }
+                            // Handle finish reason if needed
+                            // if (parsedChunk.choices && parsedChunk.choices[0]?.finish_reason) {
+                            //    console.log("Stream finished with reason:", parsedChunk.choices[0].finish_reason);
+                            //    doneReading = true; // Or rely on [DONE] / reader.done
+                            // }
+                        } catch (e) {
+                            console.warn('Failed to parse stream chunk JSON:', jsonData, e);
+                        }
+                    }
+                }
             }
         } catch (error) {
-            console.error('Error sending message:', error);
-            const errorMessage: Message = {
-                role: 'assistant',
-                content: `Error: ${error instanceof Error ? error.message : String(error)}`,
-            };
-            setHistory(prevHistory => [...prevHistory, errorMessage]);
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                console.log('Fetch aborted.');
+                setHistory(prev => {
+                    const newHistory = [...prev];
+                    const lastMsgIndex = newHistory.length - 1;
+                    if (lastMsgIndex >= 0 && newHistory[lastMsgIndex].role === 'assistant') {
+                        if (newHistory[lastMsgIndex].content === '') { // If nothing was streamed
+                            return newHistory.slice(0, -1); // Remove the empty assistant message
+                        }
+                        newHistory[lastMsgIndex].content += '\n[Streaming cancelled by user]';
+                    }
+                    return newHistory;
+                });
+            } else {
+                console.error('Error sending message or processing stream:', error);
+                const errorMessageText = `Error: ${error instanceof Error ? error.message : String(error)}`;
+                setHistory(prev => {
+                    const newHistory = [...prev];
+                    const lastMsgIndex = newHistory.length - 1;
+                    if (lastMsgIndex >= 0 && newHistory[lastMsgIndex].role === 'assistant') {
+                        newHistory[lastMsgIndex].content = (newHistory[lastMsgIndex].content || "") + `\n[Error: ${errorMessageText}]`;
+                    } else {
+                        // This case should ideally not happen if we add placeholder first
+                        return [...newHistory, { role: 'assistant', content: `[Error: ${errorMessageText}]` }];
+                    }
+                    return newHistory;
+                });
+            }
         } finally {
             setIsLoading(false);
+            abortControllerRef.current = null;
         }
-    }, [input, isLoading, selectedModelId, history, temperature, maxTokens, topP, stop, currentEndpoint.url]);
-
+    }, [
+        input, isLoading, selectedModelId, history, temperature, maxTokens, topP, stop, currentEndpoint, // currentEndpoint itself
+        setInput, setIsLoading, setHistory, stopStreaming // Include stopStreaming
+    ]);
 
     const clearHistory = () => {
+        stopStreaming(); // Abort any ongoing stream
         setHistory([]);
     };
 
@@ -209,12 +326,14 @@ function App() {
         </div>
     );
 
+
     return (
         <div className="flex flex-col md:flex-row h-screen bg-gray-800 text-white font-sans">
             {/* Left Panel: Chat History & Input */}
             <div className="flex-1 flex flex-col p-4 md:p-6 bg-gray-800">
+                {/* ... Header ... */}
                 <header className="mb-4">
-                    <h1 className="text-2xl font-semibold text-indigo-400">AI Chat Interface</h1>
+                    <h1 className="text-2xl font-semibold text-indigo-400">AI Chat Interface (Streaming)</h1>
                 </header>
 
                 {/* Chat Messages */}
@@ -240,9 +359,9 @@ function App() {
                                         {msg.role === 'user' ? 'You' : 'Assistant'}
                                     </span>
                                 </div>
-                                <div className="prose prose-sm prose-invert max-w-none">
+                                <div className="prose prose-sm prose-invert max-w-none break-words"> {/* Added break-words */}
                                     {msg.role === 'assistant' ? (
-                                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                        <ReactMarkdown>{msg.content || "▋"}</ReactMarkdown> // Show cursor while empty
                                     ) : (
                                         <p className="whitespace-pre-wrap">{msg.content}</p>
                                     )}
@@ -268,27 +387,32 @@ function App() {
                                     sendMessage();
                                 }
                             }}
-                            disabled={isLoading}
+                            disabled={isLoading && !abortControllerRef.current} // Only truly disabled if not cancellable
                         />
-                        <button
-                            onClick={sendMessage}
-                            disabled={isLoading || !input.trim()}
-                            className="p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center h-[58px]" // Match textarea height approx.
-                        >
-                            {isLoading ? (
-                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ) : (
+                        {isLoading && abortControllerRef.current ? (
+                            <button
+                                onClick={stopStreaming}
+                                className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors duration-150 flex items-center justify-center h-[58px]"
+                                title="Stop Generating"
+                            >
+                                <FiStopCircle size={20} />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={sendMessage}
+                                disabled={!input.trim()} // Allow sending even if loading to cancel previous and start new
+                                className="p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center h-[58px]"
+                            >
                                 <FiSend size={20} />
-                            )}
-                        </button>
+                            </button>
+                        )}
                     </div>
+                    {isLoading && <p className="text-xs text-gray-400 mt-1 text-center">Assistant is typing...</p>}
                 </div>
             </div>
 
             {/* Right Panel: Settings */}
+            {/* ... same as before ... */}
             <div className="w-full md:w-80 lg:w-96 bg-gray-850 p-4 md:p-6 border-l border-gray-700 overflow-y-auto custom-scrollbar flex-shrink-0">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold text-indigo-400 flex items-center">
@@ -298,6 +422,7 @@ function App() {
                         onClick={clearHistory}
                         className="text-sm text-red-400 hover:text-red-300 flex items-center"
                         title="Clear Chat History"
+                        disabled={isLoading && !abortControllerRef.current} // Disable if unstoppable loading
                     >
                         <FiTrash2 className="mr-1" /> Clear Chat
                     </button>
@@ -348,7 +473,7 @@ function App() {
                     showValue={true}
                 />
                 <ParameterInput
-                    label="Max Tokens"
+                    label="Max Tokens (ignored by Groq in stream)"
                     type="number"
                     value={maxTokens}
                     onChange={(e) => setMaxTokens(parseInt(e.target.value, 10))}
@@ -363,7 +488,7 @@ function App() {
                     showValue={true}
                 />
                 <ParameterInput
-                    label="Stop Sequence(s)"
+                    label="Stop Sequence(s) (comma-sep)"
                     type="text"
                     value={stop}
                     onChange={(e) => setStop(e.target.value)}
