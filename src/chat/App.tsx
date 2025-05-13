@@ -32,25 +32,46 @@ interface EndpointConfig {
 // --- Configuration for Endpoints and Models ---
 const ENDPOINTS_CONFIG: EndpointConfig[] = [
     {
-        id: 'moonchan_groq',
-        name: 'MoonChan (Groq)',
+        id: 'moonchan/groq',
+        name: 'Groq',
         url: 'https://moonchan.xyz/groq',
         models: [
+            { id: 'compound-beta', name: 'Compound Beta' },
+            { id: 'compound-beta-mini', name: 'Compound Beta Mini' },
             { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B' },
-            { id: 'llama3-70b-8192', name: 'Llama3 70B (8k)' },
-            { id: 'llama3-8b-8192', name: 'Llama3 8B (8k)' },
-            { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (32k)' },
-            { id: 'gemma-7b-it', name: 'Gemma 7B IT' },
+            { id: 'gemma2-9b-it', name: 'Gemma 2 Instruct' },
+            { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B' },
+            { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B' },
+            { id: 'llama-guard-3-8b', name: 'Llama Guard 3' },
+            { id: 'llama3-70b-8192', name: 'Llama 3 70B' },
+            { id: 'llama3-8b-8192', name: 'Llama 3 8B' },
+            { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick 17B 128E' },
+            { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B 16E' },
+            { id: 'meta-llama/llama-guard-4-12b', name: 'Llama Guard 4 12B' },
+            { id: 'mistral-saba-24b', name: 'Mistral Saba 24B' },
+            { id: 'qwen-qwq-32b', name: 'QwQ 32B' },
+            { id: 'whisper-large-v3', name: 'Whisper' },
+            { id: 'whisper-large-v3-turbo', name: 'Whisper Large V3 Turbo' }
         ],
-        defaultModelId: 'deepseek-r1-distill-llama-70b',
+        defaultModelId: 'meta-llama/llama-4-maverick-17b-128e-instruct',
     },
     {
-        id: 'another_endpoint',
-        name: 'Another API (Example)',
-        url: 'https://api.example.com/v1/chat/completions', // Replace with actual URL
+        id: 'moonchan/chutes',
+        name: 'Chutes',
+        url: 'https://moonchan.xyz/groq?service=chutes', // Replace with actual URL
         models: [
-            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
-            { id: 'claude-2', name: 'Claude 2' },
+            { id: 'deepseek-ai/DeepSeek-V3-0324', name: 'DeepSeek-V3-0324' },
+            { id: 'deepseek-ai/DeepSeek-Prover-V2-671B', name: 'DeepSeek-Prover-V2-671B' },
+            { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek-R1' },
+            { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek-V3' },
+            { id: 'tngtech/DeepSeek-R1T-Chimera', name: 'DeepSeek-R1T-Chimera' },
+            { id: 'Qwen/Qwen3-235B-A22B', name: 'Qwen3-235B-A22B' },
+            { id: 'Qwen/Qwen3-30B-A3B', name: 'Qwen3-30B-A3B' },
+            { id: 'Qwen/Qwen3-32B', name: 'Qwen3-32B' },
+            { id: 'Qwen/Qwen3-14B', name: 'Qwen3-14B' },
+            { id: 'Qwen/Qwen3-8B', name: 'Qwen3-8B' },
+            { id: 'Qwen/Qwen2.5-VL-32B-Instruct', name: 'Qwen2.5-VL-32B-Instruct' },
+            { id: 'chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8', name: 'Llama-4-Maverick-17B-128E-Instruct-FP8' },
         ],
         defaultModelId: 'gpt-3.5-turbo',
     },
@@ -269,7 +290,7 @@ function App() {
 
             {/* Right Panel: Settings */}
             <div className="w-full md:w-80 lg:w-96 bg-gray-850 p-4 md:p-6 border-l border-gray-700 overflow-y-auto custom-scrollbar flex-shrink-0">
-                 <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold text-indigo-400 flex items-center">
                         <FiSettings className="mr-2" /> Settings
                     </h2>
@@ -303,7 +324,7 @@ function App() {
                 {/* Model Selection */}
                 <div className="mb-6">
                     <label htmlFor="model-select" className="block text-sm font-medium text-gray-300 mb-1">Model</label>
-                     <div className="relative">
+                    <div className="relative">
                         <select
                             id="model-select"
                             value={selectedModelId}
