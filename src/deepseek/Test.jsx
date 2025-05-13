@@ -1,8 +1,9 @@
-import Test2 from './Test2.jsx'
+import StaggeredFadeText from "./StaggeredFadeText"
+export default function Test(){
+    return <StaggeredFadeText>
+        感鼓励鼓励刮擦灵感古灵感古感鼓励鼓励刮擦灵感古灵感古感鼓励鼓励刮擦灵感古灵感古
+        <span className="bg-gray-500">感鼓励鼓励刮擦灵感古灵感古</span>
 
-export default function Test() {
-    const log = (url = "a") => { console.log("2123123", url, "123213") }
-    return (<main>
-        <Test2 f={log}></Test2>
-    </main>)
+        <p>感鼓励鼓励刮擦灵感古灵感古感鼓励鼓励刮擦灵感古灵感古感鼓励鼓励刮擦灵感古灵感古感鼓励鼓励刮擦灵感古灵感古</p>
+    </StaggeredFadeText>
 }

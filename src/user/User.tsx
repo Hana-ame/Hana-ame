@@ -1,14 +1,18 @@
 import { NavLink, Outlet, useParams } from "react-router";
 import { useEffect, useState } from 'react';
+import type { User } from "../utils/type";
 
 export default function ProfilePage() {
     const { id: username } = useParams(); // 获取路由参数[1](@ref)
     const [banner, setBanner] = useState("")
     const [avatar, setAvatar] = useState("")
+    const [userObject, setUserObject] = useState<User>()
+    console.log(userObject)
     useEffect(() => {
-        fetch("https://chat.moonchan.xyz/dapp/user/"+username).then(r => r.json()).then(r => {
+        fetch("https://chat.moonchan.xyz/dapp/user/" + username).then(r => r.json()).then(r => {
             setBanner(r.banner)
             setAvatar(r.avatar)
+            setUserObject(r)
         })
     },[username])
     // const [activeTab, setActiveTab] = useState('home');

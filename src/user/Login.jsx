@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { LockClosedIcon, UserIcon } from '@heroicons/react/24/outline'
 import { NavLink, useNavigate } from 'react-router'
-import { setCookie, setCrossDomainCookie} from '../utils/getCookie';
+import { setCookie, setCrossDomainCookie } from '../utils/getCookie';
 
 function Login() {
 
@@ -19,19 +19,31 @@ function Login() {
       setError('用户名不能为空')
       return
     }
+
+    console.log(username);
     // 保持密码长度验证[9](@ref)
     // if (password.length < 6) {
     //   setError('密码至少需要6位')
     //   return
     // }
     // 模拟登录逻辑[1](@ref)
+
+    const body = username;
     fetch("https://chat.moonchan.xyz/dapp/login", {
       method: "POST",
-      body: username,
+      credentials: 'include',
+      headers: {
+        // 'Content-Type': 'text/plain' // 明确声明 body 是纯文本
+        'Dapp-Username': username,
+      },
+      // body: body,
     }).then(r => r.json()).then(r => {
-      setCookie("username", r.username)
-      setCrossDomainCookie("username",r.username,30,"chat.moonchan.xyz")
-      navitage("/profile")
+      if ((r.error || "") !== "") location.reload(true);  // 强制从服务器刷新
+      else {
+        setCookie("username", r.username)
+        setCrossDomainCookie("username", r.username, 30, "chat.moonchan.xyz")
+        navitage("/profile")
+      }
     })
 
   }

@@ -3,7 +3,7 @@
 import { useCallback, useState, useRef, useEffect } from 'react'
 import { uploadFile } from '../utils/upload';
 import { getCookie } from '../utils/getCookie'
-import { useNavigate, NavLink } from 'react-router';
+import { useNavigate, NavLink, data } from 'react-router';
 
 function ProfileSetting() {
 
@@ -13,6 +13,7 @@ function ProfileSetting() {
 
     const [avatar, setAvatar] = useState('https://example.com/default-avatar.jpg');
     const [banner, setBanner] = useState('https://example.com/default-banner.jpg');
+    const [userObject, setUserObject] = useState();
 
     useEffect(() => {
         if (username) {
@@ -20,6 +21,7 @@ function ProfileSetting() {
                 console.log(data, data.avatar, data.banner);
                 setAvatar(data.avatar);
                 setBanner(data.banner);
+                setUserObject(data)
             })
         } else {
             navigate("/login")
@@ -58,6 +60,7 @@ function ProfileSetting() {
         , [banner, avatar]);
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-gray-100 w-full">
+            deposit:  {userObject?.deposit}
             <NavLink to={"/user/" + username + "/home"} className="text-gray-600 underline decoration-blue-500 underline-offset-4 hover:decoration-2">去主页</NavLink>
             <h1 className="text-2xl font-bold mb-4">头像设置</h1>
             <ImageUploader emitter={setAvatarCallback} initImage={avatar} />

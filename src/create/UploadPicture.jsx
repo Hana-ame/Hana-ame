@@ -4,7 +4,8 @@ import { createUploadFile } from '../utils/dapp.js'
 
 export default function UploadPicture() {
     const onUpload = (url = "") => {
-        createUploadFile(url=url);
+        const meta_data = JSON.stringify({ "tags": ["upload"] })
+        createUploadFile(url, "upload", meta_data);
     }
     return (<ImageUploadBox handleUploadURL={onUpload} />)
-}
+}   

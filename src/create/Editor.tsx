@@ -106,9 +106,9 @@ export default Editor
 const ImageUploader = ({ imageSrc, setImageSrc }: { imageSrc: string, setImageSrc: React.Dispatch<React.SetStateAction<string>> }) => {
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-        uploadFile(e.target!.files![0]);
+        handleUploadFile(e.target!.files![0]);
     }
-    const uploadFile = async (file: File) => {
+    const handleUploadFile = async (file: File) => {
         if (!file) {
             // setError('请选择文件');
             return;

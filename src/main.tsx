@@ -6,10 +6,8 @@ import User from './user/User.tsx';
 import NftTabContent from './user/NFT.tsx';
 import Home from './user/Home.tsx';
 import PostsTabContent from './user/Posts.tsx';
-import DetailsPage from './deepseek/DetailsPage.tsx';
 import Sidebar from './components/Sidebar.tsx';
-import Contents from './deepseek/Contents.tsx';
-import Editor from './explore/Editor.tsx';
+import Editor from './create/Editor.tsx';
 import StepAnimation from './deepseek/StepAnimation.jsx';
 import App from './App.tsx';
 import FortuneTellerAnimation from './deepseek/FortuneTellerAnimation.jsx';
@@ -20,6 +18,12 @@ import ProfileSetting from './user/ProfileSetting.jsx';
 import SignUp from './user/Signup.jsx'
 import Test from './deepseek/Test.jsx';
 import UploadPicture from './create/UploadPicture.jsx'
+import ExploreIndex from './explore/ExploreIndex.tsx';
+import ExploreTag from './explore/ExploreTag.tsx';
+import Item from './explore/Item.tsx';
+import CreateIndex from './create/CreateIndex.tsx';
+import ImagePromptGenerator from './create/ImagePromptGenerator.jsx'
+import ImageGenerationStudio from './create/ImageGenerationStudio.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -34,18 +38,23 @@ createRoot(document.getElementById('root')!).render(
           <Route path="test2" element={<FortuneTellerAnimation />} />
           {/* 游览 */}
           <Route path="explore" element={<Sidebar />}>
-            <Route index element={<Contents />} />
-            <Route path="pic2pic" element={<Contents />} />
-            <Route path="tag/:tag" element={<Contents />} />
-            <Route path='item/:id' element={<DetailsPage />} />
+            <Route index element={<ExploreTag tag="" />} />
+            <Route path="upload" element={<ExploreTag tag="upload" />} />
+            <Route path="text2pic" element={<ExploreTag tag="text2pic" />} />
+            <Route path="pic2pic" element={<ExploreTag tag="pic2pic" />} />
+
+            <Route path="tag/:tag" element={<ExploreIndex />} />
+            <Route path='item/:id' element={<Item />} />
           </Route>
           <Route path='editor' element={<Sidebar />}>
             <Route index element={<Editor />} />
           </Route>
           {/* 创作 */}
           <Route path="create" element={<Sidebar />}>
+            <Route index element={<CreateIndex />} />
             <Route path='upload' element={<UploadPicture />} />
-            <Route path="pic2pic" element={<Contents />} />
+            <Route path="text2pic" element={<ImagePromptGenerator />} />
+            <Route path="pic2pic" element={<ImageGenerationStudio />} />
           </Route>
           {/* 占卜 */}
           <Route path="fortune" element={<StepAnimation />} >

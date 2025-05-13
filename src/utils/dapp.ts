@@ -22,7 +22,7 @@ function getCookie(name) {
  * @param {string} url - 上传文件或资源的 URL。
  * @returns {Promise<object>} - 一个 Promise，成功时 resolve 服务器返回的数据，失败时 reject 错误。
  */
-export function createUploadFile(url = "", content = "", meta_data= "{}") {
+export function createUploadFile(url = "", content = "", meta_data = "{}") {
     const username = getCookie("username"); // 从 cookie 获取 username
 
     if (!username) {
@@ -54,29 +54,29 @@ export function createUploadFile(url = "", content = "", meta_data= "{}") {
         // 将 JavaScript 对象转换为 JSON 字符串作为请求体
         body: JSON.stringify(postData)
     })
-    .then(response => {
-        console.log("收到响应，状态码:", response.status);
-        // 检查响应状态码，如果不是 2xx，则抛出错误
-        if (!response.ok) {
-            // 尝试读取错误信息体并包含在错误中
-            return response.text().then(text => {
-                 throw new Error(`HTTP 错误! 状态: ${response.status}, 响应体: ${text}`);
-            });
-        }
-        // 解析 JSON 响应体
-        return response.json();
-    })
-    .then(data => {
-        // 请求成功，处理返回的数据
-        console.log("帖子创建成功:", data);
-        return data; // 返回服务器返回的数据（可能包含新生成的 ID 等）
-    })
-    .catch(error => {
-        // 捕获请求或处理过程中的任何错误
-        console.error("创建帖子时发生错误:", error);
-        // 重新抛出错误，以便调用者可以处理
-        throw error;
-    });
+        .then(response => {
+            console.log("收到响应，状态码:", response.status);
+            // 检查响应状态码，如果不是 2xx，则抛出错误
+            if (!response.ok) {
+                // 尝试读取错误信息体并包含在错误中
+                return response.text().then(text => {
+                    throw new Error(`HTTP 错误! 状态: ${response.status}, 响应体: ${text}`);
+                });
+            }
+            // 解析 JSON 响应体
+            return response.json();
+        })
+        .then(data => {
+            // 请求成功，处理返回的数据
+            console.log("帖子创建成功:", data);
+            return data; // 返回服务器返回的数据（可能包含新生成的 ID 等）
+        })
+        .catch(error => {
+            // 捕获请求或处理过程中的任何错误
+            console.error("创建帖子时发生错误:", error);
+            // 重新抛出错误，以便调用者可以处理
+            throw error;
+        });
 }
 
 // 示例用法（假设你调用这个函数并处理其结果）：
@@ -105,3 +105,88 @@ async function exampleUsage() {
 // 3. 如果服务器配置正确，预检请求成功后，浏览器才会发送实际的 POST 请求。
 // 4. 如果服务器没有正确配置 CORS，fetch 请求会在预检阶段或实际请求阶段失败，并在浏览器控制台显示 CORS 错误。
 //    客户端代码本身无需额外处理 CORS，这是服务器的责任。
+
+
+
+
+export function getPosts(tag = "") {
+    const endpoint = "https://chat.moonchan.xyz/dapp/explore" + (tag == "" ? "" : "/" + tag)
+    return fetch(endpoint).then(r => r.json())
+}
+
+
+export function getUserPosts(user = "") {
+    const endpoint = `https://chat.moonchan.xyz/dapp/user/${user}/posts`
+    return fetch(endpoint).then(r => r.json())
+}
+
+export function getOwnedPosts(user = "") {
+    const endpoint = `https://chat.moonchan.xyz/dapp/user/${user}/owned`
+    return fetch(endpoint).then(r => r.json())
+}
+
+export function getPost(id = "0") {
+    if (id === "0") return Promise.reject({ error: "id = 0" });
+    const endpoint = "https://chat.moonchan.xyz/dapp/post/" + id
+    return fetch(endpoint).then(r => r.json())
+}
+
+export function getOwner(id = "0") {
+    if (id === "0") return Promise.reject({ error: "id = 0" });
+    return fetch(`https://chat.moonchan.xyz/dapp/post/${id}/owner`).then(r => r.json())
+}
+
+export function buyPost(id = "0") {
+    if (id === "0") return Promise.reject({ error: "id = 0" });
+    return fetch(`https://chat.moonchan.xyz/dapp/post/${id}/owner`, {
+        method: "POST",
+        credentials: 'include',
+        // body: JSON.stringify({ username: getCookie("username") }),
+        headers: {
+            "Content-Type": "application/json",
+            "Dapp-Username": getCookie("username") || "",
+        }
+    }).then(r => r.json())
+}
+
+/**
+ * Updates the post owner details (price, onsale status) via PATCH request.
+ * @param id - The ID of the post to update. Defaults to "0".
+ * @param price - The new price for the post. Defaults to "0".
+ * @param onsale - The new sale status ("true" or "false"). Defaults to "".
+ * @returns A Promise that resolves with the API response (likely JSON) or rejects with an error.
+ */
+export function patchPost(id: string = "0", price: string = "0", onsale?: boolean) { // Return Promise<any> or a more specific type based on API response
+    // Validate ID
+    if (id === "0" || !id) { // Added !id check for robustness  
+        // console.error("patchPost error: Invalid id provided.");
+        // Return a rejected Promise for consistency
+        return Promise.reject({ error: "Invalid or missing post ID" });
+    }
+
+    // --- Prepare Query Parameters ---
+    const queryParams = new URLSearchParams();
+    queryParams.append('price', price); // Add price parameter
+    if (onsale) queryParams.append('onsale', onsale.toString()); // Add onsale parameter (API should handle boolean conversion if needed)
+
+    // --- Construct the Full URL ---
+    const baseUrl = `https://chat.moonchan.xyz/dapp/post/${id}/owner`;
+    const urlWithParams = `${baseUrl}?${queryParams.toString()}`; // Append query string
+
+    // For debugging: Log the URL being called
+    // console.log(`PATCH Request URL: ${urlWithParams}`);
+
+    // --- Perform the Fetch Request ---
+    return fetch(urlWithParams, {
+        method: "PATCH",
+        credentials: 'include', // Include cookies if needed for authentication
+        // body: JSON.stringify({ key: value }), // A PATCH request *can* have a body, but here data is sent via query params. Add body if your API requires it *in addition* to query params.
+        headers: {
+            // 'Content-Type': 'application/json', // Often not needed if there's no body, but include if API requires it.
+            // Custom header for username, ensure getCookie works correctly
+            "Dapp-Username": getCookie("username") || "",
+            // Add other headers like Authorization if required
+            // 'Authorization': `Bearer ${your_token}`
+        }
+    }).then(r => r.json())
+}

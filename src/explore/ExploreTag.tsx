@@ -2,26 +2,24 @@ import {
     useState,
     useEffect
 } from 'react'
-import { getOwnedPosts } from '../utils/dapp'
+import { getPosts } from '../utils/dapp'
 // import LoadingSpinner from '../components/LoadingSpinner'
 import FourColumns from '../components/FourColumns';
 // import { NavLink } from 'react-router';
 import type { Post } from '../utils/type';
-import { useParams } from 'react-router';
 
-export default function Home() {
+export default function ExploreTag({ tag = "" }) {
     // get items
-    const { id } = useParams();
     // const [loading, setLoading] = useState(true);
     const [list, setList] = useState<Post[]>([]);
     useEffect(() => {
-        getOwnedPosts(id).then(r => {
+        getPosts(tag).then(r => {
             // console.log(r);  
             setList(r || []);
             // setLoading(false);
         })
 
-    }, [id])
+    }, [tag])
     // if (loading) return <LoadingSpinner />
 
 
