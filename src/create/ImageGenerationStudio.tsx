@@ -145,41 +145,35 @@ function ImageGenerationStudio({ onImageUploaded }: ImageGenerationStudioProps) 
             //   params.image_guidance = uploadedImageUrl; // Example
             // }
 
-            // const response = await img2img(params);
-            // console.log('API Response:', response);
-            // const uuid = response?.data?.generateUuid || response?.generateUuid;
+            const response = await img2img(params);
+            console.log('API Response:', response);
+            const uuid = response?.data?.generateUuid || response?.generateUuid;
 
-            // if (!uuid) {
-            //     setGenerationError(response?.message || response?.msg || '生成请求失败，未获取到任务ID。');
-            //     setIsGenerating(false);
-            //     return;
-            // }
+            if (!uuid) {
+                setGenerationError(response?.message || response?.msg || '生成请求失败，未获取到任务ID。');
+                setIsGenerating(false);
+                return;
+            }
 
-            // getImage(uuid, (url: string | null, errMessage?: string) => {
-            //     if (errMessage) {
-            //         setGenerationError(errMessage || '获取图片失败。');
-            //         setGeneratedImageUrl(null);
-            //     } else if (url) {
-            //         setGeneratedImageUrl(url);
-            //         setGenerationError(null);
-            //         // const onUpload = (url = "") => {
-            //         const meta_data = JSON.stringify({ "tags": ["pic2pic"] })
-            //         createUploadFile(url, prompt, meta_data);
-            //         // }
-            //     } else {
-            //         setGenerationError('获取图片超时或发生未知错误。');
-            //         setGeneratedImageUrl(null);
-            //     }
-            //     setIsGenerating(false);
-
-
-            // });
+            getImage(uuid, (url: string | null, errMessage?: string) => {
+                if (errMessage) {
+                    setGenerationError(errMessage || '获取图片失败。');
+                    setGeneratedImageUrl(null);
+                } else if (url) {
+                    setGeneratedImageUrl(url);
+                    setGenerationError(null);
+                    // const onUpload = (url = "") => {
+                    const meta_data = JSON.stringify({ "tags": ["pic2pic"] })
+                    createUploadFile(url, prompt, meta_data);
+                    // }
+                } else {
+                    setGenerationError('获取图片超时或发生未知错误。');
+                    setGeneratedImageUrl(null);
+                }
+                setIsGenerating(false);
 
 
-            const meta_data = JSON.stringify({ "tags": ["pic2pic"] })
-            setGeneratedImageUrl("https://liblibai-tmp-image.liblib.cloud/img/4ca78abc5faf4a3f8a5dbb4efe105678/6be7f19df3cf04e83c48e098c8a6202cd54f2a5671ce7af4453aafd128146b84.png");
-            createUploadFile("https://liblibai-tmp-image.liblib.cloud/img/4ca78abc5faf4a3f8a5dbb4efe105678/6be7f19df3cf04e83c48e098c8a6202cd54f2a5671ce7af4453aafd128146b84.png", prompt, meta_data);
-            setIsGenerating(false);
+            });
 
         } catch (apiError: unknown) {
             console.error('Error during image generation call:', apiError);

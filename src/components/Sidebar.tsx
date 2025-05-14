@@ -41,7 +41,6 @@ const Sidebar = () => {
                             <span className="ml-3">Explore</span>
                         </NavLink>
 
-
                         <NavLink
                             to={pathnameTo("create")}
                             className="flex items-center px-4 py-3 
