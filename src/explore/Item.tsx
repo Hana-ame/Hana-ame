@@ -219,6 +219,7 @@ export default function Item() {
                                 )}
                             </div>
                         )}
+                        <a className="bg-pink-500 text-white px-6 py-2 rounded-lg hover:bg-pink-600 transition-colors" href={`https://service.weibo.com/share/share.php?url=nft.work.place/item/${id}&title=分享我的NFT&pic=${post?.url}`}>分享到微博</a>
                     </div>
 
                     <p className="text-gray-600 mt-4">

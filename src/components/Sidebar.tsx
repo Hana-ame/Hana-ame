@@ -16,7 +16,7 @@ const Sidebar = () => {
     const prefix = pathnameArray[1];
     function pathnameTo(catagory: "create" | "explore") {
         pathnameArray[1] = catagory
-        if (pathnameArray.length>2 && pathnameArray[2] === "item") return "/"+catagory;
+        if (pathnameArray.length > 2 && pathnameArray[2] === "item") return "/" + catagory;
         return pathnameArray.join("/")
     }
 
@@ -41,7 +41,7 @@ const Sidebar = () => {
                             <span className="ml-3">Explore</span>
                         </NavLink>
 
-                        
+
                         <NavLink
                             to={pathnameTo("create")}
                             className="flex items-center px-4 py-3 
