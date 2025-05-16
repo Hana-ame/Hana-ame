@@ -1,0 +1,61 @@
+/* src/App.css */
+.App {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Important */
+  }
+  
+  .controls-panel {
+    width: 350px; /* Adjust as needed */
+    padding: 15px;
+    overflow-y: auto; /* Scroll if controls exceed height */
+    border-right: 1px solid #ccc;
+    background-color: #f9f9f9;
+  }
+  
+  .controls-panel h3, .controls-panel h4 {
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+  .controls-panel h4 {
+    margin-top: 20px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 3px;
+  }
+  
+  
+  .canvas-container {
+    flex-grow: 1; /* Takes remaining space */
+    height: 100%;
+  }
+  
+  .control-group {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+  }
+  
+  .control-group strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+  }
+  
+  .control-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+  }
+  
+  .control-group label input[type="number"],
+  .control-group label input[type="range"] {
+    margin-left: 8px;
+    max-width: 100px;
+  }
+  .control-group label input[type="range"] {
+    vertical-align: middle;
+  }

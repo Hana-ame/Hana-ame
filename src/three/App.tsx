@@ -1,210 +1,143 @@
 // src/App.tsx
-import React, { useRef, useEffect } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import React, { useState } from 'react';
+import HumanoidCanvas from './HumanoidCanvas';
+import { HumanoidPose, EulerAngles, Vector3 } from './types';
+import './App.css'; // For styling controls
+
+const initialPose: HumanoidPose = {
+  body: { position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 } },
+  head: { rotation: { x: 0, y: 0, z: 0 } },
+  leftShoulder: { rotation: { x: 0, y: 0, z: 0 } }, // Yaw for shoulder shrug/forward, Pitch for up/down, Roll for twist
+  leftUpperArm: { rotation: { x: -Math.PI / 6, y: 0, z: -Math.PI / 12 } }, // Slight natural bend
+  leftLowerArm: { rotation: { x: Math.PI / 4, y: 0, z: 0 } },
+  leftHand: { rotation: { x: 0, y: 0, z: 0 } },
+  rightShoulder: { rotation: { x: 0, y: 0, z: 0 } },
+  rightUpperArm: { rotation: { x: -Math.PI / 6, y: 0, z: Math.PI / 12 } },
+  rightLowerArm: { rotation: { x: Math.PI / 4, y: 0, z: 0 } },
+  rightHand: { rotation: { x: 0, y: 0, z: 0 } },
+  leftHip: { rotation: {x:0, y:0, z: Math.PI / 18} }, // Slight outward rotation for legs
+  leftUpperLeg: { rotation: {x: Math.PI / 12, y:0, z:0}},
+  leftLowerLeg: { rotation: {x: -Math.PI / 8, y:0, z:0}},
+  leftFoot: { rotation: {x: Math.PI / 6, y:0, z:0}}, // Point foot slightly down
+  rightHip: { rotation: {x:0, y:0, z: -Math.PI / 18} },
+  rightUpperLeg: { rotation: {x: Math.PI / 12, y:0, z:0}},
+  rightLowerLeg: { rotation: {x: -Math.PI / 8, y:0, z:0}},
+  rightFoot: { rotation: {x: Math.PI / 6, y:0, z:0}},
+};
+
+// Helper to convert degrees to radians for UI
+const degToRad = (degrees: number) => degrees * (Math.PI / 180);
+const radToDeg = (radians: number) => radians * (180 / Math.PI);
 
 const App: React.FC = () => {
-    const mountRef = useRef<HTMLDivElement>(null);
-    const sceneRef = useRef<THREE.Scene | null>(null);
-    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-    const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-    const controlsRef = useRef<OrbitControls | null>(null);
-    const animationFrameIdRef = useRef<number | null>(null);
+  const [pose, setPose] = useState<HumanoidPose>(initialPose);
 
-    // Store meshes, geometries, and materials for cleanup
-    const meshesRef = useRef<THREE.Mesh[]>([]);
-    const geometriesRef = useRef<THREE.BufferGeometry[]>([]);
-    const materialsRef = useRef<THREE.Material[]>([]);
+  const handleBodyPositionChange = (axis: keyof Vector3, value: string) => {
+    setPose(prev => ({
+      ...prev,
+      body: {
+        ...prev.body,
+        position: { ...prev.body.position, [axis]: parseFloat(value) }
+      }
+    }));
+  };
 
-
-    useEffect(() => {
-        if (!mountRef.current) return;
-
-        const currentMount = mountRef.current;
-
-        // 1. Scene
-        sceneRef.current = new THREE.Scene();
-        sceneRef.current.background = new THREE.Color(0x282c34); // Dark background
-
-        // 2. Camera
-        const width = currentMount.clientWidth;
-        const height = currentMount.clientHeight;
-        cameraRef.current = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-        cameraRef.current.position.set(0, 1, 5); // Positioned to see the XZ plane
-        cameraRef.current.lookAt(0, 0, 0);
-
-        // 3. Renderer
-        rendererRef.current = new THREE.WebGLRenderer({ antialias: true });
-        rendererRef.current.setSize(width, height);
-        rendererRef.current.setPixelRatio(window.devicePixelRatio);
-        currentMount.appendChild(rendererRef.current.domElement);
-
-        // 4. OrbitControls
-        controlsRef.current = new OrbitControls(cameraRef.current, rendererRef.current.domElement);
-        controlsRef.current.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-        controlsRef.current.dampingFactor = 0.05;
-        controlsRef.current.screenSpacePanning = false;
-        controlsRef.current.minDistance = 1;
-        controlsRef.current.maxDistance = 50;
-        // controlsRef.current.maxPolarAngle = Math.PI / 2; // Prevent looking from below
-
-        // 5. Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        sceneRef.current.add(ambientLight);
-        materialsRef.current.push(ambientLight as any); // Not a material, but for general cleanup tracking
-
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 10, 7);
-        sceneRef.current.add(directionalLight);
-        materialsRef.current.push(directionalLight as any);
-
-        // 6. Geometries and Materials
-
-        // Helper to create and add meshes
-        const createAndAddMesh = (
-            geometry: THREE.BufferGeometry,
-            materialProps: THREE.MeshStandardMaterialParameters,
-            position: [number, number, number],
-            rotation?: [number, number, number]
-        ) => {
-            geometriesRef.current.push(geometry);
-            const material = new THREE.MeshStandardMaterial({
-                ...materialProps,
-                side: THREE.DoubleSide, // Important for 2D shapes
-            });
-            materialsRef.current.push(material);
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.position.set(...position);
-            if (rotation) mesh.rotation.set(...rotation);
-            sceneRef.current!.add(mesh);
-            meshesRef.current.push(mesh);
+  const handleRotationChange = (
+    part: keyof Omit<HumanoidPose, 'body'> | 'bodyRotation', // 'bodyRotation' to distinguish from body.position
+    axis: keyof EulerAngles,
+    value: string
+  ) => {
+    const radians = degToRad(parseFloat(value));
+    setPose(prev => {
+      if (part === 'bodyRotation') {
+        return {
+          ...prev,
+          body: { ...prev.body, rotation: { ...prev.body.rotation, [axis]: radians } }
         };
+      }
+      const partToUpdate = prev[part as keyof Omit<HumanoidPose, 'body'>];
+      return {
+        ...prev,
+        [part]: {
+          ...partToUpdate,
+          rotation: { ...partToUpdate.rotation, [axis]: radians }
+        }
+      };
+    });
+  };
 
-        // --- Displaying 2D Geometries ---
+  const renderRotationControls = (partName: keyof Omit<HumanoidPose, 'body'> | 'bodyRotation', currentRotation: EulerAngles) => {
+    const labelPrefix = partName === 'bodyRotation' ? 'Body' : partName.toString();
+    return (
+      <div className="control-group">
+        <strong>{labelPrefix} Rotation:</strong>
+        {(['x', 'y', 'z'] as Array<keyof EulerAngles>).map(axis => (
+          <label key={axis}>
+            {axis.toUpperCase()} (Pitch/Yaw/Roll):
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              step="1"
+              value={radToDeg(currentRotation[axis])}
+              onChange={(e) => handleRotationChange(partName, axis, e.target.value)}
+            />
+            {radToDeg(currentRotation[axis]).toFixed(0)}°
+          </label>
+        ))}
+      </div>
+    );
+  };
 
-        // PlaneGeometry
-        createAndAddMesh(
-            new THREE.PlaneGeometry(2, 2),
-            { color: 0xff0000, roughness: 0.5, metalness: 0.1 }, // Red
-            [-3, 1, 0]
-        );
+  return (
+    <div className="App">
+      <div className="controls-panel">
+        <h3>Humanoid Controls</h3>
+        <div className="control-group">
+          <strong>Body Position:</strong>
+          {(['x', 'y', 'z'] as Array<keyof Vector3>).map(axis => (
+            <label key={axis}>
+              {axis.toUpperCase()}:
+              <input
+                type="number"
+                step="0.1"
+                value={pose.body.position[axis]}
+                onChange={(e) => handleBodyPositionChange(axis, e.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+        {renderRotationControls('bodyRotation', pose.body.rotation)}
+        {renderRotationControls('head', pose.head.rotation)}
+        {/* Add more controls systematically */}
+        <h4>Left Arm</h4>
+        {renderRotationControls('leftShoulder', pose.leftShoulder.rotation)}
+        {renderRotationControls('leftUpperArm', pose.leftUpperArm.rotation)}
+        {renderRotationControls('leftLowerArm', pose.leftLowerArm.rotation)}
+        {renderRotationControls('leftHand', pose.leftHand.rotation)}
+         <h4>Right Arm</h4>
+        {renderRotationControls('rightShoulder', pose.rightShoulder.rotation)}
+        {renderRotationControls('rightUpperArm', pose.rightUpperArm.rotation)}
+        {renderRotationControls('rightLowerArm', pose.rightLowerArm.rotation)}
+        {renderRotationControls('rightHand', pose.rightHand.rotation)}
+        <h4>Left Leg</h4>
+        {renderRotationControls('leftHip', pose.leftHip.rotation)}
+        {renderRotationControls('leftUpperLeg', pose.leftUpperLeg.rotation)}
+        {renderRotationControls('leftLowerLeg', pose.leftLowerLeg.rotation)}
+        {renderRotationControls('leftFoot', pose.leftFoot.rotation)}
+        <h4>Right Leg</h4>
+        {renderRotationControls('rightHip', pose.rightHip.rotation)}
+        {renderRotationControls('rightUpperLeg', pose.rightUpperLeg.rotation)}
+        {renderRotationControls('rightLowerLeg', pose.rightLowerLeg.rotation)}
+        {renderRotationControls('rightFoot', pose.rightFoot.rotation)}
 
-        // CircleGeometry
-        createAndAddMesh(
-            new THREE.CircleGeometry(1, 32), // radius, segments
-            { color: 0x00ff00, roughness: 0.5, metalness: 0.1 }, // Green
-            [0, 1, 0]
-        );
-
-        // RingGeometry
-        createAndAddMesh(
-            new THREE.RingGeometry(0.5, 1, 32), // innerRadius, outerRadius, thetaSegments
-            { color: 0x0000ff, roughness: 0.5, metalness: 0.1 }, // Blue
-            [3, 1, 0]
-        );
-
-        // ShapeGeometry (Example: a Triangle)
-        const triangleShape = new THREE.Shape();
-        triangleShape.moveTo(-1, -0.5);
-        triangleShape.lineTo(1, -0.5);
-        triangleShape.lineTo(0, 1);
-        triangleShape.lineTo(-1, -0.5); // close path
-        createAndAddMesh(
-            new THREE.ShapeGeometry(triangleShape),
-            { color: 0xffff00, roughness: 0.5, metalness: 0.1 }, // Yellow
-            [-3, 1, -3]
-        );
-
-        // ShapeGeometry (Example: a Heart - more complex)
-        const heartShape = new THREE.Shape();
-        const x = 0, y = -0.5; // Offset for easier positioning
-        heartShape.moveTo(x + 0.5, y + 0.5);
-        heartShape.bezierCurveTo(x + 0.5, y + 0.5, x + 0.4, y, x, y);
-        heartShape.bezierCurveTo(x - 0.6, y, x - 0.6, y + 0.7, x - 0.6, y + 0.7);
-        heartShape.bezierCurveTo(x - 0.6, y + 1.1, x - 0.3, y + 1.54, x + 0.5, y + 1.9);
-        heartShape.bezierCurveTo(x + 1.2, y + 1.54, x + 1.6, y + 1.1, x + 1.6, y + 0.7);
-        heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
-        heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
-        createAndAddMesh(
-            new THREE.ShapeGeometry(heartShape),
-            { color: 0xff00ff, roughness: 0.5, metalness: 0.1 }, // Magenta
-            [0, 0.5, -3] // Adjusted y to roughly center it
-        );
-
-        // Plane as a "floor" for context (optional)
-        const floorGeometry = new THREE.PlaneGeometry(10, 10);
-        geometriesRef.current.push(floorGeometry);
-        const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.8, metalness: 0.2, side: THREE.DoubleSide });
-        materialsRef.current.push(floorMaterial);
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
-        floor.position.y = -0.01; // Slightly below other objects
-        sceneRef.current!.add(floor);
-        meshesRef.current.push(floor);
-
-
-        // 7. Animation Loop
-        const animate = () => {
-            animationFrameIdRef.current = requestAnimationFrame(animate);
-            controlsRef.current?.update(); // only required if controls.enableDamping or controls.autoRotate are set to true
-            rendererRef.current!.render(sceneRef.current!, cameraRef.current!);
-        };
-        animate();
-
-        // 8. Handle Resize
-        const handleResize = () => {
-            if (cameraRef.current && rendererRef.current && currentMount) {
-                const newWidth = currentMount.clientWidth;
-                const newHeight = currentMount.clientHeight;
-
-                cameraRef.current.aspect = newWidth / newHeight;
-                cameraRef.current.updateProjectionMatrix();
-                rendererRef.current.setSize(newWidth, newHeight);
-            }
-        };
-        window.addEventListener('resize', handleResize);
-
-        // 9. Cleanup
-        return () => {
-            if (animationFrameIdRef.current) {
-                cancelAnimationFrame(animationFrameIdRef.current);
-            }
-            window.removeEventListener('resize', handleResize);
-
-            // Dispose Three.js objects
-            geometriesRef.current.forEach(geometry => geometry.dispose());
-            materialsRef.current.forEach(material => {
-                if (typeof (material as any).dispose === 'function') {
-                    (material as any).dispose();
-                }
-                // For textures in materials
-                for (const key in material) {
-                    const value = (material as any)[key];
-                    if (value && typeof value === 'object' && 'dispose' in value && typeof value.dispose === 'function') {
-                        value.dispose();
-                    }
-                }
-            });
-            meshesRef.current.forEach(mesh => sceneRef.current?.remove(mesh));
-
-            controlsRef.current?.dispose();
-            rendererRef.current?.dispose();
-
-            if (currentMount && rendererRef.current?.domElement) {
-                currentMount.removeChild(rendererRef.current.domElement);
-            }
-            // Clear refs
-            sceneRef.current = null;
-            cameraRef.current = null;
-            rendererRef.current = null;
-            controlsRef.current = null;
-            meshesRef.current = [];
-            geometriesRef.current = [];
-            materialsRef.current = [];
-        };
-    }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
-
-    return <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />;
+        <button onClick={() => setPose(initialPose)} style={{marginTop: '20px'}}>Reset Pose</button>
+      </div>
+      <div className="canvas-container">
+        <HumanoidCanvas pose={pose} />
+      </div>
+    </div>
+  );
 };
 
 export default App;
