@@ -3,6 +3,9 @@ import B23 from "./B23";
 import BV from "./BV";
 import Live from './Live';
 
+import { Main } from "../App"
+import Nav from '../Nav';
+
 const BiliCover = () => {
     const [url, setUrl] = useState("");
     const [b23id, setB23id] = useState("");
@@ -60,7 +63,7 @@ const BiliCover = () => {
     useEffect(() => {
         // 添加粘贴事件监听器
         window.addEventListener('paste', handlePaste);
-        
+
         // 清理事件监听器
         return () => {
             window.removeEventListener('paste', handlePaste);
@@ -68,24 +71,26 @@ const BiliCover = () => {
     });
 
     return (
-        <div className='h-full'
-            onDrop={handleDrop} // 绑定 drop 事件
-            onDragOver={handleDragOver} // 绑定 dragOver 事件
-        >
-            <input
-                type="text"
-                value={url}
-                onChange={handleChange}
-                onMouseEnter={handleMouseEnter} // 绑定鼠标悬停事件
+        <Main><Nav />
+            <div className='h-full'
+                onDrop={handleDrop} // 绑定 drop 事件
+                onDragOver={handleDragOver} // 绑定 dragOver 事件
+            >
+                <input
+                    type="text"
+                    value={url}
+                    onChange={handleChange}
+                    onMouseEnter={handleMouseEnter} // 绑定鼠标悬停事件
 
-                placeholder="输入 URL, 或者直接按 Ctrl+V, 或者拖动连接到此页面"
-                style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-            />
-            {b23id && <B23 id={b23id} />}
-            {bvid && <BV id={bvid} />}
-            {liveid && <Live id={liveid} />}
-            <div>后端支持(无断):<a className="text-blue-500 hover:text-green-500 underline" href="https://bilicover.magecorn.com/help">https://bilicover.magecorn.com/help</a></div>
-        </div>
+                    placeholder="输入 URL, 或者直接按 Ctrl+V, 或者拖动连接到此页面"
+                    style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+                />
+                {b23id && <B23 id={b23id} />}
+                {bvid && <BV id={bvid} />}
+                {liveid && <Live id={liveid} />}
+                <div>后端支持(无断):<a className="text-blue-500 hover:text-green-500 underline" href="https://bilicover.magecorn.com/help">https://bilicover.magecorn.com/help</a></div>
+            </div>
+        </Main>
     );
 };
 

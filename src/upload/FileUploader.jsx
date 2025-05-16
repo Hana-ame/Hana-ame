@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import FileInfo from './FileInfo';
+import { Main } from '../App';
+import Nav from '../Nav';
 
 export default function IFrame() {
-  return <iframe
+  return <Main><Nav /><iframe
     src="https://chat.moonchan.xyz/api/files/upload"
     className="w-full h-full flex-grow border-0"
     title="Content"
-  />
+  /></Main>
 
 }
 
@@ -61,29 +63,30 @@ export function FileUploader() {
   // };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      {/* 文件上传区域 */}
-      <label className="block mb-8">
-        <span className="sr-only">选择上传文件</span>
-        <input
-          type="file"
-          multiple
-          onChange={handleFileSelect}
-          className="block w-full text-sm text-gray-500
+    <Main><Nav />
+      <div className="max-w-2xl mx-auto p-6 ">
+        {/* 文件上传区域 */}
+        <label className="block mb-8">
+          <span className="sr-only">选择上传文件</span>
+          <input
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="block w-full text-sm text-gray-500
             file:mr-4 file:py-2 file:px-4
             file:rounded-full file:border-0
             file:text-sm file:font-semibold
             file:bg-blue-50 file:text-blue-700
             hover:file:bg-blue-100"
-        />
-      </label>
+          />
+        </label>
 
-      {files.map((file, index) => {
-        console.log(file)
-        return <FileInfo key={index} file={file}></FileInfo>
-      })}
-      {/* 上传结果列表 */}
-      {/* 
+        {files.map((file, index) => {
+          console.log(file)
+          return <FileInfo key={index} file={file}></FileInfo>
+        })}
+        {/* 上传结果列表 */}
+        {/* 
       {uploadResults.length > 0 && (
         <div className="space-y-4">
           {uploadResults.map((result, index) => (
@@ -109,7 +112,7 @@ export function FileUploader() {
           ))}
         </div>
       )} */}
-    </div>
+      </div></Main>
   );
 }
 

@@ -1,0 +1,43 @@
+/* src/styles.css */
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden; /* Prevent scrollbars from App div */
+    background-color: #282c34; /* Match default Three.js background */
+}
+
+.App {
+    text-align: center;
+}
+
+.win-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 128, 0, 0.8);
+    color: white;
+    padding: 20px 40px;
+    border-radius: 10px;
+    font-size: 24px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.win-message button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+/* Style for Draggable react-draggable handles if needed, or for the buttons themselves */
+.react-draggable {
+    /* outline: 1px dashed red; For debugging bounds */
+    z-index: 50; /* Ensure buttons are above canvas but below modals/panels */
+}

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { UPLOAD_URL, uploadFileInChunks } from './consts';
+import { Main } from '../App';
+import Nav from '../Nav';
 
 const FileUpload = () => {
   const [file, setFile] = useState(null);
@@ -72,84 +74,83 @@ const FileUpload = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">文件上传</h2>
-      
-      <div className="mb-4">
-        <input
-          type="file"
-          onChange={handleFileChange}
-          className="block w-full text-sm text-gray-500 
+    <Main><Nav></Nav>
+      <div className="max-w-md mx-auto p-6 border border-gray-300 rounded-lg shadow-md bg-white">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800">文件上传</h2>
+
+        <div className="mb-4">
+          <input
+            type="file"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-gray-500 
                      file:mr-4 file:py-2 file:px-4 
                      file:rounded-md file:border-0 
                      file:text-sm file:font-semibold 
                      file:bg-blue-50 file:text-blue-700 
                      hover:file:bg-blue-100
                      focus:outline-none"
-          disabled={uploading}
-        />
-        {file && (
-          <div className="mt-2 text-sm text-gray-600">
-            已选择: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+            disabled={uploading}
+          />
+          {file && (
+            <div className="mt-2 text-sm text-gray-600">
+              已选择: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+            </div>
+          )}
+        </div>
+
+        {uploading && (
+          <div className="mb-4">
+            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-600 transition-all duration-300"
+                style={{ width: `${progress / (file.size / 1024 / 1024) * 100}%` }}
+              />
+            </div>
+            <div className="mt-1 text-sm text-gray-600 text-right">
+              {(progress / (file.size / 1024 / 1024) * 100).toFixed(2)}%
+            </div>
           </div>
         )}
-      </div>
 
-      {uploading && (
-        <div className="mb-4">
-          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-600 transition-all duration-300"
-              style={{ width: `${progress / (file.size / 1024 / 1024) * 100}%` }}
-            />
-          </div>
-          <div className="mt-1 text-sm text-gray-600 text-right">
-            {(progress / (file.size / 1024 / 1024) * 100).toFixed(2)}%
-          </div>
-        </div>
-      )}
-
-      <button
-        onClick={handleUpload}
-        disabled={uploading || !file}
-        className={`w-full py-2 px-4 rounded-md 
-                   ${
-                     uploading || !file
-                       ? 'bg-gray-400 cursor-not-allowed'
-                       : 'bg-blue-600 hover:bg-blue-700'
-                   }
+        <button
+          onClick={handleUpload}
+          disabled={uploading || !file}
+          className={`w-full py-2 px-4 rounded-md 
+                   ${uploading || !file
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
+            }
                    text-white font-semibold transition-colors`}
-      >
-        {uploading ? '上传中...' : '上传文件'}
-      </button>
+        >
+          {uploading ? '上传中...' : '上传文件'}
+        </button>
 
-      {message.text && (
-        <div className={`mt-3 p-3 rounded-md text-sm
-                        ${
-                          message.type === 'error'
-                            ? 'bg-red-100 text-red-700'
-                            : message.type === 'success'
-                            ? 'bg-green-100 text-green-700'
-                            : ''
-                        }`}>
-          {message.text}
-        </div>
-      )}
+        {message.text && (
+          <div className={`mt-3 p-3 rounded-md text-sm
+                        ${message.type === 'error'
+              ? 'bg-red-100 text-red-700'
+              : message.type === 'success'
+                ? 'bg-green-100 text-green-700'
+                : ''
+            }`}>
+            {message.text}
+          </div>
+        )}
 
-      {link && (
-        <div className="mt-4">
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 break-all text-sm"
-          >
-            {link}
-          </a>
-        </div>
-      )}
+        {link && (
+          <div className="mt-4">
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 break-all text-sm"
+            >
+              {link}
+            </a>
+          </div>
+        )}
 
-      {/* <div className="flex flex-wrap">
+        {/* <div className="flex flex-wrap">
         {progress.map((value, index) => (
           <div
             key={index}
@@ -159,7 +160,7 @@ const FileUpload = () => {
       </div> */}
 
 
-    </div>
+      </div></Main>
   );
 };
 
