@@ -18,6 +18,7 @@ import MathEditor from './latex/MathJax';
 import Pics from './pics/Pics';
 import RedirectPage from './redirect/Redirect';
 import ThreeCanvas from './threeCanvas/App.jsx';
+import Boxes from './three/boxes/App.tsx';
 
 export const router = [
     {
@@ -116,6 +117,11 @@ export const router = [
     }, {
         path: "/3d-test",
         element: <ThreeCanvas />,
+        title: "推箱子",
+        visible: true,
+    }, {
+        path: "/3d-boxes",
+        element: <Boxes />,
         title: "推箱子",
         visible: true,
     },

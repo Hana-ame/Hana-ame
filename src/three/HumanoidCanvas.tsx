@@ -12,7 +12,7 @@ interface HumanoidCanvasProps {
 const HumanoidCanvas: React.FC<HumanoidCanvasProps> = ({ pose }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera /*| THREE.OrthographicCamera*/ | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
   const animationFrameIdRef = useRef<number | null>(null);
@@ -91,7 +91,8 @@ const HumanoidCanvas: React.FC<HumanoidCanvasProps> = ({ pose }) => {
 
     cameraRef.current = new THREE.PerspectiveCamera(75, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
     cameraRef.current.position.set(0, BODY_PART_SIZES.torsoHeight, 3); // Adjusted for humanoid scale
-
+    // cameraRef.current = new THREE.OrthographicCamera(-10, 10, -10, 10, 0.1, 1000)
+    
     rendererRef.current = new THREE.WebGLRenderer({ antialias: true });
     rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
     rendererRef.current.setPixelRatio(window.devicePixelRatio);

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 
 import { router } from './Nav';
-import Index from './three/App.tsx'
+import Index from './three/boxes/App.tsx'
 
 import {
   HomeIcon,
@@ -36,7 +36,7 @@ const App = () => {
     <Router>
       <Routes>
         <Route key="index" index element={<Index />}></Route>
-        <Route key="nav" index element={<NavigationPage />}></Route>
+        <Route key="nav" path="/nav" element={<NavigationPage />}></Route>
         {router.map((route) => (
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
