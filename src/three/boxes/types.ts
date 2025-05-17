@@ -7,14 +7,16 @@ export interface PlaneData {
     height: number;
     x: number; // World coordinate X (center of the plane)
     y: number; // World coordinate Y (center of the plane)
-    color: string; // Hex color string
+    color: string; // Hex color string (#RRGGBB)
+    opacity: number; // Opacity (0.0 to 1.0)
   }
   
   // Data structure for the config of the next plane to add
   export interface NewPlaneConfig {
     width: number;
     height: number;
-    color: string;
+    color: string; // Hex color string (#RRGGBB)
+    opacity: number; // Opacity (0.0 to 1.0)
   }
   
   // Data structure for clicked coordinates in world space
