@@ -2,9 +2,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import ThreeCanvas from './ThreeCanvas';
 import ControlsPanel from './ControlsPanel';
-import OnScreenControls from './OnScreenControls';
-import { initialLevel, ELEMENT_TYPES, TILE_SIZE, DEFAULT_COLORS } from './constants.ts';
-import './styles.css'; // We'll create this file
+// import OnScreenControls from './OnScreenControls';
+import {
+    initialLevel, ELEMENT_TYPES,
+    // TILE_SIZE,
+    DEFAULT_COLORS
+} from './constants.ts';
+// import './styles.css'; // We'll create this file
 
 const App = () => {
     const [level, setLevel] = useState(initialLevel); // Current level structure
@@ -176,7 +180,7 @@ const App = () => {
     const handleSettingChange = (key, value) => {
         setSettings(prev => ({ ...prev, [key]: value }));
     };
-    
+
     const showInstructions = () => {
         alert("Sokoban Game Instructions:\n\n- Use Arrow Keys or WASD to move the player (green cube).\n- Push the yellow boxes onto the red target circles.\n- All targets must be covered by boxes to win.\n- Press 'R' to reset the current level.\n- You can customize colors in the 'Show Settings' panel.\n- On-screen directional buttons are draggable.");
     };
@@ -211,7 +215,7 @@ const App = () => {
                     <button onClick={parseLevel}>Play Again (R)</button>
                 </div>
             )}
-            <div id="info-text" style={{position: 'absolute', top: '10px', left: '10px', color: 'white', zIndex: 10}}>
+            <div id="info-text" style={{ position: 'absolute', top: '10px', left: '10px', color: 'white', zIndex: 10 }}>
                 Use Arrow/WASD keys to move. R to reset.
             </div>
 

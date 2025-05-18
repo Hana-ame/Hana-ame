@@ -4,7 +4,9 @@ import { useEffect } from 'react';
 import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 
 import { router } from './Nav';
-import Index from './three/boxes/App.tsx'
+// import Index from './three/boxes/App.tsx'
+import Index from './three/my-canvas/App.tsx'
+// import Index from './three/example-showPicture/App.tsx'
 
 import {
   HomeIcon,
@@ -23,8 +25,8 @@ const App = () => {
 
   // 在App.js中添加
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
+    if ('serviceWorker' in window.navigator) {
+      window.navigator.serviceWorker
         .register('/sw.js')
         .then(reg => console.log('SW注册成功:', reg))
         .catch(err => console.error('SW注册失败:', err));

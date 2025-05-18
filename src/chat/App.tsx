@@ -96,7 +96,7 @@ function App() {
     const [selectedModelId, setSelectedModelId] = useState<string>(ENDPOINTS_CONFIG[0].defaultModelId);
 
     const [temperature, setTemperature] = useState<number>(0.7);
-    const [maxTokens, setMaxTokens] = useState<number>(1024); // Note: Groq ignores max_tokens with stream=true
+    const [maxTokens, setMaxTokens] = useState<number>(65536); // Note: Groq ignores max_tokens with stream=true
     const [topP, setTopP] = useState<number>(1);
     const [stop, setStop] = useState<string>(''); // Assumed to be a single string or null
 

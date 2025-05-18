@@ -88,9 +88,9 @@ const App: React.FC = () => {
             // No need for requestAnimationFrame if nothing is animating
             // Only render when needed (e.g., after pose update or resize)
             window.requestAnimationFrame(animate);
-        if (rendererRef.current && sceneRef.current && cameraRef.current) {
-            rendererRef.current.render(sceneRef.current, cameraRef.current);
-        }
+            if (rendererRef.current && sceneRef.current && cameraRef.current) {
+                rendererRef.current.render(sceneRef.current, cameraRef.current);
+            }
         };
         // Initial render
         animate();
