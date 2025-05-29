@@ -85,9 +85,9 @@ const BiliCover = () => {
                     placeholder="输入 URL, 或者直接按 Ctrl+V, 或者拖动连接到此页面"
                     style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
                 />
-                {b23id && <B23 id={b23id} />}
-                {bvid && <BV id={bvid} />}
-                {liveid && <Live id={liveid} />}
+                {b23id && <B23 id={b23id} text={url} />}
+                {bvid && <BV id={bvid} text={url} />}
+                {liveid && <Live id={liveid} text={url} />}
                 <div>后端支持(无断):<a className="text-blue-500 hover:text-green-500 underline" href="https://bilicover.magecorn.com/help">https://bilicover.magecorn.com/help</a></div>
             </div>
         </Main>

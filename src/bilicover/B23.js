@@ -3,7 +3,7 @@ import { fetchWithProxy } from '@/Tools/Proxy/utils'
 import BV from './BV';
 import Live from './Live';
 
-const B23 = ({ id }) => {
+const B23 = ({ id, text }) => {
     const [bv, setBV] = useState(null);
     const [live, setLive] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -13,13 +13,13 @@ const B23 = ({ id }) => {
         const fetchData = async () => {
             try {
                 const response = await fetchWithProxy(
-                    `https://apiv2.magecorn.com/bilicover/get?type=b23&id=${id}&client=2.6.0`, 
+                    `https://apiv2.magecorn.com/bilicover/get?type=b23&id=${id}&client=2.6.0`,
                     {
                         method: 'GET',
                     }
                 );
                 if (!response.ok) {
-                    throw new Error('Network response was not ok'+response.statusText.toString());
+                    throw new Error('Network response was not ok' + response.statusText.toString());
                 }
                 const jsonData = await response.json();
 
@@ -60,8 +60,8 @@ const B23 = ({ id }) => {
     }
 
     return (
-        bv ? <BV id={bv} /> : <Live id={live}></Live>
-        
+        bv ? <BV id={bv} text={text} /> : <Live id={live} text={text} />
+
     );
 };
 

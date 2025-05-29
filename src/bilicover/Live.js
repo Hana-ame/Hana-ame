@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchWithProxy } from '@/Tools/Proxy/utils'
 import ImagePreview from './ImagePreview';
 
-const Live = ({ id }) => {
+const Live = ({ id, text }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -46,7 +46,7 @@ const Live = ({ id }) => {
     }
 
     return (
-        <ImagePreview imageUrl={data}></ImagePreview>
+        <ImagePreview imageUrl={data} text={text} />
     );
 };
 
