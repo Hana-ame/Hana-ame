@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { getProxyURL } from '@/Tools/Proxy/utils.ts';
 import { Main } from '../App';
 import Nav from '../Nav';
+import { parseRootDomain } from '../Tools/shijima'
+
 const GetProxyURL = () => {
     const [url, setUrl] = useState("");
     const [proxyURL, setProxyURL] = useState("");
@@ -27,6 +29,18 @@ const GetProxyURL = () => {
 
         return;
     }, [url, proxyReferer])
+
+    useEffect(() => {
+        try {
+            const parsedURL = new URL(url);
+
+            if (parseRootDomain(parsedURL.hostname) === 'sinaimg.cn') setProxyReferer("https://weibo.com/")
+        } catch (e) {
+            console.log(e)
+        } finally {
+            
+        }
+    }, [url])
 
     const handleDrop = (event) => {
         event.preventDefault(); // 阻止默认行为
