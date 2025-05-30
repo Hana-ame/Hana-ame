@@ -8,6 +8,7 @@ export default function App() {
     const sceneRef = useRef<THREE.Scene | null>(null);
     const [bg, setBG] = useState(0xaaaaaa); // Initial gray background
     const [cord, setCord] = useState({ x: 0, y: 0, z: 0 }); // Added z for clarity
+    const sizeRef = useRef({ x: 0, y: 0 })
     const meshRef = useRef<THREE.Mesh | null>(null); // For the heart mesh
 
     // Effect 1: Scene setup and background color
@@ -65,6 +66,7 @@ export default function App() {
         if (sceneRef.current) {
             // console.log("APP EFFECT: Adding newly created heart mesh to existing scene");
             sceneRef.current.add(meshRef.current);
+            sceneRef.current.add(new THREE.Mesh(geometry, material)); // 可以渲染多个。
         }
 
         return () => {
@@ -86,28 +88,18 @@ export default function App() {
         }
     }, [cord]); // Re-run this effect if 'cord' changes
 
-    // Callback to get the current scene for MyCanvas
     const getScene = useCallback(() => {
         return sceneRef.current;
-    }, []); // sceneRef itself doesn't change, its .current property does.
-    // MyCanvas probably just needs a function that returns the scene.
+    }, []);
 
-    const handleClick = useCallback(() => {
-        // console.log("Button/Canvas Clicked");
-        // Example: Move heart up and slightly to the right on each click
-        setCord(prevCord => ({
-            x: prevCord.x + 2, // Move right by 2 units
-            y: prevCord.y + 2, // Move up by 2 units
-            z: prevCord.z       // Z position remains the same
-        }));
-
-        // Example: Change background color on click too, to test scene recreation
-        // setBG(prevBg => (prevBg === 0xaaaaaa ? 0xbbbbbb : 0xaaaaaa));
+    const handleClick = useCallback(({ x, y }: { x: number, y: number }) => {
+        setCord({ x, y, z: 0 })
     }, [])
 
 
-    const dummy = useCallback(({ x, y }: { x: number, y: number }) => {
-
+    const handleResize = useCallback(({ x, y }: { x: number, y: number }) => {
+        sizeRef.current.x = x;
+        sizeRef.current.y = y;
     }, [])
 
 
@@ -118,7 +110,7 @@ export default function App() {
         frustumSize={100}
         sceneGetter={getScene}
         onClick={handleClick}
-        onResize={dummy} />;
+        onResize={handleResize} />;
     // Changed prop name to sceneGetter to reflect it's a function
     // If MyCanvas expects the scene object directly, adjust accordingly.
     // If MyCanvas expects `scene={sceneRef.current}` and handles updates itself, that's also an option.
