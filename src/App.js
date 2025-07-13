@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
 
 import { router } from './Nav';
-// import Index from './three/boxes/App.tsx'
-import Index from './three/my-canvas/App.tsx'
+import Index from './Nav'
+// import Index from './three/my-canvas/App.tsx'
 // import Index from './three/example-showPicture/App.tsx'
 
 import {

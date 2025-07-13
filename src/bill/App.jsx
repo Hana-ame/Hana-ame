@@ -15,30 +15,68 @@ import {
 // 预定义的按钮数据
 const PRESET_BUTTONS = [
     { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
+    { id: 'A', label: '操作 A', description: '执行了操作A', price: 10.5 },
     { id: 'B', label: '操作 B', description: '执行了操作B', price: 25.0 },
     { id: 'C', label: '操作 C', description: '执行了操作C', price: 99.9 },
-    { id: 'D', label: '清空日志', description: 'Clear', price: 0 }, // 增加一个清空按钮便于测试
+    // 清空按钮在下面单独处理
 ];
 
 // 单条Log的显示组件 (使用 memo 优化性能)
-const LogItem = memo(({ item }) => (
+const LogItem = memo(({ item, onDelete, onEdit }) => (
     <View style={styles.logItem}>
-        <Text style={styles.logText}>时间: {item.timestamp}</Text>
-        <Text style={styles.logText}>No: <Text style={{ fontWeight: 'bold' }}>{item.sequence}</Text></Text>
-        <Text style={styles.logText}>描述: {item.description}</Text>
-        <Text style={styles.logText}>价格: ¥{item.price.toFixed(2)}</Text>
+        <View style={styles.logContent}>
+            <Text style={styles.logText}>时间: {item.timestamp}</Text>
+            <Text style={styles.logText}>No: <Text style={{ fontWeight: 'bold' }}>{item.sequence}</Text></Text>
+            <Text style={styles.logText}>描述: {item.description}</Text>
+            <Text style={styles.logText}>价格: ¥{item.price.toFixed(2)}</Text>
+        </View>
+        <View style={styles.logActions}>
+            <AppButton
+                title="编辑"
+                onPress={() => onEdit(item)}
+                style={styles.logActionButtonEdit}
+                textStyle={styles.logActionButtonText}
+            />
+            <AppButton
+                title="删除"
+                onPress={() => onDelete(item.id)}
+                style={styles.logActionButtonDelete}
+                textStyle={styles.logActionButtonText}
+            />
+        </View>
     </View>
 ));
 
 // 自定义按钮组件
-const AppButton = ({ title, onPress, style, textStyle }) => (
+const AppButton = ({ title, onPress, style, textStyle, disabled }) => (
     <Pressable
         onPress={onPress}
-        // 按下时改变透明度提供反馈
+        disabled={disabled}
         style={({ pressed }) => [
             styles.buttonBase,
             style,
-            { opacity: pressed ? 0.6 : 1.0 },
+            { opacity: disabled ? 0.5 : (pressed ? 0.6 : 1.0) },
         ]}
     >
         <Text style={[styles.buttonTextBase, textStyle]}>{title}</Text>
@@ -49,11 +87,22 @@ const AppButton = ({ title, onPress, style, textStyle }) => (
 export default function App() {
     // --- State ---
     const [sequenceNumber, setSequenceNumber] = useState(1);
+    const [lastLogs, setLastLogs] = useState([]); // 日志数组 {id, timestamp, sequence, description, price}
     const [logs, setLogs] = useState([]); // 日志数组 {id, timestamp, sequence, description, price}
-    const [modalVisible, setModalVisible] = useState(false);
+    const [lastDeletedLog, setLastDeletedLog] = useState(null); // 用于撤销删除
+
+    // Add Modal State
+    const [addModalVisible, setAddModalVisible] = useState(false);
     const [customDescription, setCustomDescription] = useState('');
     const [customPrice, setCustomPrice] = useState('');
-    const [inputError, setInputError] = useState('');
+    const [addInputError, setAddInputError] = useState('');
+
+    // Edit Modal State
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [logToEdit, setLogToEdit] = useState(null);
+    const [editDescription, setEditDescription] = useState('');
+    const [editPrice, setEditPrice] = useState('');
+    const [editInputError, setEditInputError] = useState('');
 
 
     // --- Handlers ---
@@ -61,24 +110,21 @@ export default function App() {
     // 核心：添加日志逻辑
     const addLog = useCallback((description, price) => {
         const now = new Date();
-        const priceNum = parseFloat(price) || 0; // 确保价格是数字
+        const priceNum = parseFloat(price) || 0;
         const newLog = {
-            id: Date.now().toString() + Math.random().toString(), // 确保ID唯一
-            // 格式化时间戳，包含毫秒
+            id: Date.now().toString() + Math.random().toString(),
             timestamp: `${now.toLocaleDateString()} ${now.toLocaleTimeString()}.${String(now.getMilliseconds()).padStart(3, '0')}`,
-            sequence: sequenceNumber, // 使用当前的序列号
+            sequence: sequenceNumber,
             description: description,
             price: priceNum,
         };
-        // 最新日志放在数组最前面，FlatList 就会显示在最顶部
         setLogs(prevLogs => [newLog, ...prevLogs]);
-        // 添加日志后，序列号自动+1
         setSequenceNumber(prev => prev + 1);
-    }, [sequenceNumber]); // 依赖 sequenceNumber
+        setLastDeletedLog(null); // Clear undo state on new add
+    }, [sequenceNumber]);
 
     // 减少序列号
     const handleDecrement = () => {
-        // 确保序列号不小于0
         setSequenceNumber(prev => Math.max(0, prev - 1));
     };
     // 增加序列号
@@ -88,104 +134,205 @@ export default function App() {
 
     // 处理序列号输入框变化
     const handleSequenceInputChange = (text) => {
-        // 只允许输入数字
         if (text === '') {
-            setSequenceNumber(0); // 或者设为空，但显示时需要处理
+            setSequenceNumber(0);
             return;
         }
         const num = parseInt(text, 10);
         if (!isNaN(num) && num >= 0) {
             setSequenceNumber(num);
         }
-        // 非数字输入将被忽略
     };
 
-    // 打开自定义输入弹窗
-    const openCustomModal = () => {
-        // 清空上次输入和错误信息
+    // 打开自定义输入弹窗 (Add Modal)
+    const openAddModal = () => {
         setCustomDescription('');
         setCustomPrice('');
-        setInputError('');
-        setModalVisible(true);
+        setAddInputError('');
+        setAddModalVisible(true);
     }
 
-    // 确认自定义输入
-    const handleConfirmCustom = () => {
-        Keyboard.dismiss(); // 收起键盘
+    // 确认自定义输入 (Add Modal)
+    const handleConfirmAdd = () => {
+        Keyboard.dismiss();
         const priceNum = parseFloat(customPrice);
 
-        if (isNaN(priceNum) || customPrice.trim() === '') {
-            setInputError("请输入有效的价格数字");
-            // Alert.alert("错误","请输入有效的价格数字");
+        if (customDescription.trim() === '') {
+            setAddInputError("描述不能为空");
             return;
         }
-        // 添加日志
+        if (isNaN(priceNum) || customPrice.trim() === '') {
+            setAddInputError("请输入有效的价格数字");
+            return;
+        }
         addLog(customDescription, priceNum);
-        // 关闭弹窗
-        setModalVisible(false);
-        setInputError('');
+        setAddModalVisible(false);
+        setAddInputError('');
     };
 
-    // 取消自定义输入
-    const handleCancelCustom = () => {
+    // 取消自定义输入 (Add Modal)
+    const handleCancelAdd = () => {
         Keyboard.dismiss();
-        setModalVisible(false);
-        setInputError('');
+        setAddModalVisible(false);
+        setAddInputError('');
     }
 
     // 清空日志
-    const handleClearLogs = () => {
-        console.log(">>> handleClearLogs called! Is Modal Visible? :", modalVisible);
+    const handleClearLogs = useCallback(() => {
+        if (logs.length === 0) {
+            setLogs(lastLogs); // No logs to clear
+            setLastLogs(logs);
+        } else {
+            setLastLogs(logs);
+            setLogs([]);
+        }
+    }, [logs, lastLogs]); // Recreate if logs.length changes to avoid stale closure on empty check
 
-        alert(
-            "清空确认",
-            "确定要清空所有日志记录吗?",
-            [
-                { text: "取消", style: "cancel" },
-                { text: "确定", onPress: () => setLogs([]), style: 'destructive' }
-            ]);
-    }
+    // 删除单条日志
+    const handleDeleteLog = useCallback((logId) => {
+        const logToDelete = logs.find(log => log.id === logId);
+        if (logToDelete) {
+            setLastDeletedLog(logToDelete); // Save for potential undo
+            setLogs(prevLogs => prevLogs.filter(log => log.id !== logId));
+        }
+    }, [logs]); // Dependency on logs needed to find the correct log
+
+    // 撤销删除
+    const handleUndoDelete = useCallback(() => {
+        if (lastDeletedLog) {
+            // Add back to the list, perhaps sort later if original order is critical
+            setLogs(prevLogs => [lastDeletedLog, ...prevLogs]);
+            setLastDeletedLog(null);
+        }
+    }, [lastDeletedLog]);
+
+    // 打开编辑弹窗
+    const handleOpenEditModal = useCallback((logItem) => {
+        setLogToEdit(logItem);
+        setEditDescription(logItem.description);
+        setEditPrice(String(logItem.price)); // TextInput needs string
+        setEditInputError('');
+        setEditModalVisible(true);
+    }, []);
+
+    // 确认编辑
+    const handleConfirmEdit = useCallback(() => {
+        Keyboard.dismiss();
+        const priceNum = parseFloat(editPrice);
+
+        if (editDescription.trim() === '') {
+            setEditInputError("描述不能为空");
+            return;
+        }
+        if (isNaN(priceNum) || editPrice.trim() === '') {
+            setEditInputError("请输入有效的价格数字");
+            return;
+        }
+
+        if (logToEdit) {
+            setLogs(prevLogs =>
+                prevLogs.map(log =>
+                    log.id === logToEdit.id
+                        ? { ...log, description: editDescription, price: priceNum }
+                        : log
+                )
+            );
+            setEditModalVisible(false);
+            setLogToEdit(null);
+            setEditInputError('');
+            setLastDeletedLog(null); // Clear undo state on edit
+        }
+    }, [logToEdit, editDescription, editPrice]);
+
+    // 取消编辑
+    const handleCancelEdit = useCallback(() => {
+        Keyboard.dismiss();
+        setEditModalVisible(false);
+        setLogToEdit(null);
+        setEditInputError('');
+    }, []);
 
 
     // FlatList 的 renderItem 函数
-    const renderLogEntry = useCallback(({ item }) => <LogItem item={item} />, []);
+    const renderLogEntry = useCallback(({ item }) => (
+        <LogItem
+            item={item}
+            onDelete={handleDeleteLog}
+            onEdit={handleOpenEditModal}
+        />
+    ), [handleDeleteLog, handleOpenEditModal]); // Add dependencies
 
     // --- Render ---
     return (
         <SafeAreaView style={styles.safeContainer}>
-            {/* --- 自定义输入弹窗 Modal --- */}
+            {/* --- Add Custom Log Modal --- */}
             <Modal
                 animationType="fade"
                 transparent={true}
-                visible={modalVisible}
-                onRequestClose={handleCancelCustom} // Android back button
+                visible={addModalVisible}
+                onRequestClose={handleCancelAdd}
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>自定义输入</Text>
                         <TextInput
                             style={styles.modalInput}
-                            placeholder="输入描述"
+                            placeholder="输入描述 (必填)"
                             value={customDescription}
                             onChangeText={setCustomDescription}
                             maxLength={50}
                         />
                         <TextInput
                             style={styles.modalInput}
-                            placeholder="输入价格"
+                            placeholder="输入价格 (必填)"
                             value={customPrice}
                             onChangeText={setCustomPrice}
-                            keyboardType="decimal-pad" // 数字键盘带小数点
+                            keyboardType="decimal-pad"
                             maxLength={10}
                         />
-                        {inputError ? <Text style={styles.errorText}>{inputError}</Text> : null}
+                        {addInputError ? <Text style={styles.errorText}>{addInputError}</Text> : null}
                         <View style={styles.modalButtonRow}>
-                            <AppButton title="取消" onPress={handleCancelCustom} style={styles.modalButtonCancel} />
-                            <AppButton title="确定" onPress={handleConfirmCustom} style={styles.modalButtonConfirm} />
+                            <AppButton title="取消" onPress={handleCancelAdd} style={styles.modalButtonCancel} />
+                            <AppButton title="确定" onPress={handleConfirmAdd} style={styles.modalButtonConfirm} />
                         </View>
                     </View>
                 </View>
             </Modal>
+
+            {/* --- Edit Log Modal --- */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={editModalVisible}
+                onRequestClose={handleCancelEdit}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>编辑日志</Text>
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="输入描述 (必填)"
+                            value={editDescription}
+                            onChangeText={setEditDescription}
+                            maxLength={50}
+                        />
+                        <TextInput
+                            style={styles.modalInput}
+                            placeholder="输入价格 (必填)"
+                            value={editPrice}
+                            onChangeText={setEditPrice}
+                            keyboardType="decimal-pad"
+                            maxLength={10}
+                        />
+                        {editInputError ? <Text style={styles.errorText}>{editInputError}</Text> : null}
+                        <View style={styles.modalButtonRow}>
+                            <AppButton title="取消" onPress={handleCancelEdit} style={styles.modalButtonCancel} />
+                            <AppButton title="确定" onPress={handleConfirmEdit} style={styles.modalButtonConfirm} />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
 
             {/* --- 顶部序列号控制区 --- */}
             <View style={styles.topControlContainer}>
@@ -193,9 +340,9 @@ export default function App() {
                 <AppButton title="-" onPress={handleDecrement} style={styles.incDecButton} textStyle={styles.incDecText} />
                 <TextInput
                     style={styles.sequenceInput}
-                    value={String(sequenceNumber)} // TextInput value 必须是 string
+                    value={String(sequenceNumber)}
                     onChangeText={handleSequenceInputChange}
-                    keyboardType="number-pad" // 纯数字键盘
+                    keyboardType="number-pad"
                     textAlign='center'
                     maxLength={8}
                 />
@@ -211,17 +358,27 @@ export default function App() {
                         <AppButton
                             key={btn.id}
                             title={btn.label}
-                            // 特殊处理清空按钮
-                            onPress={btn.id === 'D' ? handleClearLogs : () => addLog(btn.description, btn.price)}
-                            style={btn.id === 'D' ? styles.clearButton : styles.actionButton}
+                            onPress={() => addLog(btn.description, btn.price)}
+                            style={styles.actionButton}
                         />
                     ))}
-                    {/* 自定义输入按钮 */}
                     <AppButton
                         title="自定义输入"
-                        onPress={openCustomModal}
+                        onPress={openAddModal}
                         style={[styles.actionButton, styles.customButton]}
                     />
+                    <AppButton
+                        title="清空日志"
+                        onPress={handleClearLogs}
+                        style={styles.clearButton} // Kept distinct style
+                    />
+                    {lastDeletedLog && ( // Conditionally render Undo button
+                        <AppButton
+                            title="撤销删除"
+                            onPress={handleUndoDelete}
+                            style={styles.undoButton}
+                        />
+                    )}
                 </View>
 
                 {/* 右侧日志区 (独立滚动) */}
@@ -232,12 +389,10 @@ export default function App() {
                         renderItem={renderLogEntry}
                         keyExtractor={item => item.id}
                         style={styles.logList}
-                        contentContainerStyle={{ paddingBottom: 10 }} // 底部留白
-                        ListEmptyComponent={<Text style={styles.emptyLog}>暂无日志记录</Text>} //没有日志时显示
-                    // inverted // 如果想让最新日志在底部并自动上滚，可以开启这个，同时 setLogs 改为 [...prevLogs, newLog]
+                        contentContainerStyle={{ paddingBottom: 10 }}
+                        ListEmptyComponent={<Text style={styles.emptyLog}>暂无日志记录</Text>}
                     />
                 </View>
-
             </View>
         </SafeAreaView>
     );
@@ -249,7 +404,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f0f0f0',
     },
-    // 顶部控制
     topControlContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -284,33 +438,35 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#007AFF',
-        borderRadius: 20, // 圆形
+        borderRadius: 20,
     },
     incDecText: {
         fontSize: 24,
         fontWeight: 'bold',
-        lineHeight: 28, // 调整垂直居中
+        lineHeight: 28,
     },
-    // 主内容
     mainContent: {
-        flex: 1, // 占据剩余空间
-        flexDirection: 'row', // 关键：水平布局左右两栏
+        flex: 1,
+        flexDirection: 'row',
+        maxHeight: '100%',
     },
-    // 左侧
     leftPanel: {
-        flex: 2, // 占比 2/5
+        flex: 2,
         borderRightWidth: 1,
         borderRightColor: '#ccc',
         padding: 10,
         backgroundColor: '#e9e9e9',
-        justifyContent: 'flex-start', // 按钮从顶部开始排
-        alignItems: 'stretch', // 按钮拉伸
+        justifyContent: 'flex-start',
+        alignItems: 'stretch',
+        overflow: 'scroll',
+        maxHeight: '100vh',
     },
-    // 右侧
     rightPanel: {
-        flex: 3, // 占比 3/5
+        flex: 3,
         padding: 5,
         backgroundColor: '#fff',
+        overflow: 'scroll',
+        maxHeight: '100vh',
     },
     logHeader: {
         fontSize: 16,
@@ -328,7 +484,6 @@ const styles = StyleSheet.create({
         color: '#888',
         fontStyle: 'italic',
     },
-    // 按钮通用样式
     buttonBase: {
         paddingVertical: 12,
         paddingHorizontal: 10,
@@ -342,17 +497,21 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     actionButton: {
-        backgroundColor: '#007AFF', // iOS blue
+        backgroundColor: '#007AFF',
     },
     customButton: {
-        backgroundColor: '#4CD964', // Green
-        marginTop: 15,
+        backgroundColor: '#4CD964',
+        marginTop: 10, // Adjusted margin
     },
     clearButton: {
-        backgroundColor: '#FF3B30', // Red
-        marginTop: 20,
+        backgroundColor: '#FF3B30',
+        marginTop: 10, // Adjusted margin
     },
-    // 单条 Log 样式 (方框)
+    undoButton: {
+        backgroundColor: '#FF9500', // Orange for undo
+        marginTop: 10,
+    },
+    // LogItem styles
     logItem: {
         borderWidth: 1,
         borderColor: '#c0c0c0',
@@ -361,23 +520,49 @@ const styles = StyleSheet.create({
         marginVertical: 4,
         marginHorizontal: 5,
         borderRadius: 4,
-        shadowColor: "#000", // 添加一点阴影
+        shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 1,
-        elevation: 1, // Android shadow
+        elevation: 1,
+        flexDirection: 'row', // For content and actions side-by-side
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    logContent: {
+        flex: 1, // Take available space
+    },
+    logActions: {
+        flexDirection: 'column', // Stack edit/delete vertically
+        marginLeft: 8,
+    },
+    logActionButtonEdit: {
+        backgroundColor: '#5AC8FA', // Light blue for edit
+        paddingVertical: 5,
+        paddingHorizontal: 8,
+        marginBottom: 4,
+        borderRadius: 3,
+    },
+    logActionButtonDelete: {
+        backgroundColor: '#FF6B6B', // Light red for delete
+        paddingVertical: 5,
+        paddingHorizontal: 8,
+        borderRadius: 3,
+    },
+    logActionButtonText: {
+        fontSize: 12,
+        color: 'white',
     },
     logText: {
         fontSize: 13,
         color: '#333',
         marginBottom: 2,
     },
-    // Modal 样式
     modalOverlay: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', // 半透明背景
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContent: {
         margin: 20,
@@ -410,7 +595,9 @@ const styles = StyleSheet.create({
     errorText: {
         color: 'red',
         fontSize: 12,
+        alignSelf: 'flex-start', // Align to left under inputs
         marginBottom: 10,
+        marginLeft: 5, // Small indent
     },
     modalButtonRow: {
         flexDirection: 'row',

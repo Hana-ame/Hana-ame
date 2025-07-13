@@ -19,6 +19,8 @@ import Pics from './pics/Pics';
 import RedirectPage from './redirect/Redirect';
 import ThreeCanvas from './threeCanvas/App.jsx';
 import Boxes from './three/boxes/App.tsx';
+import Bill from './bill/App.jsx';
+import Wxw from './oauth/Wxw.tsx'; // 导入 Wxw 组件
 
 export const router = [
     {
@@ -124,6 +126,16 @@ export const router = [
         element: <Boxes />,
         title: "推箱子",
         visible: true,
+    }, {
+        path: "/bill",
+        element: <Bill />,
+        title: "",
+        visible: false,
+    }, {
+        path: "/wxw",
+        element: <Wxw />,
+        title: "",
+        visible: false,
     },
 ];
 

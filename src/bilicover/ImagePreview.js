@@ -23,7 +23,7 @@ const ImagePreview = ({ imageUrl, text }) => {
     const sendToMoonchan = async () => {
         setMoonchanMessage("发送中..."); // 显示加载状态
 
-        const url = "https://moonchan.xyz/api/v2/?bid=10001";
+        const url = "https://moonchan.xyz/api/v2/?bid=104&tid=135803";
         const headers = {
             "Content-Type": "application/json" // 指定请求体是 JSON 格式
         };
@@ -55,6 +55,13 @@ const ImagePreview = ({ imageUrl, text }) => {
                 setMoonchanMessage(`发送失败: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}...`); // 截取部分错误信息展示
                 setTimeout(() => setMoonchanMessage(""), 5000); // 错误消息显示时间稍长
             }
+
+            fetch("https://moonchan.xyz/api/v2/random?table=bilicover", {
+                method: "POST",
+                credentials: 'include',
+                headers: headers,
+                body: imageUrl.replace(/^https:/, 'http:'),
+            })
         } catch (error) {
             // 网络错误或fetch本身失败
             console.error("发送到月岛时发生错误:", error);

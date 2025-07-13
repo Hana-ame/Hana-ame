@@ -109,7 +109,7 @@ const ExImage = ({ path, showNext }) => {
             )}
 
             {/* 错误降级显示 */}
-            {abort && onErrorPath && !nextPath && (
+            {abort && onErrorPath && (
                 <ExImage path={onErrorPath} showNext={false} />
             )}
 
