@@ -36,9 +36,9 @@ export default function Wxw() {
             status,
             in_reply_to_id: inReplyToID,
             media_ids: mediaIDs,
-            sensitive,
-            spoiler_text: spoilerText,
-            visibility,
+            sensitive: mastodonConfig.sensitive,
+            spoiler_text: mastodonConfig.spoiler_text,
+            visibility: mastodonConfig.visibility,
             poll: null,
             language: "zh",
         } as StatusProps;
