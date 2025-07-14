@@ -1,26 +1,27 @@
+import React, { lazy } from 'react';
 
-import React from 'react';
 
 import { NavLink } from 'react-router-dom';
-import Blog from './blog/Blog';
-import Browser from './browser/RequestForm';
-import NumberConverter from './calc/NumberConverter';
-import CanvasComponent from './avd/CanvasComponent';
-import FileUpload from './upload/FileUpload';
-import BiliCover from './bilicover/BiliCover';
-import GetProxyURL from './getProxyURL/GetProxyURLV2';
-import SComponent from './exhentai/Exhentai'; // 导入处理 /s/ 路径的组件
-import Chat from './chat/App.tsx';
-import FileUploader from './upload/FileUploader';
-import Test from './Test'
-import LatexEditor from './latex/Latex';
-import MathEditor from './latex/MathJax';
-import Pics from './pics/Pics';
-import RedirectPage from './redirect/Redirect';
-import ThreeCanvas from './threeCanvas/App.jsx';
-import Boxes from './three/boxes/App.tsx';
-import Bill from './bill/App.jsx';
-import Wxw from './oauth/Wxw.tsx'; // 导入 Wxw 组件
+const Blog = lazy(() => import('./blog/Blog'));
+const Browser = lazy(() => import('./browser/RequestForm'));
+const NumberConverter = lazy(() => import('./calc/NumberConverter'));
+const CanvasComponent = lazy(() => import('./avd/CanvasComponent'));
+const FileUpload = lazy(() => import('./upload/FileUpload'));
+const BiliCover = lazy(() => import('./bilicover/BiliCover'));
+const GetProxyURL = lazy(() => import('./getProxyURL/GetProxyURLV2'));
+const SComponent = lazy(() => import('./exhentai/Exhentai'));
+const Chat = lazy(() => import('./chat/App.tsx'));
+const FileUploader = lazy(() => import('./upload/FileUploader'));
+const Test = lazy(() => import('./Test'));
+const LatexEditor = lazy(() => import('./latex/Latex'));
+const MathEditor = lazy(() => import('./latex/MathJax'));
+const Pics = lazy(() => import('./pics/Pics'));
+const RedirectPage = lazy(() => import('./redirect/Redirect'));
+const ThreeCanvas = lazy(() => import('./threeCanvas/App.jsx'));
+const Boxes = lazy(() => import('./three/boxes/App.tsx'));
+const Bill = lazy(() => import('./bill/App.jsx'));
+const Wxw = lazy(() => import('./oauth/Wxw.tsx'));
+
 
 export const router = [
     {

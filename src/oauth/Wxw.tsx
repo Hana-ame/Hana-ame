@@ -13,11 +13,16 @@ export default function Wxw() {
         spoiler_text: "",
         visibility: "public",
     });
+    const [moonchanConfig, setMoonchanConfig] = useLocalStorage("moonchan", {
+        bid: 23,
+        tid: 0,
+    });
     const [status, setStatus] = useState("");
     const [inReplyToID, setInReplyToID] = useState<string | null>(null);
     const [imageArray, setImageArray] = useState<MastodonMediaResponse[]>([]);
     const [mediaIDs, setMediaIDs] = useState<string[]>([]);
     useEffect(() => {
+        setMoonchanEnabled(true);
         setMediaIDs(imageArray.map((data) => data.id));
     }, [imageArray]);
     // const [sensitive, setSensitive] = useState(false);
@@ -113,14 +118,15 @@ export default function Wxw() {
 
     async function postToMoonChan() {
         setMoonchanEnabled(false);
-        const array = responseMediaArray.length === 0 ? imageArray : responseMediaArray;
-        const url = "https://moonchan.xyz/api/v2/?bid=23";
+        const array = imageArray.length !== 0 ? imageArray : responseMediaArray;
+        // Use the bid from the config state
+        const url = `https://moonchan.xyz/api/v2/?bid=${moonchanConfig.bid}&tid=${moonchanConfig.tid}`;
         const headers = {
             "Content-Type": "application/json" // 指定请求体是 JSON 格式
         };
         const body = JSON.stringify({
-            p: array[0].url || "",
-            txt: ""
+            p: array[0]?.url || "",
+            txt: status,
         });
         const response = await fetch(url, {
             method: "POST", // 使用 POST 方法
@@ -135,17 +141,17 @@ export default function Wxw() {
         }
         const data = await fetch(url).then(r => r.json());
         console.log(data);
-        if (!data || data.length === 0) {
+        if (!data || (Array.isArray(data) ? data.length === 0 : false)) {
             setMoonchanEnabled(true);
             throw new Error("No data returned from MoonChan API");
         }
-        const tid = data[0].no! as number 
+        const tid = (Array.isArray(data) ? data[0] : data).no! as number
         for (const media of array.slice(1)) {
             const mediaBody = JSON.stringify({
                 p: media.url || "",
                 txt: ""
             });
-            const mediaResponse = await fetch(url + "&tid=" + tid, {
+            const mediaResponse = await fetch(`https://moonchan.xyz/api/v2/?bid=${moonchanConfig.bid}&tid=${tid}`, {
                 method: "POST",
                 credentials: 'include',
                 headers: headers,
@@ -214,9 +220,29 @@ export default function Wxw() {
                 value={status} onChange={(e) => setStatus(e.target.value)}
             ></textarea>
 
+            {/* START: Added input bars for Moonchan */}
+            <div className="flex w-full space-x-4">
+                <input
+                    type="number"
+                    className="block w-full text-sm text-gray-700 py-2 px-4 rounded-lg border-0 font-medium"
+                    placeholder="Moonchan BID"
+                    value={moonchanConfig.bid}
+                    onChange={(e) => setMoonchanConfig({ ...moonchanConfig, bid: parseInt(e.target.value, 10) || 0 })}
+                />
+                <input
+                    type="number"
+                    className="block w-full text-sm text-gray-700 py-2 px-4 rounded-lg border-0 font-medium"
+                    placeholder="Moonchan TID (for reply)"
+                    value={moonchanConfig.tid || ''}
+                    onChange={(e) => setMoonchanConfig({ ...moonchanConfig, tid: parseInt(e.target.value, 10) || 0 })}
+                />
+            </div>
+            {/* END: Added input bars for Moonchan */}
+
             <button
-                className={`${moonchanEnabled? "": "disabled"} w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                className={`${moonchanEnabled ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400 cursor-not-allowed"} w-full px-4 py-2 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 onClick={postToMoonChan}
+                disabled={!moonchanEnabled}
             >
                 发布到月岛
             </button>
@@ -233,6 +259,7 @@ export default function Wxw() {
     </div>
 }
 
+// The MediaGallery component remains the same
 const MediaGallery = ({ responseMedia, setImageArray }: { responseMedia: MastodonMediaResponse[], setImageArray?: (o: MastodonMediaResponse[]) => void }) => (
     <div className="grid grid-cols-3 gap-4 max-w-4xl mx-auto">
         {responseMedia.map((data) => (
@@ -257,7 +284,7 @@ const MediaGallery = ({ responseMedia, setImageArray }: { responseMedia: Mastodo
                         rounded-full p-1.5 opacity-0 group-hover:opacity-100
                         transition-opacity duration-200
                         `}
-                        // ${setImageArray ? "" : "hidden"}`}
+                    // ${setImageArray ? "" : "hidden"}`}
                     onClick={() => {
                         if (setImageArray) setImageArray(responseMedia.filter((d) => d.id !== data.id));
                     }}

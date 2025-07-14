@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useEffect } from 'react';
 
 import { HashRouter as Router, Route, Routes, NavLink } from 'react-router-dom';
@@ -35,15 +35,17 @@ const App = () => {
 
 
   return (
-    <Router>
-      <Routes>
-        <Route key="index" index element={<Index />}></Route>
-        <Route key="nav" path="/nav" element={<NavigationPage />}></Route>
-        {router.map((route) => (
-          <Route key={route.path} path={route.path} element={route.element} />
-        ))}
-      </Routes>
-    </Router>
+    <Suspense fallback={<div>Loading...</div>}>
+      <Router>
+        <Routes>
+          <Route key="index" index element={<Index />}></Route>
+          <Route key="nav" path="/nav" element={<NavigationPage />}></Route>
+          {router.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+        </Routes>
+      </Router>
+    </Suspense>
   );
 };
 
