@@ -23,6 +23,7 @@ export default function Wxw() {
     // const [sensitive, setSensitive] = useState(false);
     // const [spoilerText, setSpoilerText] = useState("");
     // const [visibility, setVisibility] = useState("public");
+    const [moonchanEnabled, setMoonchanEnabled] = useState(true);
 
     const [responseMediaArray, setResponseMedia] = useState<MastodonMediaResponse[]>([]);
 
@@ -110,6 +111,53 @@ export default function Wxw() {
         }
     }
 
+    async function postToMoonChan() {
+        setMoonchanEnabled(false);
+        const array = responseMediaArray.length === 0 ? imageArray : responseMediaArray;
+        const url = "https://moonchan.xyz/api/v2/?bid=23";
+        const headers = {
+            "Content-Type": "application/json" // 指定请求体是 JSON 格式
+        };
+        const body = JSON.stringify({
+            p: array[0].url || "",
+            txt: ""
+        });
+        const response = await fetch(url, {
+            method: "POST", // 使用 POST 方法
+            credentials: 'include',
+            headers: headers,
+            body: body
+        });
+        console.log(response)
+        if (!response.ok) {
+            setMoonchanEnabled(true);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await fetch(url).then(r => r.json());
+        console.log(data);
+        if (!data || data.length === 0) {
+            setMoonchanEnabled(true);
+            throw new Error("No data returned from MoonChan API");
+        }
+        const tid = data[0].no! as number 
+        for (const media of array.slice(1)) {
+            const mediaBody = JSON.stringify({
+                p: media.url || "",
+                txt: ""
+            });
+            const mediaResponse = await fetch(url + "&tid=" + tid, {
+                method: "POST",
+                credentials: 'include',
+                headers: headers,
+                body: mediaBody
+            });
+            if (!mediaResponse.ok) {
+                setMoonchanEnabled(true);
+                throw new Error(`HTTP error! status: ${mediaResponse.status}`);
+            }
+        }
+    }
+
     // 居中魔咒
     return <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100"
         onPaste={onPaste}
@@ -167,6 +215,12 @@ export default function Wxw() {
             ></textarea>
 
             <button
+                className={`${moonchanEnabled? "": "disabled"} w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                onClick={postToMoonChan}
+            >
+                发布到月岛
+            </button>
+            <button
                 className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onClick={onPost}
             >
@@ -193,15 +247,17 @@ const MediaGallery = ({ responseMedia, setImageArray }: { responseMedia: Mastodo
             >
 
                 <Image data={data} onClick={(deletedData) => {
-                    if (setImageArray) setImageArray(responseMedia.filter((data) => data.id !== deletedData.id));
-                    else copyText(deletedData.url || "error")
+                    // if (setImageArray) setImageArray(responseMedia.filter((data) => data.id !== deletedData.id));
+                    // else copyText(deletedData.url || "error")
+                    copyText(deletedData.url || "error")
                 }} />
 
-                <button
+                {setImageArray && <button
                     className={`absolute top-2 right-2 bg-red-500 text-white 
                         rounded-full p-1.5 opacity-0 group-hover:opacity-100
                         transition-opacity duration-200
-                        ${setImageArray ? "" : "hidden"}`}
+                        `}
+                        // ${setImageArray ? "" : "hidden"}`}
                     onClick={() => {
                         if (setImageArray) setImageArray(responseMedia.filter((d) => d.id !== data.id));
                     }}
@@ -210,7 +266,7 @@ const MediaGallery = ({ responseMedia, setImageArray }: { responseMedia: Mastodo
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
-                </button>
+                </button>}
             </div>
         ))}
     </div>

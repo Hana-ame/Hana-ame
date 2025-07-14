@@ -4,7 +4,13 @@ import { delay } from "@/Tools/utils.ts";
 
 const ExImage = ({ path, showNext }) => {
     // 基础域名配置
-    const host = "https://ehwv.moonchan.xyz";
+    
+    // 不是这样
+    const searchParams =  new URLSearchParams(window.location.search)
+    // const host = "https://" +  searchParams.get("host") || "ehwv.moonchan.xyz";
+    const host = searchParams.get("host") ? window.location.origin : "https://ehwv.moonchan.xyz";
+
+    // console.log(host)
 
     // 组件状态管理
     const [imageSrc, setImageSrc] = useState(null);        // 当前图片地址
@@ -24,7 +30,9 @@ const ExImage = ({ path, showNext }) => {
     const extractOnErrorPath = (doc) => {
         const element = doc.getElementById("loadfail");
         const onclickHandler = element?.getAttribute('onclick') || '';
-        const pathParam = onclickHandler.replace(/^return nl\('/, "").replace(/'\)$/, "");
+        const regex = /nl\(['"]([^'\\]*(?:\\.[^'\\]*)*)['"]\)/g;
+
+        const pathParam = regex.exec(onclickHandler)[1];
         
         const url = new URL(path, host);
         url.searchParams.append("nl", pathParam);
