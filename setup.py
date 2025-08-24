@@ -16,7 +16,10 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",     # 兼容Python 3.6+
-    install_requires=[],         # 依赖库列表，如["requests>=2.0"]
+    install_requires=[
+        "google",
+        
+    ],         # 依赖库列表，如["requests>=2.0"]
     extras_require={              # 可选依赖（如测试）
         "test": ["pytest"]
     }

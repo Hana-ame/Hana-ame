@@ -12,3 +12,6 @@ from my_first_module import say_hello
 
 print(say_hello("World")) # Output: Hello, World!
 ```
+
+# log
+2025/8/4: 感觉全部通过了.

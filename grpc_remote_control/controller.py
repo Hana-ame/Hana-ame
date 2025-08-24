@@ -90,7 +90,7 @@ def run():
 def test():
     controller = Controller()
     print(controller.get_mouse_position())
-    controller.move_mouse(100, 200)
+    controller.move_mouse(100, 200) # 相对移动.
     print(controller.get_mouse_position())
 
 if __name__ == '__main__':
