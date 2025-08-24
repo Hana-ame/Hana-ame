@@ -1,0 +1,8 @@
+README.md
+setup.py
+my_first_python_module/__init__.py
+nanaka_tools.egg-info/PKG-INFO
+nanaka_tools.egg-info/SOURCES.txt
+nanaka_tools.egg-info/dependency_links.txt
+nanaka_tools.egg-info/requires.txt
+nanaka_tools.egg-info/top_level.txt
