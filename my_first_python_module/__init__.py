@@ -1,2 +1,2 @@
-def hello(something: str) -> None:
+def say_hello(something: str) -> None:
     print(f"hello, {something}")

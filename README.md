@@ -3,7 +3,7 @@
 
 # installation
 ```sh
-pip install git+https://github.com/Hana-ame/Hana-ame.git@py/my_first_python_module
+pip install git+https://github.com/Hana-ame/Hana-ame@py/nanaka_tools
 ```
 
 # usage
@@ -12,3 +12,5 @@ from my_first_module import say_hello
 
 print(say_hello("World")) # Output: Hello, World!
 ```
+
+可以直接在这个文件当中加
