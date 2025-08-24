@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="grpc_remote_control",      # 包名（PyPI唯一标识）
-    version="0.0.4",             # 遵循语义化版本规范
+    version="0.0.5",          
     packages=find_packages(),    # 自动查找包
     author="Nanaka",
     author_email="nanaka@moonchan.xyz",
