@@ -1,7 +1,0 @@
-README.md
-setup.py
-my_first_python_module.egg-info/PKG-INFO
-my_first_python_module.egg-info/SOURCES.txt
-my_first_python_module.egg-info/dependency_links.txt
-my_first_python_module.egg-info/requires.txt
-my_first_python_module.egg-info/top_level.txt

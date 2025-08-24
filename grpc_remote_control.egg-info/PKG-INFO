@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
-Name: my_first_python_module
-Version: 0.0.1
+Name: grpc_remote_control
+Version: 0.0.4
 Summary: 请更改描述
-Home-page: https://github.com/Hana-ame/Hana-ame
+Home-page: https://github.com/Hana-ame/Hana-ame/tree/py/grpc_remote_control
 Author: Nanaka
 Author-email: nanaka@moonchan.xyz
 Classifier: Programming Language :: Python :: 3
@@ -13,12 +13,12 @@ Description-Content-Type: text/markdown
 Provides-Extra: test
 Requires-Dist: pytest; extra == "test"
 
-# my first python module
-用于验证如何使用`pip install git+https://github.com/Hana-ame/Hana-ame.git@branch`进行模块安装的例子.
+# grpc remote control
+远程连接鼠标.
 
 # installation
 ```sh
-pip install git+https://github.com/Hana-ame/Hana-ame.git@py/my_first_python_module
+pip install git+https://github.com/Hana-ame/Hana-ame.git@py/grpc_remote_control
 ```
 
 # usage

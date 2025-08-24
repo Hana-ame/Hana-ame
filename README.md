@@ -1,9 +1,9 @@
-# my first python module
-用于验证如何使用`pip install git+https://github.com/Hana-ame/Hana-ame.git@branch`进行模块安装的例子.
+# grpc remote control
+远程连接鼠标.
 
 # installation
 ```sh
-pip install git+https://github.com/Hana-ame/Hana-ame.git@py/my_first_python_module
+pip install git+https://github.com/Hana-ame/Hana-ame.git@py/grpc_remote_control
 ```
 
 # usage
