@@ -20,7 +20,7 @@ const RedirectPage = lazy(() => import('./redirect/Redirect'));
 const ThreeCanvas = lazy(() => import('./threeCanvas/App.jsx'));
 const Boxes = lazy(() => import('./three/boxes/App.tsx'));
 const Bill = lazy(() => import('./bill/App.jsx'));
-const Wxw = lazy(() => import('./oauth/Wxw.tsx'));
+const Wxw = lazy(() => import('./wxw/Wxw.tsx'));
 
 
 export const router = [

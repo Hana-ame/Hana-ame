@@ -61,6 +61,8 @@ const ENDPOINTS_CONFIG: EndpointConfig[] = [
         name: 'Groq',
         url: 'https://moonchan.xyz/groq',
         models: [
+            { id: 'qwen/qwen3-32b', name: 'Qwen3-32B' },
+            { id: 'moonshotai/kimi-k2-instruct', name: 'Kimi K2 Instruct' },
             { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B' },
             { id: 'gemma2-9b-it', name: 'Gemma 2 Instruct' },
             { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B' },
@@ -230,7 +232,7 @@ function App() {
         const signal = abortControllerRef.current.signal;
 
         const messagesForAPI = [...currentHistory, userMessage];
-        
+
         const body = {
             model: selectedModelId,
             messages: messagesForAPI,
@@ -558,12 +560,12 @@ function App() {
                 <ParameterInput label="Max Tokens (ignored by Groq in stream)" type="number" value={maxTokens} onChange={(e) => setMaxTokens(parseInt(e.target.value, 10))} min="1" />
                 <ParameterInput label="Top P" type="range" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))} step="0.01" min="0" max="1" showValue={true} />
                 <ParameterInput label="Stop Sequence(s) (comma-sep)" type="text" value={stop} onChange={(e) => setStop(e.target.value)} />
-                
+
                 <div className="mt-6">
                     <button
                         onClick={clearHistory}
                         className="w-full bg-red-600 text-white p-2.5 rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors duration-150 flex items-center justify-center"
-                         disabled={isLoading && !abortControllerRef.current}
+                        disabled={isLoading && !abortControllerRef.current}
                     >
                         <FiTrash2 className="mr-2" /> Clear History
                     </button>
