@@ -2,6 +2,7 @@ import React, { lazy } from 'react';
 
 
 import { NavLink } from 'react-router-dom';
+import { element } from 'three/tsl';
 const Blog = lazy(() => import('./blog/Blog'));
 const Browser = lazy(() => import('./browser/RequestForm'));
 const NumberConverter = lazy(() => import('./calc/NumberConverter'));
@@ -21,7 +22,7 @@ const ThreeCanvas = lazy(() => import('./threeCanvas/App.jsx'));
 const Boxes = lazy(() => import('./three/boxes/App.tsx'));
 const Bill = lazy(() => import('./bill/App.jsx'));
 const Wxw = lazy(() => import('./wxw/Wxw.tsx'));
-
+const KuukiMouse = lazy(() => import('./kuuki-mouse/KuukiMouse.tsx'));
 
 export const router = [
     {
@@ -137,7 +138,12 @@ export const router = [
         element: <Wxw />,
         title: "",
         visible: false,
-    },
+    }, {
+        path: "kuuki-mouse",
+        element: <KuukiMouse />,
+        title: "",
+        visible: false,
+    }
 ];
 
 

@@ -27,19 +27,20 @@ export async function uploadFile(file: File, host: string, access_token: string)
     const formData = new FormData();
     formData.append('file', file); // 确保使用服务器要求的字段名（通常是 'file'）
 
-    // const response = await fetch("https://proxy.moonchan.xyz/api/v2/media", {
-    const response = await fetch(`https://${host}/api/v2/media`, { // 30s限制.
+    const response = await fetch("https://proxy.moonchan.xyz/api/v2/media", {
+    // const response = await fetch(`https://${host}/api/v2/media`, { // 30s限制.
         method: "POST",
         headers: {
             "X-Scheme": "https",
-            // "X-Host": host,
-            // "X-Referer": `https://${host}/`,
+            "X-Host": host,
+            "X-Referer": `https://${host}/`,
             "Authorization": `Bearer ${access_token}`,
             // "X-Host": `${localStorage.getItem("mastodon_host")}`,
             // "Authorization": `Bearer ${localStorage.getItem("mastodon_access_token")}`,
             // "Content-Type": "multipart/form-data" // 不需要手动设置，浏览器会自动处理
         },
-        body: formData
+        body: formData,
+        credentials: "include" // 添加此行以发送 Cookie
     });
 
     const data = await response.json();
