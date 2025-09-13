@@ -3,6 +3,7 @@ import { useState } from "react";
 import InputBar from "./InputBar";
 import ItemList from "./ItemList";
 import Websocket from "./Websocket";
+import App from "./App";
 import useLocalStorage from "../Tools/localstorage/useLocalStorageStatus";
 
 export default function KuukiMouse() {
@@ -21,7 +22,7 @@ export default function KuukiMouse() {
 
     if (item !== "") {
         return <main>
-            <Websocket url={item} />
+            <App url={item} />
         </main>
     }
 
