@@ -1,0 +1,1 @@
+// BlogCard.d.ts
