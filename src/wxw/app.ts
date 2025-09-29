@@ -27,7 +27,7 @@ export async function uploadFile(file: File, host: string, access_token: string)
     const formData = new FormData();
     formData.append('file', file); // 确保使用服务器要求的字段名（通常是 'file'）
 
-    const response = await fetch("https://proxy.moonchan.xyz/api/v2/media", {
+    const response = await fetch("https://moonchan.xyz/api/v2/media", {
     // const response = await fetch(`https://${host}/api/v2/media`, { // 30s限制.
         method: "POST",
         headers: {
@@ -49,7 +49,7 @@ export async function uploadFile(file: File, host: string, access_token: string)
     return data as MastodonMediaResponse;
 }
 export async function postStatus(host: string, access_token: string, data: StatusProps) {
-    const endpoint = `https://proxy.moonchan.xyz/api/v1/statuses`
+    const endpoint = `https://moonchan.xyz/api/v1/statuses`
     const resp = await fetch(endpoint, {
         method: 'POST',
         headers: {
