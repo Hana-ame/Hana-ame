@@ -1,90 +1,161 @@
+// 25.10.28
+// create
+// 用来渲染野生markdown文件的
+
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import remarkBreaks from 'remark-breaks';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { a11yDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
+import './MarkdownViewer.css';
 
-// 用于解析 URL 查询参数的辅助 Hook
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
-}
-
-// Markdown 渲染核心组件
-const MarkdownRenderer = () => {
-  const query = useQuery();
-  const markdownUrl = query.get('url');
-  const [markdownContent, setMarkdownContent] = useState('');
-  const [error, setError] = useState('');
+const MarkdownViewer = () => {
+  const [markdown, setMarkdown] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [url, setUrl] = useState('');
 
   useEffect(() => {
+    // 解析URL参数
+    const queryParams = new URLSearchParams(window.location.search);
+    const markdownUrl = queryParams.get('url');
+
     if (markdownUrl) {
-      fetch(markdownUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('网络响应错误');
-          }
-          return response.text();
-        })
-        .then(text => setMarkdownContent(text))
-        .catch(err => setError(`无法加载 Markdown 文件: ${err.message}`));
+      setUrl(markdownUrl);
+      fetchMarkdown(markdownUrl);
+    } else {
+      setLoading(false);
+      setError('No URL parameter provided. Use ?url=https://example.com/markdown.md');
     }
-  }, [markdownUrl]);
+  }, []);
 
-  if (!markdownUrl) {
-    return <div style={{ padding: '20px' }}><h1>请提供一个 Markdown 文件 URL</h1><p>用法示例: <code>?url=https://raw.githubusercontent.com/remarkjs/react-markdown/main/readme.md</code></p></div>;
-  }
+  useEffect(() => {
+    // 当markdown内容变化时，提取标题并设置页面标题
+    if (markdown) {
+      extractTitleFromMarkdown();
+    }
+  }, [markdown]);
 
-  if (error) {
-    return <div style={{ padding: '20px', color: 'red' }}><h1>错误</h1><p>{error}</p></div>;
-  }
-
-  // 自定义渲染器
-  const components = {
-    // 自定义 h1 标题样式
-    h1: ({ node, ...props }) => <h1 style={{ color: 'cornflowerblue', borderBottom: '2px solid lightblue', paddingBottom: '10px' }} {...props} />,
-
-    // 自定义段落样式
-    p: ({ node, ...props }) => <p style={{ fontSize: '16px', lineHeight: '1.6' }} {...props} />,
-
-    // 自定义代码块，并集成语法高亮
-    code({ node, inline, className, children, ...props }) {
-      const match = /language-(\w+)/.exec(className || '');
-      return !inline && match ? (
-        <SyntaxHighlighter
-          style={a11yDark}
-          language={match[1]}
-          PreTag="div"
-          {...props}
-        >
-          {String(children).replace(/\n$/, '')}
-        </SyntaxHighlighter>
-      ) : (
-        <code className={className} {...props}>
-          {children}
-        </code>
-      );
+  const extractTitleFromMarkdown = () => {
+    // 查找第一个一级标题
+    const match = markdown.match(/^#\s+(.+)$/m);
+    if (match && match[1]) {
+      // 设置浏览器标签标题
+      document.title = `${match[1]} - 月桂树`;
+    } else {
+      document.title = 'Markdown Viewer - 月桂树';
     }
   };
 
+  const fetchMarkdown = async (url) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch Markdown: ${response.status} ${response.statusText}`);
+      }
+
+      const text = await response.text();
+      setMarkdown(text);
+    } catch (err) {
+      // 用proxy重试
+      try {
+        const newUrl = new URL(url)
+        newUrl.searchParams.set('proxy_host', newUrl.host);
+        newUrl.host = 'proxy.moonchan.xyz';
+        const response = await fetch(newUrl)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch Markdown: ${response.status} ${response.statusText}`);
+        }
+
+        const text = await response.text();
+        setMarkdown(text);
+
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching Markdown:', err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const CodeBlock = ({ inline, className, children, ...props }) => {
+    const match = /language-(\w+)/.exec(className || '');
+
+    return !inline && match ? (
+      <>{String(children).replace(/\n$/, '')}</>
+    ) : (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  };
+
+  const handleReload = () => {
+    if (url) {
+      fetchMarkdown(url);
+    }
+  };
+
+  const handleUrlChange = (e) => {
+    setUrl(e.target.value);
+  };
+
+  const handleLoadNewUrl = () => {
+    if (url) {
+      window.location.search = `?url=${encodeURIComponent(url)}`;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading Markdown from {url}...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h2>Error Loading Markdown</h2>
+        <p>{error}</p>
+        <div className="url-controls">
+          <input
+            type="text"
+            value={url}
+            onChange={handleUrlChange}
+            placeholder="Enter Markdown URL"
+          />
+          <button onClick={handleLoadNewUrl}>Load</button>
+          <button onClick={handleReload}>Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <ReactMarkdown
-        children={markdownContent}
-        remarkPlugins={[remarkBreaks]}
-        components={components}
-      />
-    </div>
+    <main className="markdown-viewer">
+      <div className="markdown-content">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            code: CodeBlock,
+            a: ({ node, ...props }) => <a target="_blank" rel="noopener noreferrer" {...props} />,
+            img: ({ node, ...props }) => <img style={{ maxWidth: '100%' }} {...props} />
+          }}
+        >
+          {markdown}
+        </ReactMarkdown>
+      </div>
+
+      <div className="footer">
+        <p>Rendered with React Markdown Viewer | {new Date().toLocaleDateString()}</p>
+      </div>
+    </main>
   );
 };
 
-// App 入口
-const App = () => {
-  return (
-    <Router>
-      <MarkdownRenderer />
-    </Router>
-  );
-};
-
-export default App;
+export default MarkdownViewer;

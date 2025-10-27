@@ -1,0 +1,253 @@
+/* MarkdownViewer.css */
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2c3e50;
+  --light-bg: #f8f9fa;
+  --dark-bg: #2c3e50;
+  --text-color: #333;
+  --light-text: #f8f9fa;
+  --border-radius: 8px;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f0f2f5;
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.markdown-viewer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  box-shadow: var(--shadow);
+  border-radius: var(--border-radius);
+  min-height: 100vh;
+}
+
+.header {
+  background-color: var(--secondary-color);
+  color: var(--light-text);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+}
+
+.url-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.url-controls input {
+  flex-grow: 1;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  min-width: 300px;
+}
+
+.url-controls button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.url-controls button:hover {
+  background-color: #2980b9;
+}
+
+.markdown-content {
+  padding: 0 20px 20px;
+}
+
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3 {
+  color: var(--secondary-color);
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.markdown-content h1 {
+  font-size: 2rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.8rem;
+}
+
+.markdown-content h3 {
+  font-size: 1.5rem;
+}
+
+.markdown-content p {
+  margin: 15px 0;
+}
+
+.markdown-content a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.markdown-content a:hover {
+  text-decoration: underline;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid var(--primary-color);
+  padding: 10px 20px;
+  margin: 20px 0;
+  background-color: var(--light-bg);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.markdown-content th, 
+.markdown-content td {
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.markdown-content th {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: var(--light-bg);
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+  padding-left: 30px;
+  margin: 15px 0;
+}
+
+.markdown-content li {
+  margin-bottom: 8px;
+}
+
+.markdown-content code:not([class]) {
+  background-color: var(--light-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.loading-container, 
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(52, 152, 219, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary-color);
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-container {
+  background-color: #ffebee;
+  padding: 30px;
+  border-radius: var(--border-radius);
+  max-width: 800px;
+  margin: 40px auto;
+}
+
+.error-container h2 {
+  color: #c62828;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  color: #777;
+  border-top: 1px solid #eee;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .markdown-viewer {
+    padding: 15px;
+  }
+  
+  .header {
+    padding: 15px;
+  }
+  
+  .url-controls {
+    flex-direction: column;
+  }
+  
+  .url-controls input {
+    min-width: unset;
+    width: 100%;
+  }
+  
+  .markdown-content {
+    padding: 0 10px 10px;
+  }
+}
+
+/* 添加标题区域样式 */
+.title-container {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.title-container h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  color: #2c3e50;
+}
+
+.title-container .subtitle {
+  margin: 10px 0 0;
+  font-size: 1.5rem;
+  font-weight: normal;
+  color: #3498db;
+  font-style: italic;
+}
+
+/* 其他样式保持不变 */
