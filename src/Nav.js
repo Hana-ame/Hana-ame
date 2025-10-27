@@ -23,6 +23,7 @@ const Boxes = lazy(() => import('./three/boxes/App.tsx'));
 const Bill = lazy(() => import('./bill/App.jsx'));
 const Wxw = lazy(() => import('./wxw/Wxw.tsx'));
 const KuukiMouse = lazy(() => import('./kuuki-mouse/KuukiMouse.tsx'));
+const MarkdownParser = lazy(() => import('./MarkDownParser/App.jsx'));
 
 export const router = [
     {
@@ -141,6 +142,11 @@ export const router = [
     }, {
         path: "kuuki-mouse",
         element: <KuukiMouse />,
+        title: "",
+        visible: false,
+    }, {
+        path: "markdown-parser",
+        element: <MarkdownParser />,
         title: "",
         visible: false,
     }

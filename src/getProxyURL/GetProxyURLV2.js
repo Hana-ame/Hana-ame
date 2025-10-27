@@ -1,3 +1,7 @@
+// 25.10.28
+// fix 
+// 会变成ex.moonchan.xyz
+
 import React, { useEffect, useState } from 'react';
 import { getProxyURL } from '@/Tools/Proxy/utils.ts';
 import { Main } from '../App';
@@ -14,7 +18,7 @@ const GetProxyURL = () => {
         const httpsRegex = /https:\/\/[^\s/$.?#].[^\s]*/; // 提取URL的正则表达式
         const updateURL = () => {
             const match = url.match(httpsRegex);
-            let newProxyURL = getProxyURL(match ? match : "");
+            let newProxyURL = getProxyURL(match ? match : "", "proxy.moonchan.xyz");
 
             // 如果有 proxyReferer，则将其作为参数附加到 proxyURL 上
             if (proxyReferer) {

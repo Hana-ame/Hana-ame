@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchWithProxy } from '@/Tools/Proxy/utils'
+import ProxyFetch from '@/Tools/Proxy/ProxyFetch.ts'
 import ImagePreview from './ImagePreview';
 
 const BV = ({ id, text }) => {
@@ -10,7 +11,7 @@ const BV = ({ id, text }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await fetchWithProxy(
+                const response = await (new ProxyFetch("ex.moonchan.xyz")).fetch(
                     `https://apiv2.magecorn.com/bilicover/get?type=bv&id=${id}&client=2.6.0`, 
                     {
                         method: 'GET',
