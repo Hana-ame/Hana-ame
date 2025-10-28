@@ -5,6 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks'; // 引入插件
+
 import './MarkdownViewer.css';
 
 const MarkdownViewer = () => {
@@ -140,11 +142,22 @@ const MarkdownViewer = () => {
     <main className="markdown-viewer">
       <div className="markdown-content">
         <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
+          remarkPlugins={[remarkGfm, remarkBreaks]}  // 使用插件
+          breaks={true}  // 添加这一行
           components={{
             code: CodeBlock,
-            a: ({ node, ...props }) => <a target="_blank" rel="noopener noreferrer" {...props} />,
-            img: ({ node, ...props }) => <img style={{ maxWidth: '100%' }} {...props} />
+            a: ({ node, children, href, ...props }) => (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+                aria-label={children ? undefined : `Link to ${href}`}
+              >
+                {children ? children : href}
+              </a>
+            ),
+            img: ({ node, alt, ...props }) => <img alt={alt || ''} style={{ maxWidth: '100%' }} {...props} />
           }}
         >
           {markdown}
@@ -152,7 +165,8 @@ const MarkdownViewer = () => {
       </div>
 
       <div className="footer">
-        <p>Rendered with React Markdown Viewer | {new Date().toLocaleDateString()}</p>
+        <p>Rendered with React Markdown Viewer | {new Date().toLocaleDateString()}</p> 
+        <p><a href="https://moonchan.xyz/">月岛 - 匿名版</a></p>
       </div>
     </main>
   );
