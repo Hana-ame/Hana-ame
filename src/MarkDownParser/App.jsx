@@ -7,6 +7,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks'; // 引入插件
 
+import { PhotoProvider, PhotoView } from 'react-photo-view';
+import 'react-photo-view/dist/react-photo-view.css';
+
+
 import './MarkdownViewer.css';
 
 const MarkdownViewer = () => {
@@ -140,34 +144,43 @@ const MarkdownViewer = () => {
 
   return (
     <main className="markdown-viewer">
-      <div className="markdown-content">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkBreaks]}  // 使用插件
-          breaks={true}  // 添加这一行
-          components={{
-            code: CodeBlock,
-            a: ({ node, children, href, ...props }) => (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                {...props}
-                aria-label={children ? undefined : `Link to ${href}`}
-              >
-                {children ? children : href}
-              </a>
-            ),
-            img: ({ node, alt, ...props }) => <img alt={alt || ''} style={{ maxWidth: '100%' }} {...props} />
-          }}
-        >
-          {markdown}
-        </ReactMarkdown>
-      </div>
+      <PhotoProvider>
+
+        <div className="markdown-content">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm, remarkBreaks]}  // 使用插件
+            breaks={true}  // 添加这一行
+            components={{
+              code: CodeBlock,
+              a: ({ node, children, href, ...props }) => (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...props}
+                  aria-label={children ? undefined : `Link to ${href}`}
+                >
+                  {children ? children : href}
+                </a>
+              ),
+              img: ({ node, alt, ...props }) => (
+                props.src && <PhotoView src={props.src}>
+                  <img alt={alt || ''} style={{ maxWidth: '100%', maxHeight: '100%', height: 'auto', width: 'auto' }} {...props} />
+                </PhotoView>
+              )
+            }}
+          >
+            {markdown}
+          </ReactMarkdown>
+        </div>
+      </PhotoProvider>
+
 
       <div className="footer">
-        <p>Rendered with React Markdown Viewer | {new Date().toLocaleDateString()}</p> 
+        <p>Rendered with React Markdown Viewer | {new Date().toLocaleDateString()}</p>
         <p><a href="https://moonchan.xyz/">月岛 - 匿名版</a></p>
       </div>
+
     </main>
   );
 };
