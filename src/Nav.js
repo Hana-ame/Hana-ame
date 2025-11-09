@@ -24,6 +24,7 @@ const Bill = lazy(() => import('./bill/App.jsx'));
 const Wxw = lazy(() => import('./wxw/Wxw.tsx'));
 const KuukiMouse = lazy(() => import('./kuuki-mouse/KuukiMouse.tsx'));
 const MarkdownParser = lazy(() => import('./MarkDownParser/App.jsx'));
+const OCR = lazy(() => import('./ocr/OCRAppV3.jsx'));
 
 export const router = [
     {
@@ -147,6 +148,11 @@ export const router = [
     }, {
         path: "markdown-parser",
         element: <MarkdownParser />,
+        title: "",
+        visible: false,
+    }, {
+        path: "ocr",
+        element: <OCR />,
         title: "",
         visible: false,
     }
