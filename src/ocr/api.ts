@@ -43,7 +43,7 @@ export async function describeImage(content: string) {
         // 构建请求体（根据不同的OCR服务调整结构）[2](@ref)
         const body = JSON.stringify({
             image_url: content,        // 多数服务接受纯Base64数据
-            text: "describe this image in detail."
+            text: "describe this image."
         });
 
         // 构建请求头
@@ -75,7 +75,7 @@ export async function describeImage(content: string) {
 }
 
 export async function translateContent(content: string) {
-    const path = "/siliconflow/qwen2.5-7b-Instruct/translate"
+    const path = "/siliconflow/GLM-4-9B-0414/translate"
     try {
         // 构建请求头
         const headers = {

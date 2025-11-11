@@ -7,8 +7,8 @@ import { describeImage, freeOCR, translateContent } from './api.ts'
 
 // ... (假设 ChatInterface 和 ChatInputBox 组件已定义)
 
-const AVATAR_DEEPSEEK = "https://upload.moonchan.xyz/api/01LLWEUUZ3X77353ZOQBAZFEVAEMZVGU43/image.webp";
-const AVATAR_QWEN = "https://upload.moonchan.xyz/api/01LLWEUU4IFRWXLR5X2JF37YR7KICEX7U6/image.webp"
+const AVATAR_DEEPSEEK = "https://upload.moonchan.xyz/api/01LLWEUU4GWGTSADJRMZBYI6XVCRJEV4SA/DeepSeek.svg";
+const AVATAR_ZHIPU = "https://upload.moonchan.xyz/api/01LLWEUU4AXDBVIH7Q2BGJ3E7BU2O7YZSH/zhipu.svg";
 
 function isImageUrl(content) {
     // 支持的图片后缀名列表
@@ -43,9 +43,9 @@ const ChatApp = () => {
 
     const [messages, setMessages] = useState([
         { id: "ocr", align: "left", avatar: AVATAR_DEEPSEEK, username: "free OCR", content: ocr ? "OCR 功能开启" : "OCR 功能关闭", timestamp: "" },
-        { id: "translate", align: "left", avatar: AVATAR_QWEN, username: "translate", content: translate ? "translate 功能开启" : "translate 功能关闭", timestamp: "" },
+        { id: "translate", align: "left", avatar: AVATAR_ZHIPU, username: "translate", content: translate ? "translate 功能开启" : "translate 功能关闭", timestamp: "" },
         { id: "describe", align: "left", avatar: AVATAR_DEEPSEEK, username: "describe", content: describe ? "describe 功能开启" : "describe 功能关闭", timestamp: "" },
-        { id: "describe_zh", align: "left", avatar: AVATAR_QWEN, username: "describe 中文", content: describe_zh ? "describe 自动翻译功能开启" : "describe 自动翻译功能关闭", timestamp: "" },
+        { id: "describe_zh", align: "left", avatar: AVATAR_ZHIPU, username: "describe 中文", content: describe_zh ? "describe 自动翻译功能开启" : "describe 自动翻译功能关闭", timestamp: "" },
     ]);
 
 
@@ -84,7 +84,7 @@ const ChatApp = () => {
                         ...prevMessages,
                         {
                             id: Date.now(),
-                            avatar: AVATAR_QWEN,
+                            avatar: AVATAR_ZHIPU,
                             username: "Translate",
                             align: "left",
                             content: translated,
@@ -112,7 +112,7 @@ const ChatApp = () => {
                         ...prevMessages,
                         {
                             id: Date.now(),
-                            avatar: AVATAR_QWEN,
+                            avatar: AVATAR_ZHIPU,
                             username: "Describe",
                             align: "left",
                             content: translated,
