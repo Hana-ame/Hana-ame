@@ -9,6 +9,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "b58": "^4.0.3",
     "hls.js": "^1.6.12",
     "jsrsasign": "^11.1.0",
     "jsrsasign-util": "^1.0.5",
@@ -18,7 +19,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-draggable": "^4.4.6",
-    "react-hls-player": "^3.0.7",
     "react-icons": "^5.5.0",
     "react-markdown": "^9.1.0",
     "react-native-rsa-native": "^2.0.5",
@@ -26,7 +26,6 @@
     "react-photo-view": "^1.2.7",
     "react-player": "^3.3.2",
     "react-router-dom": "^6.28.0",
-    "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^16.0.0",
     "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
@@ -67,7 +66,7 @@
     "autoprefixer": "^10.4.20",
     "babel-plugin-module-resolver": "^5.0.2",
     "postcss": "^8.4.49",
-    "react-app-rewired": "^2.2.1",
+    "react-app-rewired": "^0.1.0",
     "tailwindcss": "^3.4.15"
   }
 }
