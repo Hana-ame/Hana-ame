@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务导航页</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary-color: #4a90e2;
+            --text-main: #333;
+            --text-hint: #666;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        /* 响应式 Grid 布局 */
+        #services-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* 服务 Section 样式 */
+        .service-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .service-header {
+            border-bottom: 2px solid #eee;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+        }
+
+        .service-title {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        .service-hint {
+            font-size: 0.85rem;
+            color: var(--text-hint);
+            margin-top: 5px;
+        }
+
+        /* 服务入口列表 */
+        .entry-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .entry-item {
+            position: relative;
+            text-decoration: none;
+            background: #f0f4f8;
+            color: #334e68;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        /* 触屏/PC 适配的悬停效果 */
+        .entry-item:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Tooltip 提示框样式 */
+        .entry-item .tooltip {
+            visibility: hidden;
+            width: 180px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -90px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75rem;
+            pointer-events: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .entry-item:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* 适配触屏：移动端不显示过于复杂的 hover 动画 */
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            #services-list { grid-template-columns: 1fr; }
+            .entry-item { padding: 12px 15px; width: 100%; text-align: center; } /* 增加点击面积 */
+            .entry-item .tooltip { display: none; } /* 移动端通常通过描述文字解决，不建议用 tooltip */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>一览</h1>
+        <p></p>
+    </header>
+
+    <!-- 渲染后的 HTML 将挂载到这里 -->
+    <main id="services-list"></main>
+</div>
+
+<script>
+    // 1. 定义数据 (Inline JSON)
+    const servicesData = [
+        {
+            title: "月岛 - 匿名版",
+            hint: "默认列表会不同",
+            entries: [
+                { name: "810114.xyz", url: "https://810114.xyz", note: "被墙了的话会删除" },
+                { name: "nmbyd3.top", url: "https://nmbyd3.top", note: "6月到期" },
+            ]
+        },
+        {
+            title: "exhentai 镜像",
+            hint: "不要的user script去网页最上面的设置(config)里面关掉",
+            entries: [
+                { name: "ex.810114.xyz", url: "https://ex.810114.xyz", note: "被墙了的话会删除" },
+                { name: "分流1 - 3月到期", url: "https://ex.nmbyd2.top", note: "3月到期" },
+                { name: "分流2 - 6月到期", url: "https://ex.nmbyd3.top", note: "6月到期" },
+            ]
+        },
+        {
+            title: "推图",
+            hint: "推特看图纯享版",
+            entries: [
+                { name: "x.810114.xyz", url: "https://x.810114.xyz", note: "被墙了的话会删除" },
+                { name: "x.nmbyd3.top - 6月到期", url: "https://x.nmbyd3.top", note: "6月到期" },
+            ]
+        },
+        {
+            title: "nyaa 镜像",
+            hint: "下种子的地方",
+            entries: [
+                { name: "表站", url: "https://nyaa.moonchan.xyz", note: "全年龄资源" },
+                { name: "里站", url: "https://sukebei.moonchan.xyz", note: "R18资源" },
+            ]
+        },
+    ];
+
+    // 2. 渲染函数
+    function renderServices(data) {
+        const container = document.getElementById('services-list');
+        
+        container.innerHTML = data.map(service => `
+            <section class="service-section">
+                <div class="service-header">
+                    <h2 class="service-title">${service.title}</h2>
+                    <div class="service-hint">${service.hint}</div>
+                </div>
+                <div class="entry-list">
+                    ${service.entries.map(entry => `
+                        <a href="${entry.url}" class="entry-item" target="_blank">
+                            ${entry.name}
+                            <span class="tooltip">${entry.note}</span>
+                        </a>
+                    `).join('')}
+                </div>
+            </section>
+        `).join('');
+    }
+
+    // 3. 执行渲染
+    window.onload = () => renderServices(servicesData);
+</script>
+
+</body>
+</html>
