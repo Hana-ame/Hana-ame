@@ -49,6 +49,8 @@ interface MessageMeta {
   tokens_per_second?: number;
   characters?: number;
   is_estimated?: boolean;
+  finish_reason?: string;
+  truncated_warning?: boolean;
 }
 
 interface Message {
@@ -459,6 +461,7 @@ function App() {
       let promptTokens = 0;
       let totalTokens = 0;
       let receivedUsageData = false; // 标记是否从API接收到usage数据
+      let finishReason: string | null = null; // 记录 finish_reason
 
       while (!doneReading) {
         if (signal.aborted) {
@@ -492,6 +495,17 @@ function App() {
                 const h = [...prev];
                 const lastIdx = h.length - 1;
                 if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
+                  // 获取当前内容
+                  const currentContent = h[lastIdx].content as string;
+                  let finalContent = currentContent;
+                  
+                  // 如果因为长度限制，添加截断提示
+                  if (finishReason === "length") {
+                    finalContent += "\n\n---\n**⚠️ 回复因达到长度限制而被截断**";
+                  }
+                  
+                  // 更新内容和元数据
+                  h[lastIdx].content = finalContent;
                   h[lastIdx].meta = {
                     usage: {
                       prompt_tokens: promptTokens,
@@ -500,8 +514,10 @@ function App() {
                     },
                     response_time: responseTime,
                     tokens_per_second: Math.round(tokensPerSecond * 100) / 100,
-                    characters: processedContentRef.current.length,
-                    is_estimated: !receivedUsageData
+                    characters: finalContent.length,
+                    is_estimated: !receivedUsageData,
+                    finish_reason: finishReason || undefined,
+                    truncated_warning: finishReason === "length"
                   };
                 }
                 return h;
@@ -514,8 +530,15 @@ function App() {
             try {
               const parsedChunk = JSON.parse(jsonData) as StreamChunk;
 
-              if (parsedChunk.choices && parsedChunk.choices[0]?.delta) {
-                const delta = parsedChunk.choices[0].delta;
+              if (parsedChunk.choices && parsedChunk.choices[0]) {
+                const choice = parsedChunk.choices[0];
+                const delta = choice.delta;
+                
+                // 保存 finish_reason
+                if (choice.finish_reason) {
+                  finishReason = choice.finish_reason;
+                }
+
                 const contentChunk = delta.content || "";
                 const reasoningChunk = delta.reasoning_content || "";
 
@@ -949,6 +972,15 @@ function App() {
                                     <span className="text-gray-500">chars:</span>
                                     <span className="font-medium text-indigo-400">
                                       {msg.meta.characters}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {msg.meta.finish_reason && (
+                                  <div className="flex items-center gap-1 bg-gray-800/50 px-1.5 py-0.5 rounded text-[10px]">
+                                    <span className="text-gray-500">finish:</span>
+                                    <span className="font-medium text-orange-400">
+                                      {msg.meta.finish_reason}
                                     </span>
                                   </div>
                                 )}
