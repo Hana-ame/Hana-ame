@@ -167,7 +167,6 @@ function App() {
   // 修复重复打字问题：使用 ref 记录已处理的内容
   const processedContentRef = useRef<string>("");
   const processedReasoningRef = useRef<string>("");
-  const usageDataRef = useRef<MessageMeta>({});
 
   // Save to LocalStorage when states change
   useEffect(() => {
@@ -395,7 +394,6 @@ function App() {
     // 重置已处理内容的引用
     processedContentRef.current = "";
     processedReasoningRef.current = "";
-    usageDataRef.current = {};
 
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
@@ -462,6 +460,7 @@ function App() {
       let totalTokens = 0;
       let receivedUsageData = false; // 标记是否从API接收到usage数据
       let finishReason: string | null = null; // 记录 finish_reason
+      let accumulatedContent = ""; // 本地累积内容
 
       while (!doneReading) {
         if (signal.aborted) {
@@ -490,22 +489,21 @@ function App() {
               // 计算 tokens per second
               const tokensPerSecond = completionTokens / (responseTime / 1000);
               
-              // 更新最后一条消息的元数据
+              // 获取最终内容
+              let finalContent = accumulatedContent;
+              let truncatedWarning = false;
+              
+              if (finishReason !== null) {
+                finalContent += "\n\n---\n**⚠️ 回复因达到长度限制而被截断**";
+                truncatedWarning = true;
+              }
+              
+              // 更新最后一条消息
               setHistory((prev) => {
                 const h = [...prev];
                 const lastIdx = h.length - 1;
                 if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
-                  // 获取当前内容
-                  const currentContent = h[lastIdx].content as string;
-                  let finalContent = currentContent;
-                  
-                  // 如果因为长度限制，添加截断提示
-                  if (finishReason === "length") {
-                    finalContent += "\n\n---\n**⚠️ 回复因达到长度限制而被截断**";
-                  }
-                  
-                  // 更新内容和元数据
-                  h[lastIdx].content = finalContent;
+                  // 重要：不重新设置内容，只添加元数据
                   h[lastIdx].meta = {
                     usage: {
                       prompt_tokens: promptTokens,
@@ -517,7 +515,7 @@ function App() {
                     characters: finalContent.length,
                     is_estimated: !receivedUsageData,
                     finish_reason: finishReason || undefined,
-                    truncated_warning: finishReason === "length"
+                    truncated_warning: truncatedWarning
                   };
                 }
                 return h;
@@ -542,28 +540,36 @@ function App() {
                 const contentChunk = delta.content || "";
                 const reasoningChunk = delta.reasoning_content || "";
 
-                if (contentChunk || reasoningChunk) {
-                  // 修复重复打字问题：使用 ref 累积内容
-                  if (contentChunk) {
-                    processedContentRef.current += contentChunk;
-                    // 如果没有收到API的usage数据，则估算token
-                    if (!receivedUsageData) {
-                      // 简单估算：每个中文字符约1.5个token，英文字符约0.3个token
-                      const chineseChars = (contentChunk.match(/[\u4e00-\u9fa5]/g) || []).length;
-                      const englishChars = contentChunk.length - chineseChars;
-                      completionTokens += Math.round(chineseChars * 1.5 + englishChars * 0.3);
-                    }
+                if (contentChunk) {
+                  // 累积内容
+                  accumulatedContent += contentChunk;
+                  processedContentRef.current = accumulatedContent;
+                  
+                  // 如果没有收到API的usage数据，则估算token
+                  if (!receivedUsageData) {
+                    // 简单估算：每个中文字符约1.5个token，英文字符约0.3个token
+                    const chineseChars = (contentChunk.match(/[\u4e00-\u9fa5]/g) || []).length;
+                    const englishChars = contentChunk.length - chineseChars;
+                    completionTokens += Math.round(chineseChars * 1.5 + englishChars * 0.3);
                   }
-                  if (reasoningChunk) {
-                    processedReasoningRef.current += reasoningChunk;
-                  }
-
+                  
+                  // 实时更新状态
                   setHistory((prev) => {
                     const h = [...prev];
                     const lastIdx = h.length - 1;
                     if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
-                      // 使用累积的内容更新，而不是追加
-                      h[lastIdx].content = processedContentRef.current;
+                      h[lastIdx].content = accumulatedContent;
+                    }
+                    return h;
+                  });
+                }
+                
+                if (reasoningChunk) {
+                  processedReasoningRef.current += reasoningChunk;
+                  setHistory((prev) => {
+                    const h = [...prev];
+                    const lastIdx = h.length - 1;
+                    if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
                       h[lastIdx].reasoning_content = processedReasoningRef.current;
                     }
                     return h;
@@ -574,7 +580,6 @@ function App() {
               // 保存usage数据
               if (parsedChunk.usage) {
                 receivedUsageData = true;
-                usageDataRef.current.usage = parsedChunk.usage;
                 promptTokens = parsedChunk.usage.prompt_tokens || 0;
                 completionTokens = parsedChunk.usage.completion_tokens || completionTokens;
                 totalTokens = parsedChunk.usage.total_tokens || (promptTokens + completionTokens);
@@ -910,7 +915,13 @@ function App() {
                                 },
                               }}
                             >
-                              {(msg.content as string) || "▋"}
+                              {(() => {
+                                const content = msg.content as string;
+                                if (msg.meta?.truncated_warning) {
+                                  return content + "\n\n---\n**⚠️ 回复因达到长度限制而被截断**";
+                                }
+                                return content || "▋";
+                              })()}
                             </ReactMarkdown>
                           </div>
                           
