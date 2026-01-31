@@ -21,6 +21,8 @@ import {
   FiClock,
   FiHash,
   FiActivity,
+  FiCopy,
+  FiCheck as FiCheckCircle,
 } from "react-icons/fi";
 
 // --- Type Definitions ---
@@ -107,6 +109,9 @@ function App() {
   // Token统计相关状态
   const [streamingStartTime, setStreamingStartTime] = useState<number | null>(null);
   const [currentStreamingTokens, setCurrentStreamingTokens] = useState<number>(0);
+  
+  // 复制状态
+  const [copiedCodeIndex, setCopiedCodeIndex] = useState<number | null>(null);
 
   // --- New Configuration States with LocalStorage ---
   const [endpointUrl, setEndpointUrl] = useState<string>(() => {
@@ -166,6 +171,9 @@ function App() {
   
   // 用于跟踪token统计
   const tokenCountRef = useRef<number>(0);
+  
+  // 用于生成唯一的代码块ID
+  const codeBlockIdCounter = useRef(0);
 
   // Save to LocalStorage when states change
   useEffect(() => {
@@ -354,6 +362,19 @@ function App() {
   const estimateTokens = (text: string): number => {
     // 简单估算：平均一个token大约4个字符
     return Math.ceil(text.length / 4);
+  };
+
+  // --- 复制代码功能 ---
+  const copyCodeToClipboard = async (code: string, codeIndex: number) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCodeIndex(codeIndex);
+      setTimeout(() => {
+        setCopiedCodeIndex(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy code: ', err);
+    }
   };
 
   // --- Streaming Logic ---
@@ -656,28 +677,49 @@ function App() {
       const match = /language-(\w+)/.exec(className || '');
       const language = match ? match[1] : '';
       
+      // 为每个代码块生成唯一ID
+      const codeBlockId = `code-${++codeBlockIdCounter.current}`;
+      const codeContent = String(children).replace(/\n$/, '');
+      
       if (!inline && language) {
         return (
-          <div className="relative my-2">
-            <div className="overflow-x-auto">
+          <div className="relative my-2 group">
+            <div className="overflow-x-auto rounded-t-md border border-gray-700">
               <SyntaxHighlighter
                 style={vscDarkPlus}
                 language={language}
                 PreTag="div"
-                className="rounded-md text-sm"
+                className="rounded-t-md text-sm m-0"
                 showLineNumbers={true}
-                wrapLines={true}
+                wrapLines={false}
                 customStyle={{
                   margin: 0,
-                  borderRadius: '0.375rem',
                   fontSize: '0.875rem',
+                  background: '#1a1a1a',
                 }}
               >
-                {String(children).replace(/\n$/, '')}
+                {codeContent}
               </SyntaxHighlighter>
             </div>
-            <div className="text-xs text-gray-500 mt-1 text-right">
-              可左右滚动 →
+            <div className="flex justify-between items-center bg-gray-900 border border-t-0 border-gray-700 rounded-b-md px-3 py-1">
+              <span className="text-xs text-gray-500">{language}</span>
+              <button
+                onClick={() => copyCodeToClipboard(codeContent, codeBlockIdCounter.current)}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
+                title="复制代码"
+              >
+                {copiedCodeIndex === codeBlockIdCounter.current ? (
+                  <>
+                    <FiCheckCircle className="text-green-500" size={14} />
+                    <span className="text-green-500">已复制</span>
+                  </>
+                ) : (
+                  <>
+                    <FiCopy size={14} />
+                    <span>复制代码</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         );
@@ -695,23 +737,26 @@ function App() {
     },
     table: ({ node, children, ...props }: any) => {
       return (
-        <div className="overflow-x-auto my-3">
-          <table className="min-w-full divide-y divide-gray-700 border border-gray-700 rounded-lg" {...props}>
+        <div className="overflow-x-auto my-4 border border-gray-700 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-700" {...props}>
             {children}
           </table>
         </div>
       );
     },
     thead: ({ node, children, ...props }: any) => {
-      return <thead className="bg-gray-800" {...props}>{children}</thead>;
+      return <thead className="bg-gray-800/80" {...props}>{children}</thead>;
     },
     tbody: ({ node, children, ...props }: any) => {
-      return <tbody className="divide-y divide-gray-700" {...props}>{children}</tbody>;
+      return <tbody className="divide-y divide-gray-700/50" {...props}>{children}</tbody>;
+    },
+    tr: ({ node, children, ...props }: any) => {
+      return <tr className="hover:bg-gray-800/30 transition-colors" {...props}>{children}</tr>;
     },
     th: ({ node, children, ...props }: any) => {
       return (
         <th 
-          className="px-4 py-2 text-left text-sm font-medium text-gray-300 border-b border-gray-700 bg-gray-800/50" 
+          className="px-4 py-3 text-left text-sm font-semibold text-gray-200 bg-gray-800/60 border-b border-gray-700" 
           {...props}
         >
           {children}
@@ -721,7 +766,7 @@ function App() {
     td: ({ node, children, ...props }: any) => {
       return (
         <td 
-          className="px-4 py-2 text-sm border-b border-gray-700" 
+          className="px-4 py-3 text-sm text-gray-300 border-b border-gray-700/50" 
           {...props}
         >
           {children}
@@ -731,7 +776,7 @@ function App() {
     blockquote: ({ node, children, ...props }: any) => {
       return (
         <blockquote 
-          className="border-l-4 border-indigo-500 pl-4 py-1 my-2 italic bg-gray-800/50 rounded-r" 
+          className="border-l-4 border-indigo-500 pl-4 py-2 my-3 italic bg-gray-800/30 rounded-r" 
           {...props}
         >
           {children}
@@ -739,18 +784,18 @@ function App() {
       );
     },
     ul: ({ node, children, ...props }: any) => {
-      return <ul className="list-disc pl-5 my-2 space-y-1" {...props}>{children}</ul>;
+      return <ul className="list-disc pl-5 my-3 space-y-1" {...props}>{children}</ul>;
     },
     ol: ({ node, children, ...props }: any) => {
-      return <ol className="list-decimal pl-5 my-2 space-y-1" {...props}>{children}</ol>;
+      return <ol className="list-decimal pl-5 my-3 space-y-1" {...props}>{children}</ol>;
     },
     li: ({ node, children, ...props }: any) => {
-      return <li className="my-1" {...props}>{children}</li>;
+      return <li className="my-1 pl-1" {...props}>{children}</li>;
     },
     h1: ({ node, children, ...props }: any) => {
       return (
         <h1 
-          className="text-2xl font-bold mt-4 mb-2 pb-2 border-b border-gray-700" 
+          className="text-2xl font-bold mt-6 mb-3 pb-2 border-b border-gray-700" 
           {...props}
         >
           {children}
@@ -758,28 +803,28 @@ function App() {
       );
     },
     h2: ({ node, children, ...props }: any) => {
-      return <h2 className="text-xl font-bold mt-3 mb-2" {...props}>{children}</h2>;
+      return <h2 className="text-xl font-bold mt-5 mb-2" {...props}>{children}</h2>;
     },
     h3: ({ node, children, ...props }: any) => {
-      return <h3 className="text-lg font-bold mt-2 mb-1" {...props}>{children}</h3>;
+      return <h3 className="text-lg font-bold mt-4 mb-2" {...props}>{children}</h3>;
     },
     h4: ({ node, children, ...props }: any) => {
-      return <h4 className="text-base font-bold mt-2 mb-1" {...props}>{children}</h4>;
+      return <h4 className="text-base font-bold mt-3 mb-1" {...props}>{children}</h4>;
     },
     h5: ({ node, children, ...props }: any) => {
-      return <h5 className="text-sm font-bold mt-1 mb-1" {...props}>{children}</h5>;
+      return <h5 className="text-sm font-bold mt-2 mb-1" {...props}>{children}</h5>;
     },
     h6: ({ node, children, ...props }: any) => {
-      return <h6 className="text-sm font-semibold mt-1 mb-1 text-gray-400" {...props}>{children}</h6>;
+      return <h6 className="text-sm font-semibold mt-2 mb-1 text-gray-400" {...props}>{children}</h6>;
     },
     hr: ({ node, ...props }: any) => {
-      return <hr className="my-4 border-gray-700" {...props} />;
+      return <hr className="my-6 border-gray-700" {...props} />;
     },
     a: ({ node, children, href, ...props }: any) => {
       return (
         <a 
           href={href} 
-          className="text-indigo-400 hover:text-indigo-300 underline" 
+          className="text-indigo-400 hover:text-indigo-300 underline hover:underline-offset-2 transition-all" 
           target="_blank" 
           rel="noopener noreferrer"
           {...props}
@@ -789,20 +834,20 @@ function App() {
       );
     },
     strong: ({ node, children, ...props }: any) => {
-      return <strong className="font-bold" {...props}>{children}</strong>;
+      return <strong className="font-bold text-gray-100" {...props}>{children}</strong>;
     },
     em: ({ node, children, ...props }: any) => {
       return <em className="italic" {...props}>{children}</em>;
     },
     p: ({ node, children, ...props }: any) => {
-      return <p className="my-2" {...props}>{children}</p>;
+      return <p className="my-3 leading-relaxed" {...props}>{children}</p>;
     },
     img: ({ node, src, alt, ...props }: any) => {
       return (
         <img 
           src={src} 
           alt={alt} 
-          className="max-w-full h-auto rounded-lg my-2 border border-gray-700" 
+          className="max-w-full h-auto rounded-lg my-3 border border-gray-700 shadow-lg" 
           {...props}
         />
       );
@@ -1183,6 +1228,7 @@ function App() {
             <p>* Supports DeepSeek-R1 reasoning_content display.</p>
             <p>* Enhanced Markdown support with tables, code highlighting.</p>
             <p>* Real-time token statistics and speed calculation.</p>
+            <p>* Code blocks with copy functionality.</p>
           </div>
         </div>
       </div>
