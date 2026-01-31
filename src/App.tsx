@@ -2,6 +2,9 @@
 // App.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   FiSend,
   FiTrash2,
@@ -15,6 +18,7 @@ import {
   FiSettings,
   FiChevronDown,
   FiChevronUp,
+  FiClock,
 } from "react-icons/fi";
 
 // --- Type Definitions ---
@@ -34,10 +38,21 @@ type UserContentItem = TextContentPart | ImageContentPart;
 type UserMessageContent = UserContentItem[];
 type AssistantMessageContent = string;
 
+interface MessageMeta {
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+  response_time?: number;
+  tokens_per_second?: number;
+}
+
 interface Message {
   role: "user" | "assistant" | "system";
   content: UserMessageContent | AssistantMessageContent | string;
   reasoning_content?: string; // For DeepSeek R1 style thinking process
+  meta?: MessageMeta;
 }
 
 interface StreamChoiceDelta {
@@ -58,6 +73,11 @@ interface StreamChunk {
   created?: number;
   model?: string;
   choices: StreamChoice[];
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
 }
 
 // LocalStorage Keys
@@ -142,6 +162,7 @@ function App() {
   // 修复重复打字问题：使用 ref 记录已处理的内容
   const processedContentRef = useRef<string>("");
   const processedReasoningRef = useRef<string>("");
+  const usageDataRef = useRef<MessageMeta>({});
 
   // Save to LocalStorage when states change
   useEffect(() => {
@@ -350,7 +371,20 @@ function App() {
     const newHistory = [
       ...history,
       userMessage,
-      { role: "assistant", content: "", reasoning_content: "" },
+      { 
+        role: "assistant", 
+        content: "", 
+        reasoning_content: "",
+        meta: {
+          response_time: 0,
+          tokens_per_second: 0,
+          usage: {
+            prompt_tokens: 0,
+            completion_tokens: 0,
+            total_tokens: 0
+          }
+        }
+      },
     ];
     setHistory(newHistory as Message[]);
     setInput("");
@@ -361,6 +395,7 @@ function App() {
     // 重置已处理内容的引用
     processedContentRef.current = "";
     processedReasoningRef.current = "";
+    usageDataRef.current = {};
 
     abortControllerRef.current = new AbortController();
     const signal = abortControllerRef.current.signal;
@@ -377,6 +412,8 @@ function App() {
       setIsLoading(false);
       return;
     }
+
+    const startTime = Date.now();
 
     try {
       const headers: HeadersInit = {
@@ -438,6 +475,32 @@ function App() {
             const jsonData = line.substring(5).trim();
             if (jsonData === "[DONE]") {
               doneReading = true;
+              
+              // 计算响应时间
+              const endTime = Date.now();
+              const responseTime = endTime - startTime;
+              
+              // 更新最后一条消息的元数据
+              setHistory((prev) => {
+                const h = [...prev];
+                const lastIdx = h.length - 1;
+                if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
+                  const completionTokens = processedContentRef.current.length / 4; // 估算：每个token约4个字符
+                  const tokensPerSecond = completionTokens / (responseTime / 1000);
+                  
+                  h[lastIdx].meta = {
+                    response_time: responseTime,
+                    tokens_per_second: Math.round(tokensPerSecond * 100) / 100,
+                    usage: {
+                      prompt_tokens: 0, // 通常需要从API获取
+                      completion_tokens: Math.round(completionTokens),
+                      total_tokens: Math.round(completionTokens)
+                    }
+                  };
+                }
+                return h;
+              });
+              
               break;
             }
             if (!jsonData) continue;
@@ -470,6 +533,11 @@ function App() {
                     return h;
                   });
                 }
+              }
+              
+              // 保存usage数据
+              if (parsedChunk.usage) {
+                usageDataRef.current.usage = parsedChunk.usage;
               }
             } catch (e) {
               console.warn("Parse error:", jsonData, e);
@@ -652,7 +720,7 @@ function App() {
                           </button>
 
                           {expandedThinking[index] && (
-                            <div className="p-3 bg-gray-900/80 border border-gray-700 rounded-md text-sm text-gray-400 italic whitespace-pre-wrap font-mono text-xs leading-relaxed">
+                            <div className="p-3 bg-gray-900/80 border border-gray-700 rounded-md text-sm text-gray-400 italic whitespace-pre-wrap font-mono text-xs leading-relaxed overflow-x-auto">
                               {msg.reasoning_content}
                             </div>
                           )}
@@ -662,49 +730,208 @@ function App() {
                       {msg.role === "assistant" ? (
                         <div className="markdown-content">
                           <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
                             components={{
-                              pre: ({ node, ...props }) => (
-                                <div className="overflow-x-auto my-2">
-                                  <pre
-                                    {...props}
-                                    className="bg-gray-900/80 p-3 rounded-md border border-gray-700 text-sm"
-                                  />
-                                </div>
-                              ),
-                              code: ({ node, inline, className, children, ...props }) => {
-                                if (inline) {
+                              pre({ children, ...props }) {
+                                const childArray = React.Children.toArray(children);
+                                const codeElement = childArray.find(
+                                  (child) => React.isValidElement(child) && child.type === 'code'
+                                ) as React.ReactElement<{ className?: string; children?: React.ReactNode }> | undefined;
+                                
+                                if (codeElement) {
+                                  const { className, children: codeChildren } = codeElement.props;
+                                  const language = className?.replace(/language-/, '') || 'text';
+                                  
                                   return (
-                                    <code
-                                      className="bg-gray-800/80 px-1 py-0.5 rounded text-sm"
-                                      {...props}
-                                    >
+                                    <div className="overflow-x-auto my-4">
+                                      <SyntaxHighlighter
+                                        language={language}
+                                        style={vscDarkPlus}
+                                        PreTag="div"
+                                        className="rounded-lg border border-gray-700"
+                                        showLineNumbers={language !== 'text'}
+                                        customStyle={{
+                                          margin: 0,
+                                          fontSize: '0.875rem',
+                                          lineHeight: '1.5',
+                                        }}
+                                      >
+                                        {String(codeChildren).replace(/\n$/, '')}
+                                      </SyntaxHighlighter>
+                                    </div>
+                                  );
+                                }
+                                
+                                return (
+                                  <div className="overflow-x-auto my-4">
+                                    <pre className="bg-gray-900/80 p-4 rounded-lg border border-gray-700 text-sm font-mono overflow-auto whitespace-pre-wrap">
+                                      {children}
+                                    </pre>
+                                  </div>
+                                );
+                              },
+                              code({ className, children, ...props }) {
+                                const match = /language-(\w+)/.exec(className || '');
+                                
+                                if (!match) {
+                                  return (
+                                    <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
                                       {children}
                                     </code>
                                   );
                                 }
+                                
                                 return (
                                   <div className="overflow-x-auto my-2">
-                                    <code
-                                      className="bg-gray-900/80 p-3 rounded-md border border-gray-700 text-sm block"
-                                      {...props}
+                                    <SyntaxHighlighter
+                                      language={match[1]}
+                                      style={vscDarkPlus}
+                                      PreTag="div"
+                                      className="rounded-lg border border-gray-700"
+                                      customStyle={{
+                                        margin: 0,
+                                        fontSize: '0.875rem',
+                                        lineHeight: '1.5',
+                                      }}
                                     >
-                                      {children}
-                                    </code>
+                                      {String(children).replace(/\n$/, '')}
+                                    </SyntaxHighlighter>
                                   </div>
                                 );
                               },
-                              table: ({ node, ...props }) => (
-                                <div className="overflow-x-auto my-2">
-                                  <table
-                                    {...props}
-                                    className="min-w-full divide-y divide-gray-700"
-                                  />
-                                </div>
-                              ),
+                              table({ children }) {
+                                return (
+                                  <div className="overflow-x-auto my-4">
+                                    <table className="min-w-full divide-y divide-gray-700 border border-gray-700 rounded-lg overflow-hidden">
+                                      {children}
+                                    </table>
+                                  </div>
+                                );
+                              },
+                              th({ children }) {
+                                return (
+                                  <th className="px-4 py-3 bg-gray-800/80 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-b border-gray-700">
+                                    {children}
+                                  </th>
+                                );
+                              },
+                              td({ children }) {
+                                return (
+                                  <td className="px-4 py-3 border-b border-gray-700/50 text-sm">
+                                    {children}
+                                  </td>
+                                );
+                              },
+                              a({ href, children }) {
+                                return (
+                                  <a 
+                                    href={href} 
+                                    className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                  >
+                                    {children}
+                                  </a>
+                                );
+                              },
+                              blockquote({ children }) {
+                                return (
+                                  <blockquote className="border-l-4 border-indigo-500 pl-4 my-4 italic text-gray-300">
+                                    {children}
+                                  </blockquote>
+                                );
+                              },
+                              ul({ children }) {
+                                return (
+                                  <ul className="list-disc pl-5 my-3 space-y-1">
+                                    {children}
+                                  </ul>
+                                );
+                              },
+                              ol({ children }) {
+                                return (
+                                  <ol className="list-decimal pl-5 my-3 space-y-1">
+                                    {children}
+                                  </ol>
+                                );
+                              },
+                              h1({ children }) {
+                                return <h1 className="text-2xl font-bold mt-6 mb-3">{children}</h1>;
+                              },
+                              h2({ children }) {
+                                return <h2 className="text-xl font-bold mt-5 mb-2">{children}</h2>;
+                              },
+                              h3({ children }) {
+                                return <h3 className="text-lg font-bold mt-4 mb-2">{children}</h3>;
+                              },
+                              hr() {
+                                return <hr className="my-6 border-gray-700" />;
+                              },
                             }}
+                            // className="space-y-3"
                           >
                             {(msg.content as string) || "▋"}
                           </ReactMarkdown>
+                          
+                          {/* Token usage and performance info */}
+                          {msg.meta && (
+                            <div className="mt-4 pt-3 border-t border-gray-700/50 text-xs text-gray-400">
+                              <div className="flex items-center gap-2 mb-1">
+                                <FiClock size={12} />
+                                <span className="font-medium">Response Info</span>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {msg.meta.usage?.total_tokens && (
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-500">Tokens</span>
+                                    <span className="font-medium">
+                                      {msg.meta.usage.total_tokens}
+                                    </span>
+                                  </div>
+                                )}
+                                {msg.meta.usage?.prompt_tokens && (
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-500">Prompt</span>
+                                    <span className="font-medium">
+                                      {msg.meta.usage.prompt_tokens}
+                                    </span>
+                                  </div>
+                                )}
+                                {msg.meta.usage?.completion_tokens && (
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-500">Completion</span>
+                                    <span className="font-medium">
+                                      {msg.meta.usage.completion_tokens}
+                                    </span>
+                                  </div>
+                                )}
+                                {msg.meta.response_time && (
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-500">Time</span>
+                                    <span className="font-medium">
+                                      {msg.meta.response_time}ms
+                                    </span>
+                                  </div>
+                                )}
+                                {msg.meta.tokens_per_second && (
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-500">Speed</span>
+                                    <span className="font-medium">
+                                      {msg.meta.tokens_per_second} tokens/s
+                                    </span>
+                                  </div>
+                                )}
+                                {(msg.content as string) && (
+                                  <div className="flex flex-col">
+                                    <span className="text-gray-500">Characters</span>
+                                    <span className="font-medium">
+                                      {(msg.content as string).length}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="whitespace-pre-wrap">
@@ -906,6 +1133,7 @@ function App() {
               updated with the chat history on the left.
             </p>
             <p>* Supports DeepSeek-R1 reasoning_content display.</p>
+            <p>* Enhanced Markdown with syntax highlighting and tables.</p>
           </div>
         </div>
       </div>
@@ -925,6 +1153,12 @@ function App() {
           display: block;
           overflow-x: auto;
           white-space: nowrap;
+        }
+        
+        /* 修复heading标签的返回类型错误 */
+        h1, h2, h3, h4, h5, h6 {
+          display: block;
+          font-weight: bold;
         }
       `}</style>
     </div>
