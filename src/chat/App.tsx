@@ -1,9 +1,9 @@
 // App.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { FiSend, FiTrash2, FiUser, FiCpu, FiSettings, FiChevronDown, FiStopCircle, FiUpload, FiXCircle } from 'react-icons/fi';
+import { FiSend, FiTrash2, FiUser, FiCpu, FiEdit2, FiX, FiCheck, FiPlus, FiAlertCircle } from 'react-icons/fi';
 
-// --- Enhanced Type Definitions for Multimodal Content ---
+// --- Type Definitions ---
 interface TextContentPart {
     type: 'text';
     text: string;
@@ -12,23 +12,22 @@ interface TextContentPart {
 interface ImageContentPart {
     type: 'image_url';
     image_url: {
-        url: string; // e.g., data:image/jpeg;base64,...
+        url: string;
     };
 }
 
 type UserContentItem = TextContentPart | ImageContentPart;
-type UserMessageContent = UserContentItem[]; // User messages can have multiple parts (text and/or image)
-type AssistantMessageContent = string;      // Assistant messages are streamed text
+type UserMessageContent = UserContentItem[];
+type AssistantMessageContent = string;
 
 interface Message {
-    role: 'user' | 'assistant';
-    content: UserMessageContent | AssistantMessageContent;
+    role: 'user' | 'assistant' | 'system';
+    content: UserMessageContent | AssistantMessageContent | string;
 }
 
-// Streamed chunk structure (example, adjust based on actual API)
 interface StreamChoiceDelta {
     content?: string;
-    role?: 'assistant'; // Usually only in the first chunk
+    role?: 'assistant';
 }
 
 interface StreamChoice {
@@ -45,76 +44,25 @@ interface StreamChunk {
     choices: StreamChoice[];
 }
 
-
-interface EndpointConfig {
-    id: string;
-    name: string;
-    url: string;
-    models: { id: string; name: string }[];
-    defaultModelId: string;
-}
-
-// --- Configuration for Endpoints and Models ---
-const ENDPOINTS_CONFIG: EndpointConfig[] = [
-    {
-        id: 'moonchan/groq',
-        name: 'Groq',
-        url: 'https://moonchan.xyz/groq',
-        models: [
-            { id: 'qwen/qwen3-32b', name: 'Qwen3-32B' },
-            { id: 'moonshotai/kimi-k2-instruct', name: 'Kimi K2 Instruct' },
-            { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B' },
-            { id: 'gemma2-9b-it', name: 'Gemma 2 Instruct' },
-            { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B' },
-            { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B' },
-            { id: 'llama-guard-3-8b', name: 'Llama Guard 3' },
-            { id: 'llama3-70b-8192', name: 'Llama 3 70B' },
-            { id: 'llama3-8b-8192', name: 'Llama 3 8B' },
-            { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick 17B 128E' },
-            { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B 16E' },
-            { id: 'meta-llama/llama-guard-4-12b', name: 'Llama Guard 4 12B' },
-            { id: 'mistral-saba-24b', name: 'Mistral Saba 24B' },
-            { id: 'qwen-qwq-32b', name: 'QwQ 32B' },
-            { id: 'whisper-large-v3', name: 'Whisper' },
-            { id: 'whisper-large-v3-turbo', name: 'Whisper Large V3 Turbo' }
-        ],
-        defaultModelId: 'meta-llama/llama-4-maverick-17b-128e-instruct',
-    },
-    {
-        id: 'moonchan/chutes',
-        name: 'Chutes',
-        url: 'https://moonchan.xyz/groq?service=chutes',
-        models: [
-            { id: 'deepseek-ai/DeepSeek-V3-0324', name: 'DeepSeek-V3-0324' },
-            { id: 'deepseek-ai/DeepSeek-Prover-V2-671B', name: 'DeepSeek-Prover-V2-671B' },
-            { id: 'deepseek-ai/DeepSeek-R1', name: 'DeepSeek-R1' },
-            { id: 'deepseek-ai/DeepSeek-V3', name: 'DeepSeek-V3' },
-            { id: 'tngtech/DeepSeek-R1T-Chimera', name: 'DeepSeek-R1T-Chimera' },
-            { id: 'Qwen/Qwen3-235B-A22B', name: 'Qwen3-235B-A22B' },
-            { id: 'Qwen/Qwen3-30B-A3B', name: 'Qwen3-30B-A3B' },
-            { id: 'Qwen/Qwen3-32B', name: 'Qwen3-32B' },
-            { id: 'Qwen/Qwen3-14B', name: 'Qwen3-14B' },
-            { id: 'Qwen/Qwen3-8B', name: 'Qwen3-8B' },
-            { id: 'Qwen/Qwen2.5-VL-32B-Instruct', name: 'Qwen2.5-VL-32B-Instruct' }, // Vision-Language model
-            { id: 'chutesai/Llama-4-Maverick-17B-128E-Instruct-FP8', name: 'Llama-4-Maverick-17B-128E-Instruct-FP8' },
-        ],
-        defaultModelId: 'deepseek-ai/DeepSeek-V3-0324',
-    },
-];
-
 function App() {
+    // --- Core States ---
     const [history, setHistory] = useState<Message[]>([]);
     const [input, setInput] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    
+    // --- New Configuration States ---
+    const [endpointUrl, setEndpointUrl] = useState<string>('https://api.siliconflow.cn/v1/chat/completions');
+    const [apiKey, setApiKey] = useState<string>('');
+    
+    // JSON Editor State
+    const [jsonPayload, setJsonPayload] = useState<string>('');
+    const [jsonError, setJsonError] = useState<string | null>(null);
+    
+    // Editing States
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
+    const [editContent, setEditContent] = useState<string>('');
 
-    const [selectedEndpointId, setSelectedEndpointId] = useState<string>(ENDPOINTS_CONFIG[0].id);
-    const [selectedModelId, setSelectedModelId] = useState<string>(ENDPOINTS_CONFIG[0].defaultModelId);
-
-    const [temperature, setTemperature] = useState<number>(0.7);
-    const [maxTokens, setMaxTokens] = useState<number>(65536);
-    const [topP, setTopP] = useState<number>(1);
-    const [stop, setStop] = useState<string>('');
-
+    // Upload States (保留图片上传功能)
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
 
@@ -122,53 +70,146 @@ function App() {
     const abortControllerRef = useRef<AbortController | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const currentEndpoint = ENDPOINTS_CONFIG.find(ep => ep.id === selectedEndpointId) || ENDPOINTS_CONFIG[0];
-    const availableModels = currentEndpoint.models;
-
+    // Initialize default JSON payload
     useEffect(() => {
-        const currentEpConfig = ENDPOINTS_CONFIG.find(ep => ep.id === selectedEndpointId);
-        if (currentEpConfig && !currentEpConfig.models.find(m => m.id === selectedModelId)) {
-            setSelectedModelId(currentEpConfig.defaultModelId);
-        }
-    }, [selectedEndpointId, selectedModelId]);
+        const defaultPayload = {
+            model: "deepseek-ai/DeepSeek-V3",
+            messages: [],
+            temperature: 0.7,
+            max_tokens: 4096,
+            top_p: 1,
+            stream: true,
+            // 可以添加其他OpenAI兼容参数
+        };
+        setJsonPayload(JSON.stringify(defaultPayload, null, 2));
+    }, []);
 
+    // Sync history to JSON when history changes (if not currently editing JSON manually)
     useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (jsonError) return; // Don't overwrite if there's a syntax error being fixed
+        
+        try {
+            const current = JSON.parse(jsonPayload || '{}');
+            // Only update if messages actually differ to avoid cursor jumping
+            const currentMessagesStr = JSON.stringify(current.messages);
+            const historyStr = JSON.stringify(history);
+            
+            if (currentMessagesStr !== historyStr) {
+                current.messages = history;
+                setJsonPayload(JSON.stringify(current, null, 2));
+            }
+        } catch (e) {
+            // Ignore parse errors during auto-sync
         }
     }, [history]);
 
+    // Auto-scroll
     useEffect(() => {
-        if (history.length > 0) {
-            const lastMessage = history[history.length - 1];
-            if (lastMessage.role === 'assistant' && typeof lastMessage.content === 'string' && isLoading) {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [history, isLoading]);
 
-
-    const handleEndpointChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newEndpointId = e.target.value;
-        setSelectedEndpointId(newEndpointId);
-        const newEndpointConfig = ENDPOINTS_CONFIG.find(ep => ep.id === newEndpointId);
-        if (newEndpointConfig) {
-            setSelectedModelId(newEndpointConfig.defaultModelId);
+    // --- Message Operations ---
+    const deleteMessage = (index: number) => {
+        const newHistory = history.filter((_, i) => i !== index);
+        setHistory(newHistory);
+        if (editingIndex === index) {
+            setEditingIndex(null);
         }
     };
 
+    const startEditMessage = (index: number) => {
+        const msg = history[index];
+        let contentStr = '';
+        
+        if (typeof msg.content === 'string') {
+            contentStr = msg.content;
+        } else if (Array.isArray(msg.content)) {
+            // For multimodal, extract text parts for editing
+            contentStr = msg.content
+                .filter((p): p is TextContentPart => p.type === 'text')
+                .map(p => p.text)
+                .join('\n');
+        }
+        
+        setEditContent(contentStr);
+        setEditingIndex(index);
+    };
+
+    const saveEditMessage = (index: number) => {
+        const newHistory = [...history];
+        const msg = newHistory[index];
+        
+        if (typeof msg.content === 'string') {
+            newHistory[index].content = editContent;
+        } else if (Array.isArray(msg.content)) {
+            // Preserve image parts, update text parts
+            const newContent: UserContentItem[] = [];
+            let textAdded = false;
+            
+            for (const part of msg.content) {
+                if (part.type === 'image_url') {
+                    newContent.push(part);
+                }
+            }
+            
+            if (editContent.trim()) {
+                newContent.unshift({ type: 'text', text: editContent });
+            }
+            
+            newHistory[index].content = newContent;
+        }
+        
+        setHistory(newHistory);
+        setEditingIndex(null);
+    };
+
+    const addSystemMessage = () => {
+        const newHistory: Message[] = [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            ...history
+        ];
+        setHistory(newHistory);
+    };
+
+    // --- JSON Editor Handlers ---
+    const handleJsonChange = (value: string) => {
+        setJsonPayload(value);
+        try {
+            const parsed = JSON.parse(value);
+            if (parsed.messages && Array.isArray(parsed.messages)) {
+                // Validate message structure
+                const validMessages = parsed.messages.filter((m: any) => 
+                    m.role && (m.content !== undefined)
+                );
+                setHistory(validMessages);
+            }
+            setJsonError(null);
+        } catch (e: any) {
+            setJsonError(e.message);
+        }
+    };
+
+    const formatJson = () => {
+        try {
+            const parsed = JSON.parse(jsonPayload);
+            setJsonPayload(JSON.stringify(parsed, null, 2));
+            setJsonError(null);
+        } catch (e: any) {
+            setJsonError(e.message);
+        }
+    };
+
+    // --- Image Upload ---
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            if (file.size > 20 * 1024 * 1024) { // Max 20MB (common limit for vision APIs)
+            if (file.size > 20 * 1024 * 1024) {
                 alert("Image size should not exceed 20MB.");
-                if (fileInputRef.current) fileInputRef.current.value = "";
                 return;
             }
             const allowedTypes = ["image/png", "image/jpeg", "image/gif", "image/webp"];
             if (!allowedTypes.includes(file.type)) {
                 alert("Invalid file type. Please upload PNG, JPEG, GIF, or WebP.");
-                if (fileInputRef.current) fileInputRef.current.value = "";
                 return;
             }
 
@@ -177,34 +218,39 @@ function App() {
                 setUploadedImage(reader.result as string);
                 setUploadedImageName(file.name);
             };
-            reader.readAsDataURL(file); // Reads as base64 data URL
-        }
-        if (fileInputRef.current) { // Reset to allow re-uploading the same file
-            fileInputRef.current.value = "";
+            reader.readAsDataURL(file);
         }
     };
 
     const removeUploadedImage = () => {
         setUploadedImage(null);
         setUploadedImageName(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
     };
 
+    // --- Streaming Logic ---
     const stopStreaming = useCallback(() => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
-            console.log("Streaming stopped by user.");
         }
     }, []);
 
     const sendMessage = useCallback(async () => {
         if (!input.trim() && !uploadedImage) return;
-        if (isLoading && abortControllerRef.current) {
-            stopStreaming();
+        if (!endpointUrl) {
+            alert("Please enter API Endpoint URL");
+            return;
+        }
+        if (jsonError) {
+            alert("Please fix JSON syntax error first");
+            return;
         }
 
+        if (isLoading && abortControllerRef.current) {
+            stopStreaming();
+            return;
+        }
+
+        // Construct user message
         const userContentParts: UserMessageContent = [];
         if (input.trim()) {
             userContentParts.push({ type: 'text', text: input.trim() });
@@ -213,16 +259,11 @@ function App() {
             userContentParts.push({ type: 'image_url', image_url: { url: uploadedImage } });
         }
 
-        if (userContentParts.length === 0) return;
-
         const userMessage: Message = { role: 'user', content: userContentParts };
-        const currentHistory = history; // Capture history before adding assistant placeholder
-
-        setHistory(prevHistory => [
-            ...prevHistory,
-            userMessage,
-            { role: 'assistant', content: '' as AssistantMessageContent }
-        ]);
+        
+        // Update history immediately
+        const newHistory = [...history, userMessage, { role: 'assistant', content: '' }];
+        setHistory(newHistory as Message[]);
         setInput('');
         setUploadedImage(null);
         setUploadedImageName(null);
@@ -231,22 +272,31 @@ function App() {
         abortControllerRef.current = new AbortController();
         const signal = abortControllerRef.current.signal;
 
-        const messagesForAPI = [...currentHistory, userMessage];
-
-        const body = {
-            model: selectedModelId,
-            messages: messagesForAPI,
-            temperature,
-            ...(currentEndpoint.id.includes('groq') ? {} : { max_completion_tokens: maxTokens }),
-            top_p: topP,
-            stop: stop ? stop.split(',').map(s => s.trim()).filter(Boolean) : null,
-            stream: true,
-        };
+        // Prepare request body from JSON editor, but inject current history
+        let body: any;
+        try {
+            const basePayload = JSON.parse(jsonPayload);
+            body = {
+                ...basePayload,
+                messages: [...history, userMessage], // Use current history + new message
+            };
+        } catch (e) {
+            alert("Invalid JSON payload");
+            setIsLoading(false);
+            return;
+        }
 
         try {
-            const response = await fetch(currentEndpoint.url, {
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+            };
+            if (apiKey) {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+            }
+
+            const response = await fetch(endpointUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(body),
                 signal,
             });
@@ -254,31 +304,31 @@ function App() {
             if (!response.ok) {
                 let errorContent = `API Error: ${response.status} ${response.statusText}`;
                 try {
-                    const errorDataText = await response.text();
-                    const errorData = JSON.parse(errorDataText);
+                    const errorData = await response.json();
                     errorContent += ` - ${errorData.error?.message || errorData.message || JSON.stringify(errorData)}`;
                 } catch (e) {
-                    errorContent += ` (Failed to parse error details: ${e instanceof Error ? e.message : String(e)})`;
+                    const text = await response.text();
+                    errorContent += ` - ${text}`;
                 }
+                
                 setHistory(prev => {
-                    const newHistory = [...prev];
-                    if (newHistory.length > 0 && newHistory[newHistory.length - 1].role === 'assistant') {
-                        newHistory[newHistory.length - 1].content = errorContent;
-                    }
-                    return newHistory;
+                    const h = [...prev];
+                    if (h.length > 0) h[h.length - 1].content = errorContent;
+                    return h;
                 });
                 setIsLoading(false);
                 return;
             }
 
             if (!response.body) throw new Error('Response body is null');
+            
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let doneReading = false;
 
             while (!doneReading) {
                 if (signal.aborted) {
-                    throw new DOMException("Aborted by user", "AbortError");
+                    throw new DOMException("Aborted", "AbortError");
                 }
                 const { value, done } = await reader.read();
                 doneReading = done;
@@ -297,141 +347,172 @@ function App() {
                         try {
                             const parsedChunk = JSON.parse(jsonData) as StreamChunk;
                             let contentChunk = "";
+                            
+                            // Handle different stream formats (OpenAI compatible)
                             if (parsedChunk.choices && parsedChunk.choices[0]?.delta?.content) {
                                 contentChunk = parsedChunk.choices[0].delta.content;
                             }
+                            
                             if (contentChunk) {
                                 setHistory(prev => {
-                                    const newHistory = [...prev];
-                                    const lastMsgIndex = newHistory.length - 1;
-                                    if (lastMsgIndex >= 0 && newHistory[lastMsgIndex].role === 'assistant') {
-                                        // Ensure content is treated as string for assistant
-                                        newHistory[lastMsgIndex].content = (newHistory[lastMsgIndex].content as AssistantMessageContent) + contentChunk;
+                                    const h = [...prev];
+                                    const lastIdx = h.length - 1;
+                                    if (lastIdx >= 0 && h[lastIdx].role === 'assistant') {
+                                        h[lastIdx].content = (h[lastIdx].content as string) + contentChunk;
                                     }
-                                    return newHistory;
+                                    return h;
                                 });
                             }
                         } catch (e) {
-                            console.warn('Failed to parse stream chunk JSON:', jsonData, e);
+                            console.warn('Parse error:', jsonData);
                         }
                     }
                 }
             }
-        } catch (error) {
-            if (error instanceof DOMException && error.name === 'AbortError') {
-                console.log('Fetch aborted.');
+        } catch (error: any) {
+            if (error.name === 'AbortError') {
                 setHistory(prev => {
-                    const newHistory = [...prev];
-                    const lastMsgIndex = newHistory.length - 1;
-                    if (lastMsgIndex >= 0 && newHistory[lastMsgIndex].role === 'assistant') {
-                        if (newHistory[lastMsgIndex].content === '') {
-                            return newHistory.slice(0, -1);
-                        }
-                        newHistory[lastMsgIndex].content += '\n[Streaming cancelled by user]';
+                    const h = [...prev];
+                    const lastIdx = h.length - 1;
+                    if (lastIdx >= 0 && h[lastIdx].role === 'assistant' && h[lastIdx].content === '') {
+                        h.pop(); // Remove empty assistant message if cancelled immediately
+                    } else if (lastIdx >= 0) {
+                        h[lastIdx].content += '\n[Cancelled]';
                     }
-                    return newHistory;
+                    return h;
                 });
             } else {
-                console.error('Error sending message or processing stream:', error);
-                const errorMessageText = `Error: ${error instanceof Error ? error.message : String(error)}`;
                 setHistory(prev => {
-                    const newHistory = [...prev];
-                    const lastMsgIndex = newHistory.length - 1;
-                    if (lastMsgIndex >= 0 && newHistory[lastMsgIndex].role === 'assistant') {
-                        newHistory[lastMsgIndex].content = (newHistory[lastMsgIndex].content || "") + `\n[Error: ${errorMessageText}]`;
-                    } else {
-                        return [...newHistory, { role: 'assistant', content: `[Error: ${errorMessageText}]` as AssistantMessageContent }];
+                    const h = [...prev];
+                    const lastIdx = h.length - 1;
+                    if (lastIdx >= 0) {
+                        h[lastIdx].content = `Error: ${error.message}`;
                     }
-                    return newHistory;
+                    return h;
                 });
             }
         } finally {
             setIsLoading(false);
             abortControllerRef.current = null;
         }
-    }, [
-        input, uploadedImage, isLoading, selectedModelId, history, temperature, maxTokens, topP, stop, currentEndpoint,
-        setInput, setIsLoading, setHistory, stopStreaming, setUploadedImage, setUploadedImageName
-    ]);
+    }, [input, uploadedImage, history, jsonPayload, endpointUrl, apiKey, jsonError, isLoading, stopStreaming]);
 
     const clearHistory = () => {
         stopStreaming();
         setHistory([]);
-        setUploadedImage(null);
-        setUploadedImageName(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
+        setEditingIndex(null);
     };
 
-    const ParameterInput: React.FC<{
-        label: string; type: string; value: string | number;
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-        step?: string; min?: string; max?: string; showValue?: boolean;
-    }> = ({ label, type, value, onChange, step, min, max, showValue = false }) => (
-        <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-300 mb-1 flex justify-between">
-                {label} {showValue && type === "range" && <span>({value})</span>}
-            </label>
-            <input
-                type={type} value={value} onChange={onChange} step={step} min={min} max={max}
-                className="w-full p-2 border border-gray-600 rounded bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-        </div>
-    );
-
-
     return (
-        <div className="flex flex-col md:flex-row h-screen bg-gray-800 text-white font-sans">
-            {/* Left Panel: Chat History & Input */}
-            <div className="flex-1 flex flex-col p-4 md:p-6 bg-gray-800">
-                <header className="mb-4">
-                    <h1 className="text-2xl font-semibold text-indigo-400">AI Chat Interface (Streaming)</h1>
+        <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white font-sans">
+            {/* Left Panel: Chat History */}
+            <div className="flex-1 flex flex-col h-full min-w-0">
+                {/* Header */}
+                <header className="p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
+                    <h1 className="-xl font-bold text-indigo-400">AI Chat Pro</h1>
+                    <button
+                        onClick={clearHistory}
+                        className="text-sm text-red-400 hover:text-red-300 flex items-center gap-1"
+                    >
+                        <FiTrash2 /> Clear All
+                    </button>
                 </header>
 
-                {/* Chat Messages */}
-                <div className="flex-grow overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                    {history.map((msg, index) => (
-                        <div
-                            key={index}
-                            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                            <div
-                                className={`max-w-xl p-3 rounded-xl shadow-md ${msg.role === 'user'
-                                    ? 'bg-indigo-600 text-white rounded-br-none'
-                                    : 'bg-gray-700 text-gray-200 rounded-bl-none'
-                                    }`}
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {history.length === 0 && (
+                        <div className="text-center text-gray-500 mt-10">
+                            <p>No messages yet. Start chatting or edit JSON directly.</p>
+                            <button 
+                                onClick={addSystemMessage}
+                                className="mt-2 text-indigo-400 hover:text-indigo-300 text-sm"
                             >
-                                <div className="flex items-center mb-1">
-                                    {msg.role === 'user' ? (
-                                        <FiUser className="mr-2 text-indigo-300" />
+                                + Add System Message
+                            </button>
+                        </div>
+                    )}
+                    
+                    {history.map((msg, index) => (
+                        <div key={index} className="group relative">
+                            <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-3xl w-full p-4 rounded-lg ${
+                                    msg.role === 'user' ? 'bg-indigo-900/50 border border-indigo-700/50' : 
+                                    msg.role === 'system' ? 'bg-gray-800 border border-gray-600' : 
+                                    'bg-gray-800 border border-gray-700'
+                                }`}>
+                                    {/* Message Header */}
+                                    <div className="flex justify-between items-center mb-2 opacity-70 text-xs uppercase tracking-wider">
+                                        <span className="flex items-center gap-1">
+                                            {msg.role === 'user' ? <FiUser /> : msg.role === 'system' ? <FiSettings /> : <FiCpu />}
+                                            {msg.role}
+                                        </span>
+                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button 
+                                                onClick={() => startEditMessage(index)}
+                                                className="text-gray-400 hover:text-white"
+                                                title="Edit"
+                                            >
+                                                <FiEdit2 size={14} />
+                                            </button>
+                                            <button 
+                                                onClick={() => deleteMessage(index)}
+                                                className="text-red-400 hover:text-red-300"
+                                                title="Delete"
+                                            >
+                                                <FiX size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Message Content */}
+                                    {editingIndex === index ? (
+                                        <div className="space-y-2">
+                                            <textarea
+                                                value={editContent}
+                                                onChange={(e) => setEditContent(e.target.value)}
+                                                className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-sm min-h-[100px] focus:border-indigo-500 focus:outline-none"
+                                                autoFocus
+                                            />
+                                            <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => setEditingIndex(null)}
+                                                    className="px-2 py-1 text-xs bg-gray-700 rounded hover:bg-gray-600"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button 
+                                                    onClick={() => saveEditMessage(index)}
+                                                    className="px-2 py-1 text-xs bg-indigo-600 rounded hover:bg-indigo-500 flex items-center gap-1"
+                                                >
+                                                    <FiCheck size={12} /> Save
+                                                </button>
+                                            </div>
+                                        </div>
                                     ) : (
-                                        <FiCpu className="mr-2 text-green-400" />
-                                    )}
-                                    <span className="text-xs font-semibold">
-                                        {msg.role === 'user' ? 'You' : 'Assistant'}
-                                    </span>
-                                </div>
-                                <div className="prose prose-sm prose-invert max-w-none break-words">
-                                    {msg.role === 'assistant' ? (
-                                        <ReactMarkdown>{(msg.content as AssistantMessageContent) || "▋"}</ReactMarkdown>
-                                    ) : (
-                                        (msg.content as UserMessageContent).map((part, partIndex) => {
-                                            if (part.type === 'text') {
-                                                return <p key={partIndex} className="whitespace-pre-wrap my-0.5">{part.text}</p>;
-                                            }
-                                            if (part.type === 'image_url') {
-                                                return (
-                                                    <img
-                                                        key={partIndex}
-                                                        src={part.image_url.url}
-                                                        alt="Uploaded content"
-                                                        className="max-w-full sm:max-w-xs max-h-64 my-2 rounded-md object-contain bg-gray-600" // Added bg for transparent images
-                                                    />
-                                                );
-                                            }
-                                            return null;
-                                        })
+                                        <div className="prose prose-sm prose-invert max-w-none break-words">
+                                            {msg.role === 'assistant' ? (
+                                                <ReactMarkdown>{(msg.content as string) || "▋"}</ReactMarkdown>
+                                            ) : (
+                                                <div className="whitespace-pre-wrap">
+                                                    {typeof msg.content === 'string' ? (
+                                                        msg.content
+                                                    ) : (
+                                                        (msg.content as UserContentItem[]).map((part, i) => (
+                                                            part.type === 'text' ? (
+                                                                <p key={i} className="m-0 mb-2">{part.text}</p>
+                                                            ) : (
+                                                                <img 
+                                                                    key={i} 
+                                                                    src={part.image_url.url} 
+                                                                    alt="uploaded" 
+                                                                    className="max-h-48 rounded-lg my-2"
+                                                                />
+                                                            )
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -441,36 +522,18 @@ function App() {
                 </div>
 
                 {/* Input Area */}
-                <div className="mt-4 pt-4 border-t border-gray-700">
+                <div className="p-4 border-t border-gray-700 bg-gray-800">
                     {uploadedImage && (
-                        <div className="mb-3 p-2 bg-gray-750 rounded-lg flex items-center space-x-3 shadow">
-                            <img
-                                src={uploadedImage}
-                                alt={uploadedImageName || "Preview"}
-                                className="h-16 w-16 object-cover rounded-md border border-gray-600"
-                            />
-                            <span className="text-sm text-gray-300 truncate flex-grow max-w-[calc(100%-100px)]">
-                                {uploadedImageName || 'Uploaded Image'}
-                            </span>
-                            <button
-                                onClick={removeUploadedImage}
-                                className="text-red-400 hover:text-red-300 p-1.5 rounded-full hover:bg-gray-600 transition-colors"
-                                title="Remove image"
-                            >
-                                <FiXCircle size={22} />
+                        <div className="mb-2 p-2 bg-gray-700 rounded flex items-center gap-2 w-fit">
+                            <img src={uploadedImage} alt="preview" className="h-10 w-10 object-cover rounded" />
+                            <span className="text-xs text-gray-300 truncate max-w-[150px]">{uploadedImageName}</span>
+                            <button onClick={removeUploadedImage} className="text-red-400 hover:text-red-300">
+                                <FiX size={16} />
                             </button>
                         </div>
                     )}
-                    <div className="flex items-end space-x-2">
-                        <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="p-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 focus:ring-2 focus:ring-teal-500 focus:outline-none h-[58px] flex items-center justify-center transition-colors duration-150 shrink-0"
-                            title="Upload Image (PNG, JPG, GIF, WebP)"
-                            disabled={isLoading && !abortControllerRef.current}
-                        >
-                            <FiUpload size={20} />
-                        </button>
+                    
+                    <div className="flex gap-2">
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -478,97 +541,133 @@ function App() {
                             onChange={handleImageUpload}
                             className="hidden"
                         />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="p-3 bg-gray-700 rounded-lg hover:bg-gray-600 text-gray-300"
+                            title="Upload Image"
+                        >
+                            <FiPlus />
+                        </button>
+                        
                         <textarea
-                            rows={3}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            placeholder="Type your message or upload an image..."
-                            className="flex-grow p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none custom-scrollbar min-h-[58px] max-h-[150px]"
-                            onKeyDown={e => {
+                            placeholder="Type message... (Shift+Enter for new line)"
+                            className="flex-1 bg-gray-900 border border-gray-700 rounded-lg p-3 focus:border-indigo-500 focus:outline-none resize-none min-h-[50px] max-h-[150px]"
+                            onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
                                     sendMessage();
                                 }
                             }}
-                            disabled={isLoading && !abortControllerRef.current}
+                            disabledisLoading}
                         />
-                        {isLoading && abortControllerRef.current ? (
+                        
+                        {isLoading ? (
                             <button
                                 onClick={stopStreaming}
-                                className="p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors duration-150 flex items-center justify-center h-[58px] shrink-0"
-                                title="Stop Generating"
+                                className="p-3 bg-red-600 rounded-lg hover:bg-red-700 text-white"
+                                title="Stop"
                             >
-                                <FiStopCircle size={20} />
+                                <FiX />
                             </button>
                         ) : (
                             <button
                                 onClick={sendMessage}
-                                disabled={(!input.trim() && !uploadedImage) || (isLoading && !abortControllerRef.current)}
-                                className="p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 flex items-center justify-center h-[58px] shrink-0"
+                                disabled={(!input.trim() && !uploadedImage) || !!jsonError}
+                                className="p-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <FiSend size={20} />
+                                <FiSend />
                             </button>
                         )}
                     </div>
-                    {isLoading && <p className="text-xs text-gray-400 mt-1 text-center">Assistant is typing...</p>}
                 </div>
             </div>
 
-            {/* Right Panel: Settings */}
-            <div className="w-full md:w-80 lg:w-96 bg-gray-850 p-4 md:p-6 border-l border-gray-700 overflow-y-auto custom-scrollbar flex-shrink-0">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold text-indigo-400 flex items-center">
-                        <FiSettings className="mr-2" /> Settings
+            {/* Right Panel: Configuration */}
+            <div className="w-full md:w-[450px] bg-gray-800 border-l border-gray-700 flex flex-col h-full">
+                <div className="p-4 border-b border-gray-700 bg-gray-850">
+                    <h2 className="text-lg font-semibold text-indigo-400 flex items-center gap-2">
+                        <FiEdit2 /> Request Configuration
                     </h2>
-                    <button
-                        onClick={clearHistory}
-                        className="text-sm text-red-400 hover:text-red-300 flex items-center"
-                        title="Clear Chat History"
-                        disabled={isLoading && !abortControllerRef.current}
-                    >
-                        <FiTrash2 className="mr-1" /> Clear Chat
-                    </button>
                 </div>
 
-                <div className="mb-6">
-                    <label htmlFor="endpoint-select" className="block text-sm font-medium text-gray-300 mb-1">API Endpoint</label>
-                    <div className="relative">
-                        <select
-                            id="endpoint-select" value={selectedEndpointId} onChange={handleEndpointChange}
-                            className="w-full p-2.5 border border-gray-600 rounded bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none pr-8"
-                        >
-                            {ENDPOINTS_CONFIG.map(ep => (<option key={ep.id} value={ep.id}>{ep.name}</option>))}
-                        </select>
-                        <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {/* Endpoint & Auth */}
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Endpoint URL</label>
+                            <input
+                                type="text"
+                                value={endpointUrl}
+                                onChange={(e) => setEndpointUrl(e.target.value)}
+                                placeholder="https://api.siliconflow.cn/v1/chat/completions"
+                                className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-sm font-mono focus:border-indigo-500 focus:outline-none"
+                            />
+                        </div>
+                        
+                        <div>
+                            <label className="block text-xs font-medium text-gray-400 mb-1">Authorization (Bearer Token)</label>
+                            <input
+                                type="password"
+                                value={apiKey}
+                                onChange={(e) => setApiKey(e.target.value)}
+                                placeholder="sk-..."
+                                className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-sm font-mono focus:border-indigo-500 focus:outline-none"
+                            />
+                        </div>
                     </div>
-                </div>
 
-                <div className="mb-6">
-                    <label htmlFor="model-select" className="block text-sm font-medium text-gray-300 mb-1">Model</label>
-                    <div className="relative">
-                        <select
-                            id="model-select" value={selectedModelId} onChange={(e) => setSelectedModelId(e.target.value)}
-                            className="w-full p-2.5 border border-gray-600 rounded bg-gray-700 text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none pr-8"
-                        >
-                            {availableModels.map(model => (<option key={model.id} value={model.id}>{model.name}</option>))}
-                        </select>
-                        <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <div className="border-t border-gray-700 pt-4">
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-xs font-medium text-gray-400">JSON Payload</label>
+                            <button 
+                                onClick={formatJson}
+                                className="text-xs text-indigo-400 hover:text-indigo-300"
+                            >
+                                Format JSON
+                            </button>
+                        </div>
+                        
+                        <div className="relative">
+                            <textarea
+                                value={jsonPayload}
+                                onChange={(e) => handleJsonChange(e.target.value)}
+                                className={`w-full h-[400px] bg-gray-900 border ${jsonError ? 'border-red-500' : 'border-gray-600'} rounded p-3 text-xs font-mono focus:outline-none resize-none`}
+                                spellCheck={false}
+                            />
+                            {jsonError && (
+                                <div className="absolute bottom-2 left-2 right-2 bg-red-900/90 text-red-200 text-xs p-2 rounded flex items-center gap-1">
+                                    <FiAlertCircle size={12} />
+                                    {jsonError}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <p className="text-xs text-gray-500 mt-2">
+                            * The <code>messages</code> array above will be automatically updated with the chat history on the left.
+                        </p>
                     </div>
-                </div>
 
-                <ParameterInput label="Temperature" type="range" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))} step="0.01" min="0" max="2" showValue={true} />
-                <ParameterInput label="Max Tokens (ignored by Groq in stream)" type="number" value={maxTokens} onChange={(e) => setMaxTokens(parseInt(e.target.value, 10))} min="1" />
-                <ParameterInput label="Top P" type="range" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))} step="0.01" min="0" max="1" showValue={true} />
-                <ParameterInput label="Stop Sequence(s) (comma-sep)" type="text" value={stop} onChange={(e) => setStop(e.target.value)} />
-
-                <div className="mt-6">
-                    <button
-                        onClick={clearHistory}
-                        className="w-full bg-red-600 text-white p-2.5 rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none transition-colors duration-150 flex items-center justify-center"
-                        disabled={isLoading && !abortControllerRef.current}
-                    >
-                        <FiTrash2 className="mr-2" /> Clear History
-                    </button>
+                    {/* Quick Stats */}
+                    <div className="bg-gray-900 rounded p-3 text-xs space-y-1 text-gray-400">
+                        <div className="flex justify-between">
+                            <span>Messages in context:</span>
+                            <span className="text-white">{history.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Current model:</span>
+                            <span className="text-white truncate max-w-[200px]">
+                                {(() => {
+                                    try {
+                                        return JSON.parse(jsonPayload).model || 'Not set';
+                                    } catch {
+                                        return 'Invalid JSON';
+                                    }
+                                })()}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
