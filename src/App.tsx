@@ -19,6 +19,7 @@ import {
   FiChevronDown,
   FiChevronUp,
   FiClock,
+  FiDatabase,
 } from "react-icons/fi";
 
 // --- Type Definitions ---
@@ -46,6 +47,7 @@ interface MessageMeta {
   };
   response_time?: number;
   tokens_per_second?: number;
+  characters?: number;
 }
 
 interface Message {
@@ -375,15 +377,6 @@ function App() {
         role: "assistant", 
         content: "", 
         reasoning_content: "",
-        meta: {
-          response_time: 0,
-          tokens_per_second: 0,
-          usage: {
-            prompt_tokens: 0,
-            completion_tokens: 0,
-            total_tokens: 0
-          }
-        }
       },
     ];
     setHistory(newHistory as Message[]);
@@ -455,6 +448,11 @@ function App() {
       const decoder = new TextDecoder();
       let doneReading = false;
       let buffer = "";
+      
+      // 用于计算 tokens
+      let completionTokens = 0;
+      let promptTokens = 0;
+      let totalTokens = 0;
 
       while (!doneReading) {
         if (signal.aborted) {
@@ -476,26 +474,27 @@ function App() {
             if (jsonData === "[DONE]") {
               doneReading = true;
               
-              // 计算响应时间
+              // 计算响应时间和性能
               const endTime = Date.now();
               const responseTime = endTime - startTime;
+              
+              // 计算 tokens per second
+              const tokensPerSecond = completionTokens / (responseTime / 1000);
               
               // 更新最后一条消息的元数据
               setHistory((prev) => {
                 const h = [...prev];
                 const lastIdx = h.length - 1;
                 if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
-                  const completionTokens = processedContentRef.current.length / 4; // 估算：每个token约4个字符
-                  const tokensPerSecond = completionTokens / (responseTime / 1000);
-                  
                   h[lastIdx].meta = {
+                    usage: {
+                      prompt_tokens: promptTokens,
+                      completion_tokens: completionTokens,
+                      total_tokens: totalTokens
+                    },
                     response_time: responseTime,
                     tokens_per_second: Math.round(tokensPerSecond * 100) / 100,
-                    usage: {
-                      prompt_tokens: 0, // 通常需要从API获取
-                      completion_tokens: Math.round(completionTokens),
-                      total_tokens: Math.round(completionTokens)
-                    }
+                    characters: processedContentRef.current.length
                   };
                 }
                 return h;
@@ -517,6 +516,10 @@ function App() {
                   // 修复重复打字问题：使用 ref 累积内容
                   if (contentChunk) {
                     processedContentRef.current += contentChunk;
+                    // 简单估算：每个中文字符约1.5个token，英文字符约0.3个token
+                    const chineseChars = (contentChunk.match(/[\u4e00-\u9fa5]/g) || []).length;
+                    const englishChars = contentChunk.length - chineseChars;
+                    completionTokens += Math.round(chineseChars * 1.5 + englishChars * 0.3);
                   }
                   if (reasoningChunk) {
                     processedReasoningRef.current += reasoningChunk;
@@ -538,6 +541,9 @@ function App() {
               // 保存usage数据
               if (parsedChunk.usage) {
                 usageDataRef.current.usage = parsedChunk.usage;
+                promptTokens = parsedChunk.usage.prompt_tokens || 0;
+                completionTokens = parsedChunk.usage.completion_tokens || completionTokens;
+                totalTokens = parsedChunk.usage.total_tokens || (promptTokens + completionTokens);
               }
             } catch (e) {
               console.warn("Parse error:", jsonData, e);
@@ -876,60 +882,74 @@ function App() {
                           {/* Token usage and performance info */}
                           {msg.meta && (
                             <div className="mt-4 pt-3 border-t border-gray-700/50 text-xs text-gray-400">
-                              <div className="flex items-center gap-2 mb-1">
-                                <FiClock size={12} />
-                                <span className="font-medium">Response Info</span>
+                              <div className="flex items-center gap-2 mb-2">
+                                <FiDatabase size={12} />
+                                <span className="font-medium">响应统计</span>
                               </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                {msg.meta.usage?.total_tokens && (
-                                  <div className="flex flex-col">
-                                    <span className="text-gray-500">Tokens</span>
-                                    <span className="font-medium">
-                                      {msg.meta.usage.total_tokens}
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {msg.meta.tokens_per_second && msg.meta.tokens_per_second > 0 && (
+                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
+                                    <span className="text-gray-500 text-[10px]">速度</span>
+                                    <span className="font-medium text-green-400">
+                                      {msg.meta.tokens_per_second.toFixed(1)} tokens/s
                                     </span>
                                   </div>
                                 )}
-                                {msg.meta.usage?.prompt_tokens && (
-                                  <div className="flex flex-col">
-                                    <span className="text-gray-500">Prompt</span>
-                                    <span className="font-medium">
+                                
+                                {msg.meta.usage?.prompt_tokens && msg.meta.usage.prompt_tokens > 0 && (
+                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
+                                    <span className="text-gray-500 text-[10px]">输入 Token</span>
+                                    <span className="font-medium text-blue-400">
                                       {msg.meta.usage.prompt_tokens}
                                     </span>
                                   </div>
                                 )}
-                                {msg.meta.usage?.completion_tokens && (
-                                  <div className="flex flex-col">
-                                    <span className="text-gray-500">Completion</span>
-                                    <span className="font-medium">
+                                
+                                {msg.meta.usage?.completion_tokens && msg.meta.usage.completion_tokens > 0 && (
+                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
+                                    <span className="text-gray-500 text-[10px]">输出 Token</span>
+                                    <span className="font-medium text-purple-400">
                                       {msg.meta.usage.completion_tokens}
                                     </span>
                                   </div>
                                 )}
-                                {msg.meta.response_time && (
-                                  <div className="flex flex-col">
-                                    <span className="text-gray-500">Time</span>
-                                    <span className="font-medium">
+                                
+                                {msg.meta.usage?.total_tokens && msg.meta.usage.total_tokens > 0 && (
+                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
+                                    <span className="text-gray-500 text-[10px]">总 Token</span>
+                                    <span className="font-medium text-yellow-400">
+                                      {msg.meta.usage.total_tokens}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {msg.meta.response_time && msg.meta.response_time > 0 && (
+                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
+                                    <span className="text-gray-500 text-[10px]">响应时间</span>
+                                    <span className="font-medium text-cyan-400">
                                       {msg.meta.response_time}ms
                                     </span>
                                   </div>
                                 )}
-                                {msg.meta.tokens_per_second && (
-                                  <div className="flex flex-col">
-                                    <span className="text-gray-500">Speed</span>
-                                    <span className="font-medium">
-                                      {msg.meta.tokens_per_second} tokens/s
-                                    </span>
-                                  </div>
-                                )}
-                                {(msg.content as string) && (
-                                  <div className="flex flex-col">
-                                    <span className="text-gray-500">Characters</span>
-                                    <span className="font-medium">
-                                      {(msg.content as string).length}
+                                
+                                {msg.meta.characters && msg.meta.characters > 0 && (
+                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
+                                    <span className="text-gray-500 text-[10px]">字符数</span>
+                                    <span className="font-medium text-indigo-400">
+                                      {msg.meta.characters}
                                     </span>
                                   </div>
                                 )}
                               </div>
+                              
+                              {/* 显示估算提示 */}
+                              {(msg.meta.usage?.prompt_tokens === 0 || 
+                                msg.meta.usage?.completion_tokens === 0 || 
+                                msg.meta.usage?.total_tokens === 0) && (
+                                <div className="mt-2 text-gray-500 text-[10px] italic">
+                                  * Token 数据为估算值
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
