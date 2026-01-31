@@ -48,6 +48,7 @@ interface MessageMeta {
   response_time?: number;
   tokens_per_second?: number;
   characters?: number;
+  is_estimated?: boolean;
 }
 
 interface Message {
@@ -284,10 +285,14 @@ function App() {
           (m: any) => m.role && m.content !== undefined,
         );
         setHistory(validMessages);
+      } else {
+        // 如果没有messages字段，不更新history，保持现有对话
+        console.log("No messages array found in JSON, keeping existing history");
       }
       setJsonError(null);
     } catch (e: any) {
       setJsonError(e.message);
+      // 不更新history，保持现有对话
     }
   };
 
@@ -453,6 +458,7 @@ function App() {
       let completionTokens = 0;
       let promptTokens = 0;
       let totalTokens = 0;
+      let receivedUsageData = false; // 标记是否从API接收到usage数据
 
       while (!doneReading) {
         if (signal.aborted) {
@@ -494,7 +500,8 @@ function App() {
                     },
                     response_time: responseTime,
                     tokens_per_second: Math.round(tokensPerSecond * 100) / 100,
-                    characters: processedContentRef.current.length
+                    characters: processedContentRef.current.length,
+                    is_estimated: !receivedUsageData
                   };
                 }
                 return h;
@@ -516,10 +523,13 @@ function App() {
                   // 修复重复打字问题：使用 ref 累积内容
                   if (contentChunk) {
                     processedContentRef.current += contentChunk;
-                    // 简单估算：每个中文字符约1.5个token，英文字符约0.3个token
-                    const chineseChars = (contentChunk.match(/[\u4e00-\u9fa5]/g) || []).length;
-                    const englishChars = contentChunk.length - chineseChars;
-                    completionTokens += Math.round(chineseChars * 1.5 + englishChars * 0.3);
+                    // 如果没有收到API的usage数据，则估算token
+                    if (!receivedUsageData) {
+                      // 简单估算：每个中文字符约1.5个token，英文字符约0.3个token
+                      const chineseChars = (contentChunk.match(/[\u4e00-\u9fa5]/g) || []).length;
+                      const englishChars = contentChunk.length - chineseChars;
+                      completionTokens += Math.round(chineseChars * 1.5 + englishChars * 0.3);
+                    }
                   }
                   if (reasoningChunk) {
                     processedReasoningRef.current += reasoningChunk;
@@ -540,6 +550,7 @@ function App() {
               
               // 保存usage数据
               if (parsedChunk.usage) {
+                receivedUsageData = true;
                 usageDataRef.current.usage = parsedChunk.usage;
                 promptTokens = parsedChunk.usage.prompt_tokens || 0;
                 completionTokens = parsedChunk.usage.completion_tokens || completionTokens;
@@ -735,170 +746,171 @@ function App() {
 
                       {msg.role === "assistant" ? (
                         <div className="markdown-content">
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              pre({ children, ...props }) {
-                                const childArray = React.Children.toArray(children);
-                                const codeElement = childArray.find(
-                                  (child) => React.isValidElement(child) && child.type === 'code'
-                                ) as React.ReactElement<{ className?: string; children?: React.ReactNode }> | undefined;
-                                
-                                if (codeElement) {
-                                  const { className, children: codeChildren } = codeElement.props;
-                                  const language = className?.replace(/language-/, '') || 'text';
+                          <div className="space-y-3">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                pre({ children, ...props }) {
+                                  const childArray = React.Children.toArray(children);
+                                  const codeElement = childArray.find(
+                                    (child) => React.isValidElement(child) && child.type === 'code'
+                                  ) as React.ReactElement<{ className?: string; children?: React.ReactNode }> | undefined;
+                                  
+                                  if (codeElement) {
+                                    const { className, children: codeChildren } = codeElement.props;
+                                    const language = className?.replace(/language-/, '') || 'text';
+                                    
+                                    return (
+                                      <div className="overflow-x-auto my-4">
+                                        <SyntaxHighlighter
+                                          language={language}
+                                          style={vscDarkPlus}
+                                          PreTag="div"
+                                          className="rounded-lg border border-gray-700"
+                                          showLineNumbers={language !== 'text'}
+                                          customStyle={{
+                                            margin: 0,
+                                            fontSize: '0.875rem',
+                                            lineHeight: '1.5',
+                                          }}
+                                        >
+                                          {String(codeChildren).replace(/\n$/, '')}
+                                        </SyntaxHighlighter>
+                                      </div>
+                                    );
+                                  }
                                   
                                   return (
                                     <div className="overflow-x-auto my-4">
+                                      <pre className="bg-gray-900/80 p-4 rounded-lg border border-gray-700 text-sm font-mono overflow-auto whitespace-pre-wrap">
+                                        {children}
+                                      </pre>
+                                    </div>
+                                  );
+                                },
+                                code({ className, children, ...props }) {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  
+                                  if (!match) {
+                                    return (
+                                      <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                                        {children}
+                                      </code>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <div className="overflow-x-auto my-2">
                                       <SyntaxHighlighter
-                                        language={language}
+                                        language={match[1]}
                                         style={vscDarkPlus}
                                         PreTag="div"
                                         className="rounded-lg border border-gray-700"
-                                        showLineNumbers={language !== 'text'}
                                         customStyle={{
                                           margin: 0,
                                           fontSize: '0.875rem',
                                           lineHeight: '1.5',
                                         }}
                                       >
-                                        {String(codeChildren).replace(/\n$/, '')}
+                                        {String(children).replace(/\n$/, '')}
                                       </SyntaxHighlighter>
                                     </div>
                                   );
-                                }
-                                
-                                return (
-                                  <div className="overflow-x-auto my-4">
-                                    <pre className="bg-gray-900/80 p-4 rounded-lg border border-gray-700 text-sm font-mono overflow-auto whitespace-pre-wrap">
-                                      {children}
-                                    </pre>
-                                  </div>
-                                );
-                              },
-                              code({ className, children, ...props }) {
-                                const match = /language-(\w+)/.exec(className || '');
-                                
-                                if (!match) {
+                                },
+                                table({ children }) {
                                   return (
-                                    <code className="bg-gray-800/80 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
-                                      {children}
-                                    </code>
+                                    <div className="overflow-x-auto my-4">
+                                      <table className="min-w-full divide-y divide-gray-700 border border-gray-700 rounded-lg overflow-hidden">
+                                        {children}
+                                      </table>
+                                    </div>
                                   );
-                                }
-                                
-                                return (
-                                  <div className="overflow-x-auto my-2">
-                                    <SyntaxHighlighter
-                                      language={match[1]}
-                                      style={vscDarkPlus}
-                                      PreTag="div"
-                                      className="rounded-lg border border-gray-700"
-                                      customStyle={{
-                                        margin: 0,
-                                        fontSize: '0.875rem',
-                                        lineHeight: '1.5',
-                                      }}
-                                    >
-                                      {String(children).replace(/\n$/, '')}
-                                    </SyntaxHighlighter>
-                                  </div>
-                                );
-                              },
-                              table({ children }) {
-                                return (
-                                  <div className="overflow-x-auto my-4">
-                                    <table className="min-w-full divide-y divide-gray-700 border border-gray-700 rounded-lg overflow-hidden">
+                                },
+                                th({ children }) {
+                                  return (
+                                    <th className="px-4 py-3 bg-gray-800/80 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-b border-gray-700">
                                       {children}
-                                    </table>
-                                  </div>
-                                );
-                              },
-                              th({ children }) {
-                                return (
-                                  <th className="px-4 py-3 bg-gray-800/80 text-left text-xs font-medium text-gray-300 uppercase tracking-wider border-b border-gray-700">
-                                    {children}
-                                  </th>
-                                );
-                              },
-                              td({ children }) {
-                                return (
-                                  <td className="px-4 py-3 border-b border-gray-700/50 text-sm">
-                                    {children}
-                                  </td>
-                                );
-                              },
-                              a({ href, children }) {
-                                return (
-                                  <a 
-                                    href={href} 
-                                    className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                  >
-                                    {children}
-                                  </a>
-                                );
-                              },
-                              blockquote({ children }) {
-                                return (
-                                  <blockquote className="border-l-4 border-indigo-500 pl-4 my-4 italic text-gray-300">
-                                    {children}
-                                  </blockquote>
-                                );
-                              },
-                              ul({ children }) {
-                                return (
-                                  <ul className="list-disc pl-5 my-3 space-y-1">
-                                    {children}
-                                  </ul>
-                                );
-                              },
-                              ol({ children }) {
-                                return (
-                                  <ol className="list-decimal pl-5 my-3 space-y-1">
-                                    {children}
-                                  </ol>
-                                );
-                              },
-                              h1({ children }) {
-                                return <h1 className="text-2xl font-bold mt-6 mb-3">{children}</h1>;
-                              },
-                              h2({ children }) {
-                                return <h2 className="text-xl font-bold mt-5 mb-2">{children}</h2>;
-                              },
-                              h3({ children }) {
-                                return <h3 className="text-lg font-bold mt-4 mb-2">{children}</h3>;
-                              },
-                              hr() {
-                                return <hr className="my-6 border-gray-700" />;
-                              },
-                            }}
-                            // className="space-y-3"
-                          >
-                            {(msg.content as string) || "▋"}
-                          </ReactMarkdown>
+                                    </th>
+                                  );
+                                },
+                                td({ children }) {
+                                  return (
+                                    <td className="px-4 py-3 border-b border-gray-700/50 text-sm">
+                                      {children}
+                                    </td>
+                                  );
+                                },
+                                a({ href, children }) {
+                                  return (
+                                    <a 
+                                      href={href} 
+                                      className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                    >
+                                      {children}
+                                    </a>
+                                  );
+                                },
+                                blockquote({ children }) {
+                                  return (
+                                    <blockquote className="border-l-4 border-indigo-500 pl-4 my-4 italic text-gray-300">
+                                      {children}
+                                    </blockquote>
+                                  );
+                                },
+                                ul({ children }) {
+                                  return (
+                                    <ul className="list-disc pl-5 my-3 space-y-1">
+                                      {children}
+                                    </ul>
+                                  );
+                                },
+                                ol({ children }) {
+                                  return (
+                                    <ol className="list-decimal pl-5 my-3 space-y-1">
+                                      {children}
+                                    </ol>
+                                  );
+                                },
+                                h1({ children }) {
+                                  return <h1 className="text-2xl font-bold mt-6 mb-3">{children}</h1>;
+                                },
+                                h2({ children }) {
+                                  return <h2 className="text-xl font-bold mt-5 mb-2">{children}</h2>;
+                                },
+                                h3({ children }) {
+                                  return <h3 className="text-lg font-bold mt-4 mb-2">{children}</h3>;
+                                },
+                                hr() {
+                                  return <hr className="my-6 border-gray-700" />;
+                                },
+                              }}
+                            >
+                              {(msg.content as string) || "▋"}
+                            </ReactMarkdown>
+                          </div>
                           
                           {/* Token usage and performance info */}
                           {msg.meta && (
-                            <div className="mt-4 pt-3 border-t border-gray-700/50 text-xs text-gray-400">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FiDatabase size={12} />
-                                <span className="font-medium">响应统计</span>
+                            <div className="mt-3 pt-2 border-t border-gray-700/50 text-xs text-gray-400">
+                              <div className="flex items-center gap-1 mb-1">
+                                <FiDatabase size={10} />
+                                <span className="font-medium text-[10px] uppercase tracking-wider">STATS</span>
                               </div>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              <div className="flex flex-wrap gap-1.5">
                                 {msg.meta.tokens_per_second && msg.meta.tokens_per_second > 0 && (
-                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
-                                    <span className="text-gray-500 text-[10px]">速度</span>
+                                  <div className="flex items-center gap-1 bg-gray-800/50 px-1.5 py-0.5 rounded text-[10px]">
+                                    <span className="text-gray-500">speed:</span>
                                     <span className="font-medium text-green-400">
-                                      {msg.meta.tokens_per_second.toFixed(1)} tokens/s
+                                      {msg.meta.tokens_per_second.toFixed(1)}/s
                                     </span>
                                   </div>
                                 )}
                                 
                                 {msg.meta.usage?.prompt_tokens && msg.meta.usage.prompt_tokens > 0 && (
-                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
-                                    <span className="text-gray-500 text-[10px]">输入 Token</span>
+                                  <div className="flex items-center gap-1 bg-gray-800/50 px-1.5 py-0.5 rounded text-[10px]">
+                                    <span className="text-gray-500">in:</span>
                                     <span className="font-medium text-blue-400">
                                       {msg.meta.usage.prompt_tokens}
                                     </span>
@@ -906,8 +918,8 @@ function App() {
                                 )}
                                 
                                 {msg.meta.usage?.completion_tokens && msg.meta.usage.completion_tokens > 0 && (
-                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
-                                    <span className="text-gray-500 text-[10px]">输出 Token</span>
+                                  <div className="flex items-center gap-1 bg-gray-800/50 px-1.5 py-0.5 rounded text-[10px]">
+                                    <span className="text-gray-500">out:</span>
                                     <span className="font-medium text-purple-400">
                                       {msg.meta.usage.completion_tokens}
                                     </span>
@@ -915,8 +927,8 @@ function App() {
                                 )}
                                 
                                 {msg.meta.usage?.total_tokens && msg.meta.usage.total_tokens > 0 && (
-                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
-                                    <span className="text-gray-500 text-[10px]">总 Token</span>
+                                  <div className="flex items-center gap-1 bg-gray-800/50 px-1.5 py-0.5 rounded text-[10px]">
+                                    <span className="text-gray-500">total:</span>
                                     <span className="font-medium text-yellow-400">
                                       {msg.meta.usage.total_tokens}
                                     </span>
@@ -924,8 +936,8 @@ function App() {
                                 )}
                                 
                                 {msg.meta.response_time && msg.meta.response_time > 0 && (
-                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
-                                    <span className="text-gray-500 text-[10px]">响应时间</span>
+                                  <div className="flex items-center gap-1 bg-gray-800/50 px-1.5 py-0.5 rounded text-[10px]">
+                                    <FiClock size={8} className="text-gray-500" />
                                     <span className="font-medium text-cyan-400">
                                       {msg.meta.response_time}ms
                                     </span>
@@ -933,8 +945,8 @@ function App() {
                                 )}
                                 
                                 {msg.meta.characters && msg.meta.characters > 0 && (
-                                  <div className="flex flex-col bg-gray-800/30 p-2 rounded">
-                                    <span className="text-gray-500 text-[10px]">字符数</span>
+                                  <div className="flex items-center gap-1 bg-gray-800/50 px-1.5 py-0.5 rounded text-[10px]">
+                                    <span className="text-gray-500">chars:</span>
                                     <span className="font-medium text-indigo-400">
                                       {msg.meta.characters}
                                     </span>
@@ -942,12 +954,9 @@ function App() {
                                 )}
                               </div>
                               
-                              {/* 显示估算提示 */}
-                              {(msg.meta.usage?.prompt_tokens === 0 || 
-                                msg.meta.usage?.completion_tokens === 0 || 
-                                msg.meta.usage?.total_tokens === 0) && (
-                                <div className="mt-2 text-gray-500 text-[10px] italic">
-                                  * Token 数据为估算值
+                              {msg.meta.is_estimated && (
+                                <div className="mt-1 text-gray-500 text-[9px] italic">
+                                  * Token estimates
                                 </div>
                               )}
                             </div>
