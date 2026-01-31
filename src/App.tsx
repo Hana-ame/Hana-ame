@@ -3,9 +3,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import rehypeHighlight from "rehype-highlight";
-import "highlight.js/styles/github-dark.css";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import {
   FiSend,
   FiTrash2,
@@ -653,40 +652,46 @@ function App() {
 
   // Markdown组件自定义样式
   const markdownComponents = {
-    code: ({ node, inline, className, children, ...props }: any) => {
+    code({ node, inline, className, children, ...props }: any) {
       const match = /language-(\w+)/.exec(className || '');
-      const isMultiline = !inline && children && 
-        typeof children === 'string' && 
-        (children.includes('\n') || children.length > 50);
+      const language = match ? match[1] : '';
       
-      return !inline && isMultiline ? (
-        <div className="relative">
-          <div className="overflow-x-auto">
-            <code
-              className={`${className} block whitespace-pre text-sm p-3 rounded bg-gray-900 border border-gray-700`}
-              {...props}
-            >
-              {children}
-            </code>
+      if (!inline && language) {
+        return (
+          <div className="relative my-2">
+            <div className="overflow-x-auto">
+              <SyntaxHighlighter
+                style={vscDarkPlus}
+                language={language}
+                PreTag="div"
+                className="rounded-md text-sm"
+                showLineNumbers={true}
+                wrapLines={true}
+                customStyle={{
+                  margin: 0,
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                {String(children).replace(/\n$/, '')}
+              </SyntaxHighlighter>
+            </div>
+            <div className="text-xs text-gray-500 mt-1 text-right">
+              可左右滚动 →
+            </div>
           </div>
-          <div className="text-xs text-gray-500 mt-1 text-right">
-            可左右滚动 →
-          </div>
-        </div>
-      ) : (
-        <code className={`${className} px-1 py-0.5 rounded bg-gray-800`} {...props}>
+        );
+      }
+      
+      // 行内代码
+      return (
+        <code className="px-2 py-1 bg-gray-800 rounded text-sm font-mono" {...props}>
           {children}
         </code>
       );
     },
     pre: ({ node, children, ...props }: any) => {
-      return (
-        <div className="overflow-x-auto my-2">
-          <pre className="text-sm p-3 rounded bg-gray-900 border border-gray-700 whitespace-pre" {...props}>
-            {children}
-          </pre>
-        </div>
-      );
+      return <div className="my-2" {...props}>{children}</div>;
     },
     table: ({ node, children, ...props }: any) => {
       return (
@@ -704,13 +709,34 @@ function App() {
       return <tbody className="divide-y divide-gray-700" {...props}>{children}</tbody>;
     },
     th: ({ node, children, ...props }: any) => {
-      return <th className="px-4 py-2 text-left text-sm font-medium text-gray-300 border-b border-gray-700" {...props}>{children}</th>;
+      return (
+        <th 
+          className="px-4 py-2 text-left text-sm font-medium text-gray-300 border-b border-gray-700 bg-gray-800/50" 
+          {...props}
+        >
+          {children}
+        </th>
+      );
     },
     td: ({ node, children, ...props }: any) => {
-      return <td className="px-4 py-2 text-sm border-b border-gray-700" {...props}>{children}</td>;
+      return (
+        <td 
+          className="px-4 py-2 text-sm border-b border-gray-700" 
+          {...props}
+        >
+          {children}
+        </td>
+      );
     },
     blockquote: ({ node, children, ...props }: any) => {
-      return <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 my-2 italic bg-gray-800/50 rounded-r" {...props}>{children}</blockquote>;
+      return (
+        <blockquote 
+          className="border-l-4 border-indigo-500 pl-4 py-1 my-2 italic bg-gray-800/50 rounded-r" 
+          {...props}
+        >
+          {children}
+        </blockquote>
+      );
     },
     ul: ({ node, children, ...props }: any) => {
       return <ul className="list-disc pl-5 my-2 space-y-1" {...props}>{children}</ul>;
@@ -722,7 +748,14 @@ function App() {
       return <li className="my-1" {...props}>{children}</li>;
     },
     h1: ({ node, children, ...props }: any) => {
-      return <h1 className="text-2xl font-bold mt-4 mb-2 pb-2 border-b border-gray-700" {...props}>{children}</h1>;
+      return (
+        <h1 
+          className="text-2xl font-bold mt-4 mb-2 pb-2 border-b border-gray-700" 
+          {...props}
+        >
+          {children}
+        </h1>
+      );
     },
     h2: ({ node, children, ...props }: any) => {
       return <h2 className="text-xl font-bold mt-3 mb-2" {...props}>{children}</h2>;
@@ -730,17 +763,53 @@ function App() {
     h3: ({ node, children, ...props }: any) => {
       return <h3 className="text-lg font-bold mt-2 mb-1" {...props}>{children}</h3>;
     },
+    h4: ({ node, children, ...props }: any) => {
+      return <h4 className="text-base font-bold mt-2 mb-1" {...props}>{children}</h4>;
+    },
+    h5: ({ node, children, ...props }: any) => {
+      return <h5 className="text-sm font-bold mt-1 mb-1" {...props}>{children}</h5>;
+    },
+    h6: ({ node, children, ...props }: any) => {
+      return <h6 className="text-sm font-semibold mt-1 mb-1 text-gray-400" {...props}>{children}</h6>;
+    },
     hr: ({ node, ...props }: any) => {
       return <hr className="my-4 border-gray-700" {...props} />;
     },
-    a: ({ node, children, ...props }: any) => {
-      return <a className="text-indigo-400 hover:text-indigo-300 underline" {...props}>{children}</a>;
+    a: ({ node, children, href, ...props }: any) => {
+      return (
+        <a 
+          href={href} 
+          className="text-indigo-400 hover:text-indigo-300 underline" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          {...props}
+        >
+          {children}
+        </a>
+      );
     },
     strong: ({ node, children, ...props }: any) => {
       return <strong className="font-bold" {...props}>{children}</strong>;
     },
     em: ({ node, children, ...props }: any) => {
       return <em className="italic" {...props}>{children}</em>;
+    },
+    p: ({ node, children, ...props }: any) => {
+      return <p className="my-2" {...props}>{children}</p>;
+    },
+    img: ({ node, src, alt, ...props }: any) => {
+      return (
+        <img 
+          src={src} 
+          alt={alt} 
+          className="max-w-full h-auto rounded-lg my-2 border border-gray-700" 
+          {...props}
+        />
+      );
+    },
+    // 支持删除线
+    del: ({ node, children, ...props }: any) => {
+      return <del className="line-through text-gray-500" {...props}>{children}</del>;
     },
   };
 
@@ -878,7 +947,6 @@ function App() {
                       {msg.role === "assistant" ? (
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[rehypeRaw, [rehypeHighlight, { ignoreMissing: true }]]}
                           components={markdownComponents}
                           // className="markdown-content"
                         >
