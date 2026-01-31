@@ -23,6 +23,8 @@ import {
   FiActivity,
   FiCopy,
   FiCheck as FiCheckCircle,
+  FiAlertTriangle,
+  FiInfo,
 } from "react-icons/fi";
 
 // --- Type Definitions ---
@@ -53,6 +55,8 @@ interface Message {
     total_tokens: number;
     processing_time?: number; // in seconds
   };
+  finish_reason?: string | null; // 添加finish_reason字段
+  finish_message?: string; // 添加finish_message字段用于显示提示
 }
 
 interface StreamChoiceDelta {
@@ -86,6 +90,26 @@ const STORAGE_KEYS = {
   apiKey: "ai_chat_pro_api_key",
   jsonPayload: "ai_chat_pro_json_payload",
   chatHistory: "ai_chat_pro_chat_history",
+};
+
+// 翻译finish_reason为人类可读的提示
+const getFinishReasonMessage = (reason: string | null): string => {
+  if (!reason) return "";
+  
+  switch (reason) {
+    case "stop":
+      return "正常停止：模型完成了回复";
+    case "length":
+      return "长度限制：达到了最大token限制，回复可能不完整";
+    case "content_filter":
+      return "内容过滤：因内容安全策略而停止";
+    case "tool_calls":
+      return "工具调用：需要调用外部工具";
+    case "function_call":
+      return "函数调用：需要调用函数";
+    default:
+      return `停止原因：${reason}`;
+  }
 };
 
 function App() {
@@ -174,6 +198,9 @@ function App() {
   
   // 用于生成唯一的代码块ID
   const codeBlockIdCounter = useRef(0);
+  
+  // 用于记录finish_reason
+  const finishReasonRef = useRef<string | null>(null);
 
   // Save to LocalStorage when states change
   useEffect(() => {
@@ -438,6 +465,8 @@ function App() {
     setStreamingStartTime(Date.now());
     setCurrentStreamingTokens(0);
     tokenCountRef.current = 0;
+    // 重置finish_reason
+    finishReasonRef.current = null;
 
     // 重置去重引用
     const assistantIndex = newHistory.length - 1;
@@ -533,43 +562,63 @@ function App() {
                 finalUsage = parsedChunk.usage;
               }
 
-              if (parsedChunk.choices && parsedChunk.choices[0]?.delta) {
-                const delta = parsedChunk.choices[0].delta;
+              if (parsedChunk.choices && parsedChunk.choices[0]) {
+                const choice = parsedChunk.choices[0];
+                const delta = choice.delta;
                 const contentChunk = delta.content || "";
                 const reasoningChunk = delta.reasoning_content || "";
+                
+                // 记录finish_reason
+                if (choice.finish_reason !== undefined && choice.finish_reason !== null) {
+                  finishReasonRef.current = choice.finish_reason;
+                }
 
-                if (contentChunk || reasoningChunk) {
+                // 如果有内容更新或者有finish_reason，则更新消息
+                const hasContentUpdate = contentChunk || reasoningChunk;
+                const hasFinishReason = choice.finish_reason && choice.finish_reason !== null;
+                
+                if (hasContentUpdate || hasFinishReason) {
                   setHistory((prev) => {
                     const h = [...prev];
                     const lastIdx = h.length - 1;
                     if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
-                      // 去重检查
-                      const currentContent = h[lastIdx].content as string;
-                      const currentReasoning = h[lastIdx].reasoning_content || "";
-                      
-                      const lastContent = lastContentRef.current[lastIdx] || "";
-                      const lastReasoning = lastReasoningRef.current[lastIdx] || "";
-                      
-                      if (contentChunk && contentChunk === lastContent) {
-                        return h;
-                      }
-                      if (reasoningChunk && reasoningChunk === lastReasoning) {
-                        return h;
-                      }
-                      
-                      lastContentRef.current[lastIdx] = contentChunk;
-                      lastReasoningRef.current[lastIdx] = reasoningChunk;
-                      
-                      // 更新token计数
+                      // 去重检查并更新内容
                       if (contentChunk) {
-                        tokenCountRef.current += estimateTokens(contentChunk);
-                        setCurrentStreamingTokens(tokenCountRef.current);
-                        h[lastIdx].content = currentContent + contentChunk;
+                        const currentContent = h[lastIdx].content as string;
+                        const lastContent = lastContentRef.current[lastIdx] || "";
+                        
+                        // 检查是否重复
+                        if (contentChunk !== lastContent) {
+                          lastContentRef.current[lastIdx] = contentChunk;
+                          
+                          // 更新token计数
+                          tokenCountRef.current += estimateTokens(contentChunk);
+                          setCurrentStreamingTokens(tokenCountRef.current);
+                          h[lastIdx].content = currentContent + contentChunk;
+                        }
                       }
                       if (reasoningChunk) {
-                        tokenCountRef.current += estimateTokens(reasoningChunk);
-                        setCurrentStreamingTokens(tokenCountRef.current);
-                        h[lastIdx].reasoning_content = currentReasoning + reasoningChunk;
+                        const currentReasoning = h[lastIdx].reasoning_content || "";
+                        const lastReasoning = lastReasoningRef.current[lastIdx] || "";
+                        
+                        // 检查是否重复
+                        if (reasoningChunk !== lastReasoning) {
+                          lastReasoningRef.current[lastIdx] = reasoningChunk;
+                          
+                          // 更新token计数
+                          tokenCountRef.current += estimateTokens(reasoningChunk);
+                          setCurrentStreamingTokens(tokenCountRef.current);
+                          h[lastIdx].reasoning_content = currentReasoning + reasoningChunk;
+                        }
+                      }
+                      
+                      // 更新finish_reason和提示消息
+                      if (hasFinishReason && choice.finish_reason) {
+                        h[lastIdx].finish_reason = choice.finish_reason;
+                        const message = getFinishReasonMessage(choice.finish_reason);
+                        if (message) {
+                          h[lastIdx].finish_message = message;
+                        }
                       }
                     }
                     return h;
@@ -598,6 +647,15 @@ function App() {
               total_tokens: finalUsage?.total_tokens || (finalUsage?.prompt_tokens || estimateTokens(JSON.stringify(body.messages))) + tokenCountRef.current,
               processing_time: processingTime,
             };
+            
+            // 确保finish_reason被保存（如果之前没有保存）
+            if (finishReasonRef.current && !h[lastIdx].finish_reason) {
+              h[lastIdx].finish_reason = finishReasonRef.current;
+              const message = getFinishReasonMessage(finishReasonRef.current);
+              if (message) {
+                h[lastIdx].finish_message = message;
+              }
+            }
           }
           return h;
         });
@@ -637,6 +695,7 @@ function App() {
       const assistantIndex = history.length;
       delete lastContentRef.current[assistantIndex];
       delete lastReasoningRef.current[assistantIndex];
+      finishReasonRef.current = null;
     }
   }, [
     input,
@@ -1020,6 +1079,26 @@ function App() {
                         </div>
                       )}
 
+                      {/* 显示finish_reason提示 */}
+                      {msg.role === "assistant" && msg.finish_message && (
+                        <div className={`mt-2 p-2 rounded-md text-sm flex items-start gap-2 ${
+                          msg.finish_reason === 'length' 
+                            ? 'bg-yellow-900/30 border border-yellow-700/50 text-yellow-300' 
+                            : msg.finish_reason === 'content_filter'
+                            ? 'bg-red-900/30 border border-red-700/50 text-red-300'
+                            : 'bg-blue-900/30 border border-blue-700/50 text-blue-300'
+                        }`}>
+                          {msg.finish_reason === 'length' ? (
+                            <FiAlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+                          ) : msg.finish_reason === 'content_filter' ? (
+                            <FiAlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <FiInfo size={16} className="mt-0.5 flex-shrink-0" />
+                          )}
+                          <span>{msg.finish_message}</span>
+                        </div>
+                      )}
+
                       {/* Token Usage Information */}
                       {msg.role === "assistant" && msg.usage && (
                         <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
@@ -1230,6 +1309,7 @@ function App() {
             <p>* Enhanced Markdown support with tables, code highlighting.</p>
             <p>* Real-time token statistics and speed calculation.</p>
             <p>* Code blocks with copy functionality.</p>
+            <p>* Shows finish reason (length, content_filter, etc.) with explanations.</p>
           </div>
         </div>
       </div>
