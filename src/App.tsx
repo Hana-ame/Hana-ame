@@ -990,13 +990,14 @@ function App() {
                       )}
 
                       {msg.role === "assistant" ? (
-                        <ReactMarkdown 
-                          remarkPlugins={[remarkGfm]}
-                          components={markdownComponents}
-                          // className="markdown-content"
-                        >
-                          {(msg.content as string) || "▋"}
-                        </ReactMarkdown>
+                        <div className="markdown-content">
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            components={markdownComponents}
+                          >
+                            {(msg.content as string) || "▋"}
+                          </ReactMarkdown>
+                        </div>
                       ) : (
                         <div className="whitespace-pre-wrap">
                           {typeof msg.content === "string"
