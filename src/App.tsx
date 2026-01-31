@@ -2,6 +2,10 @@
 // App.tsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github-dark.css";
 import {
   FiSend,
   FiTrash2,
@@ -15,6 +19,9 @@ import {
   FiSettings,
   FiChevronDown,
   FiChevronUp,
+  FiClock,
+  FiHash,
+  FiActivity,
 } from "react-icons/fi";
 
 // --- Type Definitions ---
@@ -39,6 +46,12 @@ interface Message {
   content: UserMessageContent | AssistantMessageContent | string;
   reasoning_content?: string; // For DeepSeek R1 style thinking process
   id?: string; // Add ID for tracking
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    processing_time?: number; // in seconds
+  };
 }
 
 interface StreamChoiceDelta {
@@ -59,6 +72,11 @@ interface StreamChunk {
   created?: number;
   model?: string;
   choices: StreamChoice[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
 // LocalStorage Keys
@@ -66,7 +84,7 @@ const STORAGE_KEYS = {
   endpointUrl: "ai_chat_pro_endpoint_url",
   apiKey: "ai_chat_pro_api_key",
   jsonPayload: "ai_chat_pro_json_payload",
-  chatHistory: "ai_chat_pro_chat_history", // 添加对话历史存储键
+  chatHistory: "ai_chat_pro_chat_history",
 };
 
 function App() {
@@ -83,9 +101,13 @@ function App() {
     }
     return [];
   });
-
+  
   const [input, setInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Token统计相关状态
+  const [streamingStartTime, setStreamingStartTime] = useState<number | null>(null);
+  const [currentStreamingTokens, setCurrentStreamingTokens] = useState<number>(0);
 
   // --- New Configuration States with LocalStorage ---
   const [endpointUrl, setEndpointUrl] = useState<string>(() => {
@@ -138,10 +160,13 @@ function App() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
+  
   // 用于去重流式响应
   const lastContentRef = useRef<Record<number, string>>({});
   const lastReasoningRef = useRef<Record<number, string>>({});
+  
+  // 用于跟踪token统计
+  const tokenCountRef = useRef<number>(0);
 
   // Save to LocalStorage when states change
   useEffect(() => {
@@ -164,10 +189,8 @@ function App() {
       localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(history));
     } catch (e) {
       console.error("Failed to save chat history:", e);
-      // 如果存储失败，尝试清理旧数据
-      if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
         alert("存储空间不足，将清除旧对话历史");
-        // 保留最近的20条消息
         const recentHistory = history.slice(-20);
         setHistory(recentHistory);
       }
@@ -189,7 +212,6 @@ function App() {
       }
     } catch (e) {
       console.log(e);
-      // Ignore parse errors during auto-sync
     }
   }, [history, jsonPayload, jsonError]);
 
@@ -197,6 +219,17 @@ function App() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [history, isLoading]);
+
+  // 计算token/s
+  useEffect(() => {
+    if (streamingStartTime && currentStreamingTokens > 0) {
+      const interval = setInterval(() => {
+        // 定期更新显示的token/s
+      }, 500);
+      
+      return () => clearInterval(interval);
+    }
+  }, [streamingStartTime, currentStreamingTokens]);
 
   // --- Message Operations ---
   const deleteMessage = (index: number) => {
@@ -318,6 +351,12 @@ function App() {
     setUploadedImageName(null);
   };
 
+  // 估算token数量 (简单估算)
+  const estimateTokens = (text: string): number => {
+    // 简单估算：平均一个token大约4个字符
+    return Math.ceil(text.length / 4);
+  };
+
   // --- Streaming Logic ---
   const stopStreaming = useCallback(() => {
     if (abortControllerRef.current) {
@@ -352,26 +391,33 @@ function App() {
       });
     }
 
-    const userMessage: Message = {
-      role: "user",
+    const userMessage: Message = { 
+      role: "user", 
       content: userContentParts,
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+
+    const assistantMessage: Message = { 
+      role: "assistant", 
+      content: "",
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
 
     const newHistory = [
       ...history,
       userMessage,
-      {
-        role: "assistant",
-        content: "",
-        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      },
+      assistantMessage,
     ];
     setHistory(newHistory as Message[]);
     setInput("");
     setUploadedImage(null);
     setUploadedImageName(null);
     setIsLoading(true);
+    
+    // 重置token计数和开始时间
+    setStreamingStartTime(Date.now());
+    setCurrentStreamingTokens(0);
+    tokenCountRef.current = 0;
 
     // 重置去重引用
     const assistantIndex = newHistory.length - 1;
@@ -391,6 +437,7 @@ function App() {
     } catch (e) {
       alert("Invalid JSON payload");
       setIsLoading(false);
+      setStreamingStartTime(null);
       return;
     }
 
@@ -425,6 +472,7 @@ function App() {
           return h;
         });
         setIsLoading(false);
+        setStreamingStartTime(null);
         return;
       }
 
@@ -434,6 +482,7 @@ function App() {
       const decoder = new TextDecoder();
       let doneReading = false;
       let buffer = "";
+      let finalUsage = null;
 
       while (!doneReading) {
         if (signal.aborted) {
@@ -442,11 +491,9 @@ function App() {
         const { value, done } = await reader.read();
         doneReading = done;
 
-        // Append to buffer and process line by line
         buffer += decoder.decode(value, { stream: !doneReading });
         const lines = buffer.split("\n");
 
-        // Keep the last partial line in buffer
         buffer = lines.pop() || "";
 
         for (const line of lines) {
@@ -461,6 +508,11 @@ function App() {
             try {
               const parsedChunk = JSON.parse(jsonData) as StreamChunk;
 
+              // 检查是否有usage信息
+              if (parsedChunk.usage) {
+                finalUsage = parsedChunk.usage;
+              }
+
               if (parsedChunk.choices && parsedChunk.choices[0]?.delta) {
                 const delta = parsedChunk.choices[0].delta;
                 const contentChunk = delta.content || "";
@@ -473,34 +525,31 @@ function App() {
                     if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
                       // 去重检查
                       const currentContent = h[lastIdx].content as string;
-                      const currentReasoning =
-                        h[lastIdx].reasoning_content || "";
-
-                      // 检查是否重复
+                      const currentReasoning = h[lastIdx].reasoning_content || "";
+                      
                       const lastContent = lastContentRef.current[lastIdx] || "";
-                      const lastReasoning =
-                        lastReasoningRef.current[lastIdx] || "";
-
-                      // 如果新内容和上次相同，跳过
+                      const lastReasoning = lastReasoningRef.current[lastIdx] || "";
+                      
                       if (contentChunk && contentChunk === lastContent) {
                         return h;
                       }
                       if (reasoningChunk && reasoningChunk === lastReasoning) {
                         return h;
                       }
-
-                      // 更新引用
+                      
                       lastContentRef.current[lastIdx] = contentChunk;
                       lastReasoningRef.current[lastIdx] = reasoningChunk;
-
-                      // Update main content
+                      
+                      // 更新token计数
                       if (contentChunk) {
+                        tokenCountRef.current += estimateTokens(contentChunk);
+                        setCurrentStreamingTokens(tokenCountRef.current);
                         h[lastIdx].content = currentContent + contentChunk;
                       }
-                      // Update reasoning content (thinking process)
                       if (reasoningChunk) {
-                        h[lastIdx].reasoning_content =
-                          currentReasoning + reasoningChunk;
+                        tokenCountRef.current += estimateTokens(reasoningChunk);
+                        setCurrentStreamingTokens(tokenCountRef.current);
+                        h[lastIdx].reasoning_content = currentReasoning + reasoningChunk;
                       }
                     }
                     return h;
@@ -512,6 +561,26 @@ function App() {
             }
           }
         }
+      }
+
+      // 流式结束后，如果有usage信息，更新到消息中
+      if (finalUsage || streamingStartTime) {
+        const endTime = Date.now();
+        const processingTime = streamingStartTime ? (endTime - streamingStartTime) / 1000 : 0;
+        
+        setHistory((prev) => {
+          const h = [...prev];
+          const lastIdx = h.length - 1;
+          if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
+            h[lastIdx].usage = {
+              prompt_tokens: finalUsage?.prompt_tokens || estimateTokens(JSON.stringify(body.messages)),
+              completion_tokens: finalUsage?.completion_tokens || tokenCountRef.current,
+              total_tokens: finalUsage?.total_tokens || (finalUsage?.prompt_tokens || estimateTokens(JSON.stringify(body.messages))) + tokenCountRef.current,
+              processing_time: processingTime,
+            };
+          }
+          return h;
+        });
       }
     } catch (error: any) {
       if (error.name === "AbortError") {
@@ -543,8 +612,9 @@ function App() {
       }
     } finally {
       setIsLoading(false);
+      setStreamingStartTime(null);
       abortControllerRef.current = null;
-      // 清理去重引用
+      const assistantIndex = history.length;
       delete lastContentRef.current[assistantIndex];
       delete lastReasoningRef.current[assistantIndex];
     }
@@ -558,6 +628,7 @@ function App() {
     jsonError,
     isLoading,
     stopStreaming,
+    streamingStartTime,
   ]);
 
   const clearHistory = () => {
@@ -573,16 +644,21 @@ function App() {
     }));
   };
 
+  // 计算实时的token/s
+  const calculateCurrentTokensPerSecond = () => {
+    if (!streamingStartTime || currentStreamingTokens === 0) return 0;
+    const elapsedSeconds = (Date.now() - streamingStartTime) / 1000;
+    return elapsedSeconds > 0 ? (currentStreamingTokens / elapsedSeconds).toFixed(1) : "0.0";
+  };
+
   // Markdown组件自定义样式
   const markdownComponents = {
     code: ({ node, inline, className, children, ...props }: any) => {
-      const match = /language-(\w+)/.exec(className || "");
-      const isMultiline =
-        !inline &&
-        children &&
-        typeof children === "string" &&
-        (children.includes("\n") || children.length > 50);
-
+      const match = /language-(\w+)/.exec(className || '');
+      const isMultiline = !inline && children && 
+        typeof children === 'string' && 
+        (children.includes('\n') || children.length > 50);
+      
       return !inline && isMultiline ? (
         <div className="relative">
           <div className="overflow-x-auto">
@@ -598,7 +674,7 @@ function App() {
           </div>
         </div>
       ) : (
-        <code className={className} {...props}>
+        <code className={`${className} px-1 py-0.5 rounded bg-gray-800`} {...props}>
           {children}
         </code>
       );
@@ -606,14 +682,65 @@ function App() {
     pre: ({ node, children, ...props }: any) => {
       return (
         <div className="overflow-x-auto my-2">
-          <pre
-            className="text-sm p-3 rounded bg-gray-900 border border-gray-700 whitespace-pre"
-            {...props}
-          >
+          <pre className="text-sm p-3 rounded bg-gray-900 border border-gray-700 whitespace-pre" {...props}>
             {children}
           </pre>
         </div>
       );
+    },
+    table: ({ node, children, ...props }: any) => {
+      return (
+        <div className="overflow-x-auto my-3">
+          <table className="min-w-full divide-y divide-gray-700 border border-gray-700 rounded-lg" {...props}>
+            {children}
+          </table>
+        </div>
+      );
+    },
+    thead: ({ node, children, ...props }: any) => {
+      return <thead className="bg-gray-800" {...props}>{children}</thead>;
+    },
+    tbody: ({ node, children, ...props }: any) => {
+      return <tbody className="divide-y divide-gray-700" {...props}>{children}</tbody>;
+    },
+    th: ({ node, children, ...props }: any) => {
+      return <th className="px-4 py-2 text-left text-sm font-medium text-gray-300 border-b border-gray-700" {...props}>{children}</th>;
+    },
+    td: ({ node, children, ...props }: any) => {
+      return <td className="px-4 py-2 text-sm border-b border-gray-700" {...props}>{children}</td>;
+    },
+    blockquote: ({ node, children, ...props }: any) => {
+      return <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 my-2 italic bg-gray-800/50 rounded-r" {...props}>{children}</blockquote>;
+    },
+    ul: ({ node, children, ...props }: any) => {
+      return <ul className="list-disc pl-5 my-2 space-y-1" {...props}>{children}</ul>;
+    },
+    ol: ({ node, children, ...props }: any) => {
+      return <ol className="list-decimal pl-5 my-2 space-y-1" {...props}>{children}</ol>;
+    },
+    li: ({ node, children, ...props }: any) => {
+      return <li className="my-1" {...props}>{children}</li>;
+    },
+    h1: ({ node, children, ...props }: any) => {
+      return <h1 className="text-2xl font-bold mt-4 mb-2 pb-2 border-b border-gray-700" {...props}>{children}</h1>;
+    },
+    h2: ({ node, children, ...props }: any) => {
+      return <h2 className="text-xl font-bold mt-3 mb-2" {...props}>{children}</h2>;
+    },
+    h3: ({ node, children, ...props }: any) => {
+      return <h3 className="text-lg font-bold mt-2 mb-1" {...props}>{children}</h3>;
+    },
+    hr: ({ node, ...props }: any) => {
+      return <hr className="my-4 border-gray-700" {...props} />;
+    },
+    a: ({ node, children, ...props }: any) => {
+      return <a className="text-indigo-400 hover:text-indigo-300 underline" {...props}>{children}</a>;
+    },
+    strong: ({ node, children, ...props }: any) => {
+      return <strong className="font-bold" {...props}>{children}</strong>;
+    },
+    em: ({ node, children, ...props }: any) => {
+      return <em className="italic" {...props}>{children}</em>;
     },
   };
 
@@ -623,12 +750,22 @@ function App() {
       <div className="flex-1 flex flex-col h-full min-w-0">
         <header className="p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
           <h1 className="text-xl font-bold text-indigo-400">AI Chat Pro</h1>
-          <button
-            onClick={clearHistory}
-            className="text-sm text-red-400 hover:text-red-300 flex items-center gap-1"
-          >
-            <FiTrash2 /> Clear All
-          </button>
+          <div className="flex items-center gap-4">
+            {isLoading && streamingStartTime && (
+              <div className="text-sm text-gray-400 flex items-center gap-2">
+                <FiActivity className="animate-pulse" />
+                <span>{calculateCurrentTokensPerSecond()} tokens/s</span>
+                <span className="text-gray-500">|</span>
+                <span>{currentStreamingTokens} tokens</span>
+              </div>
+            )}
+            <button
+              onClick={clearHistory}
+              className="text-sm text-red-400 hover:text-red-300 flex items-center gap-1"
+            >
+              <FiTrash2 /> Clear All
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -739,7 +876,12 @@ function App() {
                       )}
 
                       {msg.role === "assistant" ? (
-                        <ReactMarkdown components={markdownComponents}>
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeRaw, [rehypeHighlight, { ignoreMissing: true }]]}
+                          components={markdownComponents}
+                          // className="markdown-content"
+                        >
                           {(msg.content as string) || "▋"}
                         </ReactMarkdown>
                       ) : (
@@ -761,6 +903,30 @@ function App() {
                                     />
                                   ),
                               )}
+                        </div>
+                      )}
+
+                      {/* Token Usage Information */}
+                      {msg.role === "assistant" && msg.usage && (
+                        <div className="mt-3 pt-3 border-t border-gray-700 text-xs text-gray-400">
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-1">
+                              <FiHash size={12} />
+                              <span>Tokens: {msg.usage.total_tokens} (Prompt: {msg.usage.prompt_tokens}, Completion: {msg.usage.completion_tokens})</span>
+                            </div>
+                            {msg.usage.processing_time && msg.usage.completion_tokens > 0 && (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <FiClock size={12} />
+                                  <span>Time: {msg.usage.processing_time.toFixed(2)}s</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <FiActivity size={12} />
+                                  <span>Speed: {(msg.usage.completion_tokens / msg.usage.processing_time).toFixed(1)} tokens/s</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -902,7 +1068,6 @@ function App() {
               />
             </div>
 
-            {/* Moved error message below textarea to avoid blocking */}
             {jsonError && (
               <div className="mt-2 bg-red-900/50 border border-red-700 text-red-200 text-xs p-2 rounded flex items-start gap-2">
                 <FiAlertCircle size={14} className="mt-0.5 shrink-0" />
@@ -948,7 +1113,8 @@ function App() {
               updated with the chat history on the left.
             </p>
             <p>* Supports DeepSeek-R1 reasoning_content display.</p>
-            <p>* Code blocks now support horizontal scrolling.</p>
+            <p>* Enhanced Markdown support with tables, code highlighting.</p>
+            <p>* Real-time token statistics and speed calculation.</p>
           </div>
         </div>
       </div>
