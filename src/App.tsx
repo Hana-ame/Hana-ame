@@ -1,40 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Navbar from "./components/layout/Navbar";
 import { GalleryCard } from "./components/gallery/GalleryCard";
 import SettingsPanel from "./components/settings/SettingsPanel";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { GalleryItem, TabType } from "./types";
+// 1. Import the hooks (adjust paths as necessary)
+import { useUser } from "./hooks/useUser";
+import { useGallery } from "./hooks/useGallery";
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("recent_submit");
-  const [userId, setUserId] = useState<string>(
-    localStorage.getItem("eh_user_id") || "",
-  );
-  const [items, setItems] = useState<GalleryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // 2. Replace the old userId state and useEffect with this:
+  const userId = useUser();
+  // 3. Replace items/loading/error state and the fetching useEffect with this:
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { items, loading, error, refresh } = useGallery(activeTab, userId);
 
-  // 初始化用户
-  useEffect(() => {
-    (async () => {
-      if (!userId) {
-        const newId = "UID-" + Math.random().toString(36).substring(2, 11);
-        localStorage.setItem("eh_user_id", newId);
-        setUserId(newId);
-      }
-    })();
-  }, [userId]);
+  if (loading) return <div>Loading...</div>;
 
-  // 模拟数据加载（实际开发中请移至 hooks/useGallery.ts）
-  useEffect(() => {
-    (async () => {
-      if (activeTab === "settings") return;
-      setLoading(true);
-      // TODO: fetch(`${API_BASE}/${userId}/items?tab=${activeTab}`)
-      setTimeout(() => {
-        setItems([]); // 填入你的 mock 或 接口数据
-        setLoading(false);
-      }, 500);
-    })();
-  }, [activeTab, userId]);
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
@@ -45,7 +29,7 @@ const App: React.FC = () => {
 
       <main className="max-w-5xl mx-auto p-3 md:p-6">
         {activeTab === "settings" ? (
-          <SettingsPanel userId={userId} setUserId={setUserId} balance={0} />
+          <SettingsPanel userId={userId} balance={0} />
         ) : (
           <div className="space-y-4">
             {loading ? (

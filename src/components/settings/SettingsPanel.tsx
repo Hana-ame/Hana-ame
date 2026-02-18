@@ -3,27 +3,18 @@ import { Settings as SettingsIcon } from "lucide-react";
 
 // --- 子组件: 设置面板 ---
 export interface SettingsPanelProps {
-  userId: string;
-  setUserId: (id: string) => void;
+  userId: string | null;
   balance: number;
 }
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({
-  userId,
-  setUserId,
-  balance,
-}) => {
-  const [tempId, setTempId] = useState<string>(userId);
-
-  const saveId = () => {
-    localStorage.setItem("eh_user_id", tempId);
-    setUserId(tempId);
-    alert("ID 已更新");
-  };
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ userId, balance }) => {
+  const [tempId, setTempId] = useState<string | null>(userId);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTempId(e.target.value);
   };
+
+  if (tempId === null) return <>未登录</>;
 
   return (
     <div className="max-w-md mx-auto bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
@@ -55,10 +46,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={saveId}
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 transition-colors"
-        >
+        <button className="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700 transition-colors">
           保存设置
         </button>
       </div>
