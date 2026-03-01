@@ -1,39 +1,18 @@
-src/controllers/GameController.ts中被写入了以下内容
-// ============================================================
-// 文件: src/controllers/GameController.ts
-// 用途: 游戏业务逻辑控制器，负责本地模拟和服务器实体渲染。
-//       使用 ServerConnection 处理 WebSocket 通信。
-// 版本: 4.1.0
-//    - 在 onAppInit 中调用 pixiController.setApp(app)，确保...(中间省略)...private clearServerGraphics(): void {
-    if (!this.app) return;
-    for (const g of this.entityGraphics.values()) {
-      this.app.stage.removeChild(g);
-      g.destroy();
-    }
-    this.entityGraphics.clear();
-    this.serverEntities.clear();
-  }
-}
-
-
-
+command py utils.py write_multiple has been run, the result returned:
 src/App.tsx中被写入了以下内容
-// ============================================================
-// 文件: src/App.tsx
-// 用途: 主应用，集成 PixiCanvas 和 Toolbar，显示事件日志。
-// 版本: 4.1.0
-//    - 为 PixiController 设置空消息处理器，消除控制台警告。
-// ============================================================
+import React from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { GameApp } from "./GameApp";
+import { DrawingApp } from "./DrawingApp";
+import { GeneticApp } from "./GeneticApp";
+import "./App.css";
 
-imp...(中间省略)...          {eventLogs.map((log, index) => (
-              <li key={index} className="bg-gray-700 p-2 rounded">
-                {log}
-              </li>
-            ))}
-          </ul>
-        </div>
+function...(中间省略)...        <Route path="/" element={<GameApp />} />
+          <Route path="/drawing" element={<DrawingApp />} />
+          <Route path="/genetic" element={<GeneticApp />} />
+        </Routes>
       </div>
-    </div>
+    </BrowserRouter>
   );
 }
 
@@ -41,23 +20,85 @@ export default App;
 
 
 
-src/components/Toolbar.tsx中被写入了以下内容
-// ============================================================
-// 文件: src/components/Toolbar.tsx
-// 用途: 工具栏组件，包含服务器控制和本地模拟按钮。
-//       使用 Tailwind CSS 进行样式美化。
-// 版本: 4.1.0
-//    - 移除画圆、画矩形按钮，精简界面。
-// =================================================...(中间省略)...>
+src/GameApp.tsx中被写入了以下内容
+import React, { useState, useRef, useCallback } from "react";
+import * as PIXI from "pixi.js";
+import { PixiCanvas } from "./components/PixiCanvas";
+import { PixiController } from "./controllers/PixiController";
+import { GameController } from "./cont...(中间省略)..."space-y-1 text-sm">
+            {eventLogs.map((log, index) => (
+              <li key={index} className="bg-gray-700 p-2 rounded">
+                {log}
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <button
-          onClick={onClearLogs}
-          className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded shadow ml-auto"
-        >
-          清除日志
-        </button>
       </div>
+    </>
+  );
+};
+
+
+
+src/DrawingApp.tsx中被写入了以下内容
+import React, { useRef, useEffect, useState } from "react";
+import { DrawingCanvas } from "./components/DrawingCanvas";
+import { DrawingController } from "./controllers/DrawingController";
+
+export const DrawingApp: React.FC = () => {
+  const drawingC...(中间省略)...{0xffffff}
+        />
+        {suggestion && (
+          <div className="mt-4 p-4 bg-gray-800 rounded">
+            <h3>推荐建议</h3>
+            <pre>{JSON.stringify(suggestion, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+
+src/GeneticApp.tsx中被写入了以下内容
+import React from "react";
+import { GeneticPanel } from "./components/GeneticPanel";
+
+export const GeneticApp: React.FC = () => {
+  return (
+    <div className="flex justify-center">
+      <GeneticPanel />
+    </div>
+  );
+};...(中间省略)...import React from "react";
+import { GeneticPanel } from "./components/GeneticPanel";
+
+export const GeneticApp: React.FC = () => {
+  return (
+    <div className="flex justify-center">
+      <GeneticPanel />
+    </div>
+  );
+};
+
+
+
+src/components/GeneticPanel.tsx中被写入了以下内容
+import React, { useState, useEffect, useRef } from 'react';
+import { DrawingController } from '../controllers/DrawingController';
+import { PixiCanvas } from './PixiCanvas';
+import { PixiController } from '../controllers/PixiController';
+
+export const...(中间省略)...     </div>
+      </div>
+      <button
+        onClick={nextGeneration}
+        disabled={loading}
+        className="mt-6 px-6 py-2 bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+      >
+        生成下一代
+      </button>
     </div>
   );
 };
