@@ -1,8 +1,8 @@
 // ============================================================
 // 文件: src/App.tsx
 // 用途: 主应用，集成 PixiCanvas 和 Toolbar，显示事件日志。
-// 版本: 4.0.0
-//    - 使用 Toolbar 组件，界面美化。
+// 版本: 4.1.0
+//    - 为 PixiController 设置空消息处理器，消除控制台警告。
 // ============================================================
 
 import React, { useState, useRef, useCallback } from "react";
@@ -23,6 +23,8 @@ function App() {
   if (!pixiControllerRef.current) {
     const pixiController = new PixiController();
     plugins.forEach((plugin) => pixiController.registerPlugin(plugin));
+    // 设置空消息处理器，避免控制台警告
+    pixiController.onMessageFromParent(() => {});
     pixiControllerRef.current = pixiController;
   }
 

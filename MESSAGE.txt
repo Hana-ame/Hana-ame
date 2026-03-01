@@ -1,23 +1,63 @@
-On branch sim
-Your branch is up to date with 'origin/sim'.
+src/controllers/GameController.ts中被写入了以下内容
+// ============================================================
+// 文件: src/controllers/GameController.ts
+// 用途: 游戏业务逻辑控制器，负责本地模拟和服务器实体渲染。
+//       使用 ServerConnection 处理 WebSocket 通信。
+// 版本: 4.1.0
+//    - 在 onAppInit 中调用 pixiController.setApp(app)，确保...(中间省略)...private clearServerGraphics(): void {
+    if (!this.app) return;
+    for (const g of this.entityGraphics.values()) {
+      this.app.stage.removeChild(g);
+      g.destroy();
+    }
+    this.entityGraphics.clear();
+    this.serverEntities.clear();
+  }
+}
 
-Changes not staged for commit:
-  (use "git add/rm <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-	modified:   LAST_RESPONSE.txt
-	modified:   MESSAGE.txt
-	deleted:    SYSTEM_PROMPT.txt
-	modified:   THIS_RESPONSE.txt
-	modified:   package-lock.json
-	modified:   server/main.py
-	modified:   server/systems.py
-	modified:   src/App.tsx
-	modified:   src/controllers/GameController.ts
 
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	SYSTEM_PROMPT.bak
-	src/components/Toolbar.tsx
-	src/controllers/ServerConnection.ts
 
-no changes added to commit (use "git add" and/or "git commit -a")
+src/App.tsx中被写入了以下内容
+// ============================================================
+// 文件: src/App.tsx
+// 用途: 主应用，集成 PixiCanvas 和 Toolbar，显示事件日志。
+// 版本: 4.1.0
+//    - 为 PixiController 设置空消息处理器，消除控制台警告。
+// ============================================================
+
+imp...(中间省略)...          {eventLogs.map((log, index) => (
+              <li key={index} className="bg-gray-700 p-2 rounded">
+                {log}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+src/components/Toolbar.tsx中被写入了以下内容
+// ============================================================
+// 文件: src/components/Toolbar.tsx
+// 用途: 工具栏组件，包含服务器控制和本地模拟按钮。
+//       使用 Tailwind CSS 进行样式美化。
+// 版本: 4.1.0
+//    - 移除画圆、画矩形按钮，精简界面。
+// =================================================...(中间省略)...>
+        </div>
+
+        <button
+          onClick={onClearLogs}
+          className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded shadow ml-auto"
+        >
+          清除日志
+        </button>
+      </div>
+    </div>
+  );
+};

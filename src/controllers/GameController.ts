@@ -2,9 +2,8 @@
 // 文件: src/controllers/GameController.ts
 // 用途: 游戏业务逻辑控制器，负责本地模拟和服务器实体渲染。
 //       使用 ServerConnection 处理 WebSocket 通信。
-// 版本: 4.0.0
-//    - 分离 WebSocket 逻辑到 ServerConnection。
-//    - 简化代码，专注于状态管理和渲染。
+// 版本: 4.1.0
+//    - 在 onAppInit 中调用 pixiController.setApp(app)，确保绘图指令能正确执行。
 // ============================================================
 
 import * as PIXI from "pixi.js";
@@ -38,6 +37,7 @@ export class GameController {
 
   public onAppInit(app: PIXI.Application): void {
     this.app = app;
+    this.pixiController.setApp(app);  // 关键：将 app 设置到 pixiController
     this.logCallback("PixiJS 应用已初始化");
   }
 

@@ -1,1 +1,30 @@
-py utils.py git status
+所有文件已成功写入。请按照以下步骤完成最终验证和提交：
+
+1. **重启后端**：停止当前的 `python -m server.main`（按 Ctrl+C），然后重新运行：
+   ```
+   python -m server.main
+   ```
+
+2. **重启前端**：停止当前的 `npm run dev`（按 Ctrl+C），然后重新运行：
+   ```
+   npm run dev
+   ```
+
+3. **验证功能**：
+   - 访问 `http://localhost:5173`。
+   - 点击“连接服务器”，检查控制台是否还有警告（应已消除）。
+   - 测试创建实体、移动、本地小球等功能是否正常。
+
+4. **提交 Git**（可选，但推荐）：
+   ```
+   py utils.py git add .
+   py utils.py git commit -m "精简界面，消除控制台警告，完成前后端集成"
+   ```
+
+5. **如需回滚**：
+   - 放弃未提交的修改：`py utils.py git checkout .`
+   - 回退到最后一次提交：`py utils.py git reset --hard HEAD`
+
+若一切正常，本次任务即可完成。如有其他需求，请随时告知。
+
+=== FINISH ===

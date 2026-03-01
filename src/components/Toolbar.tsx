@@ -2,6 +2,8 @@
 // 文件: src/components/Toolbar.tsx
 // 用途: 工具栏组件，包含服务器控制和本地模拟按钮。
 //       使用 Tailwind CSS 进行样式美化。
+// 版本: 4.1.0
+//    - 移除画圆、画矩形按钮，精简界面。
 // ============================================================
 
 import React, { useState } from 'react';
@@ -28,19 +30,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ gameController, onClearLogs })
   return (
     <div className="bg-gray-800 p-4 rounded-lg shadow-lg mb-4">
       <div className="flex flex-wrap gap-2 items-center">
-        {/* 基础绘图按钮（可选保留） */}
-        <button
-          onClick={() => gameController?.drawCircle()}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow"
-        >
-          画圆
-        </button>
-        <button
-          onClick={() => gameController?.drawRectangle()}
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow"
-        >
-          画矩形
-        </button>
+        {/* 保留清除按钮和本地模拟 */}
         <button
           onClick={handleClearCanvas}
           className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded shadow"
@@ -48,7 +38,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({ gameController, onClearLogs })
           清除
         </button>
 
-        {/* 本地模拟 */}
         <button
           onClick={handleStartBalls}
           className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded shadow"
