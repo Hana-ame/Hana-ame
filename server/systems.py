@@ -10,8 +10,19 @@ def movement_system(world, dt):
         pos = world.component_manager.get_component(entity_id, ComponentType.POSITION)
         vel = world.component_manager.get_component(entity_id, ComponentType.VELOCITY)
         # 更新位置
-        pos['x'] += vel['vx'] * dt
-        pos['y'] += vel['vy'] * dt
+        new_x = pos['x'] + vel['vx'] * dt
+        new_y = pos['y'] + vel['vy'] * dt
+
+        # 边界反弹（画布大小 800x600）
+        if new_x < 0 or new_x > 800:
+            vel['vx'] *= -1
+            new_x = max(0, min(new_x, 800))
+        if new_y < 0 or new_y > 600:
+            vel['vy'] *= -1
+            new_y = max(0, min(new_y, 600))
+
+        pos['x'] = new_x
+        pos['y'] = new_y
 
 def input_system(world, dt):
     # 根据输入组件修改速度

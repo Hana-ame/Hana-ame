@@ -1,155 +1,235 @@
 // ============================================================
 // 文件: src/controllers/GameController.ts
-// 用途: 高级业务控制器，负责监听来自 PixiCanvas 的事件，
-//       并转发给 PixiController 进行绘图，同时管理 UI 回调。
-//       它将所有与业务逻辑相关的消息处理集中在此，使 App.tsx 保持简洁。
-// 上下文: 在 App.tsx 中实例化，并传入 UI 日志回调。持有 PixiController 实例。
-//
-// 版本: 1.0.0
-//    - 初始版本，将事件处理和命令发送从 App.tsx 迁移至此。
-//
-// Outline:
-// 1. 构造函数接收 PixiController 实例和一个可选的日志回调。
-// 2. 在构造函数中设置 PixiController 的 onMessageFromParent 监听器。
-// 3. 定义公共方法，供 UI 按钮调用（如 drawCircle, startBalls 等），
-//    这些方法构造消息并调用 pixiController.sendToPixi。
-// 4. 提供 onAppInit 方法，用于在 PixiCanvas 初始化完成后调用，
-//    设置 app 到 pixiController，并启动默认动画（如 DVD）。
-// 5. 内部处理从画布收到的事件，更新日志（通过回调）并转发必要的消息（如 mouseMove）。
-//
-// 使用方法:
-//   const pixiController = new PixiController();
-//   const gameController = new GameController(pixiController, (logEntry) => {
-//     // 更新 UI 日志
-//   });
-//   // 在 PixiCanvas 的 onAppInit 中调用 gameController.onAppInit(app)
-//
-// 注意事项:
-//   - 所有业务逻辑相关的消息类型和参数都定义在此类的内部。
-//   - 此类不直接依赖 React，只接受回调，方便单元测试。
+// 用途: 游戏业务逻辑控制器，负责本地模拟和服务器实体渲染。
+//       使用 ServerConnection 处理 WebSocket 通信。
+// 版本: 4.0.0
+//    - 分离 WebSocket 逻辑到 ServerConnection。
+//    - 简化代码，专注于状态管理和渲染。
 // ============================================================
 
-import { PixiController } from './PixiController';
-import * as PIXI from 'pixi.js';
+import * as PIXI from "pixi.js";
+import { PixiController } from "./PixiController";
+import { ServerConnection, ServerEntity } from "./ServerConnection";
 
-export type LogCallback = (logEntry: string) => void;
+export type LogCallback = (message: string) => void;
 
 export class GameController {
   private pixiController: PixiController;
-  private logCallback?: LogCallback;
+  private logCallback: LogCallback;
+  private app: PIXI.Application | null = null;
 
-  constructor(pixiController: PixiController, logCallback?: LogCallback) {
+  // 本地模拟相关
+  private ballsContainer: PIXI.Container | null = null;
+  private balls: PIXI.Graphics[] = [];
+  private ballVelocities: { vx: number; vy: number }[] = [];
+  private animationFrame: number | null = null;
+  private lastTimestamp: number = 0;
+
+  // 服务器模式相关
+  private serverConn: ServerConnection | null = null;
+  private serverEntities: Map<number, ServerEntity> = new Map();
+  private entityGraphics: Map<number, PIXI.Graphics> = new Map();
+  private isServerMode: boolean = false;
+
+  constructor(pixiController: PixiController, logCallback: LogCallback) {
     this.pixiController = pixiController;
     this.logCallback = logCallback;
-
-    // 设置画布事件监听器
-    this.pixiController.onMessageFromParent((message) => {
-      this.handleCanvasEvent(message);
-    });
   }
 
-  /**
-   * 处理从画布发来的事件（由 PixiController 转发）
-   */
-  private handleCanvasEvent(message: any): void {
-    // 格式化日志
-    const timeStr = message.timestamp
-      ? this.formatTimestamp(message.timestamp)
-      : '未知时间';
+  public onAppInit(app: PIXI.Application): void {
+    this.app = app;
+    this.logCallback("PixiJS 应用已初始化");
+  }
 
-    let logEntry = `[${timeStr}] 事件: ${message.type}`;
-    if (message.x !== undefined && message.y !== undefined) {
-      logEntry += ` 坐标: (${message.x.toFixed(2)}, ${message.y.toFixed(2)})`;
+  // ---------- 绘图操作（通过 sendToPixi 发送消息） ----------
+  public drawCircle(): void {
+    this.pixiController.sendToPixi({
+      type: 'drawCircle',
+      x: 400,
+      y: 300,
+      radius: 50,
+      color: 0xff0000
+    });
+    this.logCallback("画了一个红色圆形");
+  }
+
+  public drawRectangle(): void {
+    this.pixiController.sendToPixi({
+      type: 'drawRectangle',
+      x: 300,
+      y: 200,
+      width: 100,
+      height: 80,
+      color: 0x00ff00
+    });
+    this.logCallback("画了一个绿色矩形");
+  }
+
+  public clearCanvas(): void {
+    this.pixiController.sendToPixi({ type: 'clear' });
+    this.stopBalls();
+    this.disconnectServer();
+    this.logCallback("清除了画布");
+  }
+
+  // ---------- 本地模拟方法 ----------
+  public startBalls(): void {
+    if (!this.app) {
+      this.logCallback("错误：PixiJS 应用未初始化");
+      return;
     }
+    this.disconnectServer();
+    this.stopBalls();
 
-    // 通过回调输出日志
-    this.logCallback?.(logEntry);
+    this.ballsContainer = new PIXI.Container();
+    this.app.stage.addChild(this.ballsContainer);
 
-    // 转发鼠标移动事件给插件（用于小球撞击）
-    if (message.type === 'pointermove' && message.x !== undefined && message.y !== undefined) {
-      this.pixiController.sendToPixi({
-        type: 'mouseMove',
-        x: message.x,
-        y: message.y,
-        timestamp: message.timestamp,
+    const width = this.app.screen.width;
+    const height = this.app.screen.height;
+
+    for (let i = 0; i < 100; i++) {
+      const ball = new PIXI.Graphics();
+      ball.circle(0, 0, 5);
+      ball.fill(0xffaa00);
+      ball.position.set(Math.random() * width, Math.random() * height);
+      this.ballsContainer.addChild(ball);
+      this.balls.push(ball);
+      this.ballVelocities.push({
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.5) * 4,
       });
     }
+
+    this.logCallback("启动 100 个小球模拟");
+    this.animationFrame = requestAnimationFrame(this.updateBalls.bind(this));
   }
 
-  /**
-   * 格式化时间戳为 HH:MM:SS.mmm
-   */
-  private formatTimestamp(timestamp: number): string {
-    const date = new Date(timestamp);
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-    const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
-    return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+  private stopBalls(): void {
+    if (this.animationFrame !== null) {
+      cancelAnimationFrame(this.animationFrame);
+      this.animationFrame = null;
+    }
+    if (this.ballsContainer) {
+      this.ballsContainer.destroy({ children: true });
+      this.ballsContainer = null;
+    }
+    this.balls = [];
+    this.ballVelocities = [];
   }
 
-  /**
-   * 当 PixiCanvas 初始化完成时调用，设置 app 并启动默认动画
-   */
-  onAppInit(app: PIXI.Application): void {
-    this.pixiController.setApp(app);
+  private updateBalls(timestamp: number): void {
+    if (!this.app || !this.ballsContainer) return;
 
-    // 发送默认启动消息
-    this.pixiController.sendToPixi({ type: 'startDVD' });
-    this.pixiController.sendToPixi({ type: 'startFireworks' });
+    if (this.lastTimestamp === 0) {
+      this.lastTimestamp = timestamp;
+      this.animationFrame = requestAnimationFrame(this.updateBalls.bind(this));
+      return;
+    }
+    const deltaTime = (timestamp - this.lastTimestamp) / 1000;
+    this.lastTimestamp = timestamp;
 
-    this.logCallback?.(`[${new Date().toLocaleTimeString('zh-CN', { hour12: false, fractionalSecondDigits: 3 })}] 启动 DVD 反弹动画`);
+    const width = this.app.screen.width;
+    const height = this.app.screen.height;
+    const speedFactor = 60;
+
+    for (let i = 0; i < this.balls.length; i++) {
+      const ball = this.balls[i];
+      const vel = this.ballVelocities[i];
+
+      ball.x += vel.vx * deltaTime * speedFactor;
+      ball.y += vel.vy * deltaTime * speedFactor;
+
+      if (ball.x < 0) { ball.x = 0; vel.vx *= -1; }
+      else if (ball.x > width) { ball.x = width; vel.vx *= -1; }
+      if (ball.y < 0) { ball.y = 0; vel.vy *= -1; }
+      else if (ball.y > height) { ball.y = height; vel.vy *= -1; }
+    }
+
+    this.animationFrame = requestAnimationFrame(this.updateBalls.bind(this));
   }
 
-  // ----- 绘图命令方法（供 UI 按钮调用）-----
+  // ---------- 服务器模式方法 ----------
+  public connectServer(wsUrl: string): void {
+    if (this.serverConn && this.serverConn.isConnected()) {
+      this.logCallback("已经连接至服务器");
+      return;
+    }
 
-  drawCircle(): void {
-    const message = {
-      type: 'drawCircle',
-      timestamp: Date.now(),
-      x: Math.random() * 400 + 200,
-      y: Math.random() * 300 + 150,
-      radius: 30,
-      color: Math.random() * 0xffffff,
-    };
-    this.pixiController.sendToPixi(message);
-    this.logCallback?.(`[${this.formatTimestamp(message.timestamp)}] 发送绘图指令: drawCircle`);
+    this.stopBalls();
+    this.pixiController.sendToPixi({ type: 'clear' });
+    this.isServerMode = true;
+
+    // 创建 ServerConnection 实例
+    this.serverConn = new ServerConnection(wsUrl, this.logCallback, (entities) => {
+      this.updateServerEntities(entities);
+    });
+    this.serverConn.connect();
+
+    if (this.app) {
+      this.app.ticker.add(this.renderServerEntities, this);
+    }
   }
 
-  drawRectangle(): void {
-    const message = {
-      type: 'drawRectangle',
-      timestamp: Date.now(),
-      x: Math.random() * 400 + 200,
-      y: Math.random() * 300 + 150,
-      width: 60,
-      height: 40,
-      color: Math.random() * 0xffffff,
-    };
-    this.pixiController.sendToPixi(message);
-    this.logCallback?.(`[${this.formatTimestamp(message.timestamp)}] 发送绘图指令: drawRectangle`);
+  public disconnectServer(): void {
+    if (this.serverConn) {
+      this.serverConn.disconnect();
+      this.serverConn = null;
+    }
+    if (this.app) {
+      this.app.ticker.remove(this.renderServerEntities, this);
+    }
+    this.clearServerGraphics();
+    this.isServerMode = false;
   }
 
-  clearCanvas(): void {
-    this.pixiController.sendToPixi({ type: 'clear', timestamp: Date.now() });
-    this.logCallback?.(`[${this.formatTimestamp(Date.now())}] 发送绘图指令: clear`);
+  public createEntity(): void {
+    this.serverConn?.createEntity();
   }
 
-  startBalls(): void {
-    this.pixiController.sendToPixi({ type: 'startBalls', timestamp: Date.now() });
-    this.logCallback?.(`[${this.formatTimestamp(Date.now())}] 发送绘图指令: startBalls`);
+  public moveEntity(dx: number, dy: number): void {
+    // 暂时控制 ID 为 0 的实体，可根据需要修改
+    this.serverConn?.moveEntity(0, dx, dy);
   }
 
-  // API 演示方法
-  runApiDemo(demoType: string): void {
-    const message = {
-      type: demoType,
-      timestamp: Date.now(),
-    };
-    this.pixiController.sendToPixi(message);
-    this.logCallback?.(`[${this.formatTimestamp(message.timestamp)}] 发送绘图指令: ${demoType}`);
+  private updateServerEntities(entities: ServerEntity[]): void {
+    const newMap = new Map<number, ServerEntity>();
+    for (const e of entities) {
+      newMap.set(e.id, e);
+    }
+    this.serverEntities = newMap;
   }
 
-  // 如果需要停止小球等，可以添加更多方法
+  private renderServerEntities = (): void => {
+    if (!this.app || !this.isServerMode) return;
+
+    for (const [id, g] of this.entityGraphics) {
+      if (!this.serverEntities.has(id)) {
+        this.app.stage.removeChild(g);
+        g.destroy();
+        this.entityGraphics.delete(id);
+      }
+    }
+
+    for (const [id, entity] of this.serverEntities) {
+      let g = this.entityGraphics.get(id);
+      if (!g) {
+        g = new PIXI.Graphics();
+        g.circle(0, 0, 6);
+        g.fill(0x33ccff);
+        this.app.stage.addChild(g);
+        this.entityGraphics.set(id, g);
+      }
+      g.position.set(entity.x, entity.y);
+    }
+  };
+
+  private clearServerGraphics(): void {
+    if (!this.app) return;
+    for (const g of this.entityGraphics.values()) {
+      this.app.stage.removeChild(g);
+      g.destroy();
+    }
+    this.entityGraphics.clear();
+    this.serverEntities.clear();
+  }
 }

@@ -24,8 +24,8 @@ def init_world():
     with world_lock:
         for i in range(10):
             eid = world.entity_manager.create_entity()
-            # 使用元组赋值，符合结构化数组
-            world.component_manager.add_component(eid, ComponentType.POSITION, (float(np.random.rand()*100), float(np.random.rand()*100)))
+            # 位置范围匹配前端画布 800x600
+            world.component_manager.add_component(eid, ComponentType.POSITION, (float(np.random.rand()*800), float(np.random.rand()*600)))
             world.component_manager.add_component(eid, ComponentType.VELOCITY, (float(np.random.rand()*10-5), float(np.random.rand()*10-5)))
 
 # 添加系统
@@ -66,10 +66,15 @@ def world_update_loop(main_loop):
                 if world.entity_manager.is_alive(eid):
                     pos = world.component_manager.get_component(eid, ComponentType.POSITION)
                     if pos is not None:
+                        # 钳位坐标到画布范围内
+                        x = float(pos['x'])
+                        y = float(pos['y'])
+                        x = max(0, min(x, 800))
+                        y = max(0, min(y, 600))
                         entities_data.append({
                             "id": eid,
-                            "x": float(pos['x']),
-                            "y": float(pos['y'])
+                            "x": x,
+                            "y": y
                         })
         # 广播
         message = {"type": "update", "data": entities_data}
@@ -99,10 +104,14 @@ async def get_entities():
             if world.entity_manager.is_alive(eid):
                 pos = world.component_manager.get_component(eid, ComponentType.POSITION)
                 if pos:
+                    x = float(pos['x'])
+                    y = float(pos['y'])
+                    x = max(0, min(x, 800))
+                    y = max(0, min(y, 600))
                     entities.append({
                         "id": eid,
-                        "x": float(pos['x']),
-                        "y": float(pos['y'])
+                        "x": x,
+                        "y": y
                     })
     return JSONResponse(content=entities)
 
@@ -120,8 +129,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     # 创建新实体
                     with world_lock:
                         eid = world.entity_manager.create_entity()
-                        # 随机位置和速度
-                        world.component_manager.add_component(eid, ComponentType.POSITION, (float(np.random.rand()*100), float(np.random.rand()*100)))
+                        # 随机位置和速度，位置范围匹配画布
+                        world.component_manager.add_component(eid, ComponentType.POSITION, (float(np.random.rand()*800), float(np.random.rand()*600)))
                         world.component_manager.add_component(eid, ComponentType.VELOCITY, (float(np.random.rand()*10-5), float(np.random.rand()*10-5)))
                     await websocket.send_text(json.dumps({"type": "create_response", "id": eid}))
                 elif msg_type == "move":

@@ -1,137 +1,23 @@
-README.md中被写入了以下内容
-# ECS Game Server
+On branch sim
+Your branch is up to date with 'origin/sim'.
 
-一个基于实体组件系统（ECS）架构的实时游戏服务器，使用 FastAPI 和 WebSocket 实现高效通信，NumPy 提供高性能组件数据管理。
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   LAST_RESPONSE.txt
+	modified:   MESSAGE.txt
+	deleted:    SYSTEM_PROMPT.txt
+	modified:   THIS_RESPONSE.txt
+	modified:   package-lock.json
+	modified:   server/main.py
+	modified:   server/systems.py
+	modified:   src/App.tsx
+	modified:   src/controllers/GameController.ts
 
-## 功能特点
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	SYSTEM_PROMPT.bak
+	src/components/Toolbar.tsx
+	src/controllers/ServerConnection.ts
 
-- **ECS 核心**：实体、组件、系统分离，易于扩展和维护。
-- **实时更新**：以固定 tick 率（默认 60 Hz）更新游戏世界状态。
-- **WebSocket 接口**：客户端可连接并实时接收状态广播，发送控制指令。
-- **HTTP 接口**：提供简单的 REST API 获取实体信息。
-- **高性能**：利用 NumPy 结构化数组存储组件数据，支持大量实体（默认最大 10000）。
-
-## 技术栈
-
-- Python 3.8+
-- FastAPI
-- Uvicorn (ASGI 服务器)
-- WebSockets
-- NumPy
-
-## 快速开始
-
-### 安装依赖
-
-```bash
-pip install fastapi uvicorn numpy
-```
-
-如需运行测试，还需安装 `websockets`：
-
-```bash
-pip install websockets
-```
-
-### 启动服务器
-
-从项目根目录执行以下命令：
-
-```bash
-python -m server.main
-```
-
-默认监听 `0.0.0.0:8000`，可通过命令行参数指定端口：
-
-```bash
-python -m server.main 8080
-```
-
-### 验证运行
-
-打开浏览器访问 `http://localhost:8000/`，应看到欢迎页面。
-
-## API 文档
-
-### HTTP 接口
-
-| 方法 | 路径 | 描述 |
-|------|------|------|
-| GET | `/` | 返回 HTML 欢迎页 |
-| GET | `/entities` | 返回所有存活实体的位置信息（JSON 数组） |
-
-**`/entities` 响应示例：**
-
-```json
-[
-  {"id": 0, "x": 12.34, "y": 56.78},
-  {"id": 1, "x": 23.45, "y": 67.89}
-]
-```
-
-### WebSocket 接口
-
-连接地址：`ws://<服务器地址>:<端口>/ws`
-
-客户端发送 JSON 格式消息，服务器会广播状态更新（`type: "update"`）并响应特定指令。
-
-#### 客户端发送消息
-
-| 类型 | 说明 | 示例 |
-|------|------|------|
-| `create` | 创建新实体（随机位置和速度） | `{"type": "create"}` |
-| `move` | 设置实体的移动方向 | `{"type": "move", "id": 10, "dx": 1.0, "dy": 1.0}` |
-
-#### 服务器响应
-
-- **创建实体响应**：`{"type": "create_response", "id": 10}`
-- **移动实体响应**：`{"type": "move_response", "id": 10, "dx": 1.0, "dy": 1.0}`
-- **错误响应**：`{"type": "error", "message": "Entity not found"}`
-- **状态广播**：`{"type": "update", "data": [{"id":0,"x":...,"y":...}, ...]}`
-
-## 项目结构
-
-```
-server/
-├── __init__.py
-├── components.py      # 组件类型定义与数据结构
-├── config.py          # 配置参数（TICK_RATE, MAX_ENTITIES）
-├── ecs.py             # ECS 核心实现（实体、组件、世界管理）
-├── systems.py         # 系统逻辑（移动、输入控制）
-├── main.py            # FastAPI 应用与 WebSocket 服务
-├── test_ecs.py        # 单元测试（ECS 核心）
-└── test_server.py     # 集成测试（启动服务器并测试 WebSocket）
-```
-
-## 扩展指南
-
-### 添加新组件
-
-1. 在 `components.py` 的 `ComponentType` 枚举中添加新类型。
-2. 在 `COMPONENT_SCHEMAS` 中定义对应的 NumPy 结构化数组格式。
-3. 在需要使用的地方通过 `ComponentManager` 添加/获取。
-
-### 添加新系统
-
-1. 在 `systems.py` 中编写系统函数，接受 `(world, dt)` 参数。
-2. 在 `main.py` 初始化后通过 `world.add_system()` 注册。
-
-## 运行测试
-
-### 单元测试（无需启动服务器）
-
-```bash
-python server/test_ecs.py
-```
-
-### 集成测试（自动启动服务器并验证）
-
-```bash
-python server/test_server.py
-```
-
-测试脚本会自动寻找空闲端口并运行所有测试用例。
-
-## 许可证
-
-MIT
+no changes added to commit (use "git add" and/or "git commit -a")
