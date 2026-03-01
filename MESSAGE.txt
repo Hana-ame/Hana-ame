@@ -1,3 +1,4 @@
+README.md中被写入了以下内容
 # ECS Game Server
 
 一个基于实体组件系统（ECS）架构的实时游戏服务器，使用 FastAPI 和 WebSocket 实现高效通信，NumPy 提供高性能组件数据管理。

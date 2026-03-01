@@ -1,128 +1,136 @@
-# 这里是后端
+# ECS Game Server
 
-使用ECS的
+一个基于实体组件系统（ECS）架构的实时游戏服务器，使用 FastAPI 和 WebSocket 实现高效通信，NumPy 提供高性能组件数据管理。
 
-开放单个websocket口进行通信.
+## 功能特点
 
-# usage
-`uvicorn main:app --reload`
-如果没有在server这个文件夹运行，会失败。
+- **ECS 核心**：实体、组件、系统分离，易于扩展和维护。
+- **实时更新**：以固定 tick 率（默认 60 Hz）更新游戏世界状态。
+- **WebSocket 接口**：客户端可连接并实时接收状态广播，发送控制指令。
+- **HTTP 接口**：提供简单的 REST API 获取实体信息。
+- **高性能**：利用 NumPy 结构化数组存储组件数据，支持大量实体（默认最大 10000）。
 
+## 技术栈
 
+- Python 3.8+
+- FastAPI
+- Uvicorn (ASGI 服务器)
+- WebSockets
+- NumPy
 
-`15/16	3/8	(max - (max >> 4)) + (min >> 2) + (min >> 3)	5.5%	Very smooth, very low average error.`
+## 快速开始
 
-在其中，只，实现，移动的，部分？如何？
-一个object确实是
-{
-  health: int,
-  x: int,
-  y: int,
-  vx: int,
-  vy: int,
-  moving_system: id,
-}
+### 安装依赖
 
-# 鼠鼠乐园 ～ a project for simulation game
+```bash
+pip install fastapi uvicorn numpy
+```
 
-**note**: 学习部分挪到了io里面，能展示。计划暂且不示人
+如需运行测试，还需安装 `websockets`：
 
-in general, this project will be a simulation game like Rimworld or other 4X games.
+```bash
+pip install websockets
+```
 
-here is the plan of this game.
+### 启动服务器
 
-## frameworks
+从项目根目录执行以下命令：
 
-in this section, the frontend and backend frame will be introduced.
+```bash
+python -m server.main
+```
 
-### frontend
+默认监听 `0.0.0.0:8000`，可通过命令行参数指定端口：
 
-maybe [phaser](https://blog.logrocket.com/best-javascript-html5-game-engines/)
+```bash
+python -m server.main 8080
+```
 
-more infomation about phaser see [here](/phaser.md)
+### 验证运行
 
-### backend
+打开浏览器访问 `http://localhost:8000/`，应看到欢迎页面。
 
-not really sure but maybe in java or python (maybe some thing about machine learning)
+## API 文档
 
-or this example
+### HTTP 接口
 
-upload:
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/` | 返回 HTML 欢迎页 |
+| GET | `/entities` | 返回所有存活实体的位置信息（JSON 数组） |
 
-client -- browser -- api(golang?) -- redis/kafka -- python/java -- database
+**`/entities` 响应示例：**
 
-download:
+```json
+[
+  {"id": 0, "x": 12.34, "y": 56.78},
+  {"id": 1, "x": 23.45, "y": 67.89}
+]
+```
 
-client -- browser -- api(golang?) -- database
-~~NOTE: maybe no orm~~ no need for multi-language orm now.
+### WebSocket 接口
 
-it seems that sqlite is ok for it?
-NOTE: maybe add redis
+连接地址：`ws://<服务器地址>:<端口>/ws`
 
-so maybe you should learn kafka and how to deal with it with python golang or else.
+客户端发送 JSON 格式消息，服务器会广播状态更新（`type: "update"`）并响应特定指令。
 
-NOTE: 想起来了上传特别弱。。.
-NOTE: how to deal with edge of two simulator.
+#### 客户端发送消息
 
-### entities
+| 类型 | 说明 | 示例 |
+|------|------|------|
+| `create` | 创建新实体（随机位置和速度） | `{"type": "create"}` |
+| `move` | 设置实体的移动方向 | `{"type": "move", "id": 10, "dx": 1.0, "dy": 1.0}` |
 
-catagories.
+#### 服务器响应
 
-- map
-  - this is the ground entity that shows up and exists in the background.
-  - it accutary the memo of ground truth.
-- pawns
-  - this is 
-  - pawns has property.
-  - it has little **mem** to store some key infomation. it has **inventory** to store some **items** in game
-  - every time, pawns ues it's **sensers** to get the ground that it knwon.
-  - it generate **ambitious** or **aims**
-  - when pawn has an **aim**, it cause the pawn **move**
-  - the pawn get a **move**
-  - then with the time slips. pawn 
-- items
-  - this is the item 
+- **创建实体响应**：`{"type": "create_response", "id": 10}`
+- **移动实体响应**：`{"type": "move_response", "id": 10, "dx": 1.0, "dy": 1.0}`
+- **错误响应**：`{"type": "error", "message": "Entity not found"}`
+- **状态广播**：`{"type": "update", "data": [{"id":0,"x":...,"y":...}, ...]}`
 
+## 项目结构
 
+```
+server/
+├── __init__.py
+├── components.py      # 组件类型定义与数据结构
+├── config.py          # 配置参数（TICK_RATE, MAX_ENTITIES）
+├── ecs.py             # ECS 核心实现（实体、组件、世界管理）
+├── systems.py         # 系统逻辑（移动、输入控制）
+├── main.py            # FastAPI 应用与 WebSocket 服务
+├── test_ecs.py        # 单元测试（ECS 核心）
+└── test_server.py     # 集成测试（启动服务器并测试 WebSocket）
+```
 
-## gameplay
+## 扩展指南
 
-大概是游戏机制
+### 添加新组件
 
-### 开场
+1. 在 `components.py` 的 `ComponentType` 枚举中添加新类型。
+2. 在 `COMPONENT_SCHEMAS` 中定义对应的 NumPy 结构化数组格式。
+3. 在需要使用的地方通过 `ComponentManager` 添加/获取。
 
-掉下来了一块银河系漫游指南的石头，鼠鼠们被激励了，开始了科学发展
+### 添加新系统
 
-### 机制
+1. 在 `systems.py` 中编写系统函数，接受 `(world, dt)` 参数。
+2. 在 `main.py` 初始化后通过 `world.add_system()` 注册。
 
-~~完了脑子射出去了~~
+## 运行测试
 
-#### 棋盘
+### 单元测试（无需启动服务器）
 
-32 x 32 = 1024为一格子，正方形，无限铺张。
-一次加载至少九个格子，也许更多
-格子包含的内容
-- 当前地的海拔高度
-- 当前地的土壤情况
-- 当前地的地块类型（屋顶下，岩石顶下）
-- 当前地的地板类型
-- 当前地上的建筑物，植物，或者岩石掩体
-- 温度
-- 是否室内
-- 美观度
+```bash
+python server/test_ecs.py
+```
 
+### 集成测试（自动启动服务器并验证）
 
+```bash
+python server/test_server.py
+```
 
-以1024B = 1KB的blob格式储存
-可能2KB
+测试脚本会自动寻找空闲端口并运行所有测试用例。
 
-#### 鼠鼠
+## 许可证
 
-鼠鼠是智能体
-*吵死了又是枪声又是痨病鬼的。*
-
-#### 货币
-
-待定
-
-
+MIT
