@@ -1,3 +1,0 @@
-py utils.py git add .
-py utils.py git commit -m "refactor: split drawing and genetic into separate apps with routing"
-py utils.py pause
