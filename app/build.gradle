@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+def keystorePropsFile = rootProject.file('keystore.properties')
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
@@ -11,10 +17,21 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+    signingConfigs {
+        release {
+            storeFile file(keystoreProps['storeFile'] ?: 'release.keystore')
+            storePassword keystoreProps['storePassword'] ?: 'android123'
+            keyAlias keystoreProps['keyAlias'] ?: 'release'
+            keyPassword keystoreProps['keyPassword'] ?: 'android123'
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
         }
     }
 }

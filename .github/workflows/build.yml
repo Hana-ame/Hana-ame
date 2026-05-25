@@ -25,8 +25,18 @@ jobs:
       - name: Accept SDK licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses > /dev/null 2>&1 || true
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Decode signing keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 -d > release.keystore
+          cat > keystore.properties <<EOF
+          storeFile=release.keystore
+          storePassword=${{ secrets.RELEASE_STORE_PASSWORD }}
+          keyAlias=${{ secrets.RELEASE_KEY_ALIAS }}
+          keyPassword=${{ secrets.RELEASE_KEY_PASSWORD }}
+          EOF
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK and post to Board 666
         run: |
@@ -34,7 +44,6 @@ jobs:
           NAME=$(basename "$APK")
           echo "Found APK: $APK"
 
-          # Upload to moonchan
           URLNAME=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$NAME'))")
           RESP=$(curl -s -X PUT \
             -H "Content-Type: application/vnd.android.package-archive" \
@@ -45,7 +54,6 @@ jobs:
           DLURL="https://upload.moonchan.xyz/api/${FID}/${URLNAME}"
           echo "Uploaded: ${DLURL}"
 
-          # Post to Board 666
           COOKIE=$(curl -s -c - "https://vps.moonchan.xyz/api/v2/cookie" 2>/dev/null | awk '/auth/{print $NF}')
           TS=$(date -u '+%Y-%m-%d %H:%M:%S')
           TXT="Download: ${DLURL}\n\n${TS}"

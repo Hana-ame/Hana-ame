@@ -26,3 +26,6 @@ local.properties
 *.sha1
 *.keystore
 !debug.keystore
+/keystore.properties
+local.properties
+release.keystore
