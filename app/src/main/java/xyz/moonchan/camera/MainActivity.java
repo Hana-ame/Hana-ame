@@ -4,8 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.InetAddress;
-import android.net.NetworkInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -20,6 +18,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.Enumeration;
 
