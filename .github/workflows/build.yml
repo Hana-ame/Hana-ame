@@ -41,7 +41,7 @@ jobs:
       - name: Accept licenses & install platform
         run: |
           yes | ${{ env.SDKMANAGER }} --licenses > /dev/null 2>&1 || true
-          ${{ env.SDKMANAGER }} "platforms;android-29" "build-tools;29.0.2" > /dev/null 2>&1 || true
+          ${{ env.SDKMANAGER }} "platforms;android-29" "build-tools;30.0.3" > /dev/null 2>&1 || true
 
       - name: Grant Gradle permission
         run: chmod +x gradlew
