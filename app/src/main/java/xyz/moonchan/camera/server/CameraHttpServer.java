@@ -12,31 +12,60 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 
-import org.nanohttpd.IHTTPSession;
-import org.nanohttpd.NanoHTTPD;
-
-public class CameraHttpServer extends NanoHTTPD {
+public class CameraHttpServer implements Runnable {
     private static final String TAG = "CameraHttpServer";
+    private final int port;
     private final Context context;
     private final ImageCapture imageCapture;
+    private volatile boolean running = true;
+    private ServerSocket serverSocket;
 
     public CameraHttpServer(int port, Context context, ImageCapture imageCapture) {
-        super(port);
+        this.port = port;
         this.context = context;
         this.imageCapture = imageCapture;
     }
 
     @Override
-    public org.nanohttpd.Response serve(IHTTPSession session) {
-        Log.d(TAG, "Request received: " + session.getUri());
+    public void run() {
         try {
+            serverSocket = new ServerSocket(port);
+            Log.d(TAG, "HTTP Server started on port " + port);
+            while (running) {
+                Socket client = serverSocket.accept();
+                new Thread(() -> handleClient(client)).start();
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Server error", e);
+        }
+    }
+
+    private void handleClient(Socket client) {
+        try (InputStream in = client.getInputStream();
+             OutputStream out = client.getOutputStream()) {
+            
+            byte[] buffer = new byte[1024];
+            int read = in.read(buffer);
+            if (read == -1) return;
+            
             byte[] imageBytes = captureImage();
-            return new org.nanohttpd.Response(org.nanohttpd.Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
+            
+            String header = "HTTP/1.1 200 OK\r\n" +
+                            "Content-Type: image/jpeg\r\n" +
+                            "Content-Length: " + imageBytes.length + "\r\n" +
+                            "Connection: close\r\n\r\n";
+            
+            out.write(header.getBytes());
+            out.write(imageBytes);
+            out.flush();
         } catch (Exception e) {
-            Log.e(TAG, "Capture failed", e);
-            return new org.nanohttpd.Response(org.nanohttpd.Response.Status.INTERNAL_ERROR, "text/plain", "Capture failed: " + e.getMessage());
+            Log.e(TAG, "Client handle error", e);
         }
     }
 
@@ -63,7 +92,7 @@ public class CameraHttpServer extends NanoHTTPD {
                 }
 
                 @Override
-                public void onError(ImageCaptureException ex) {
+                public void onError(int exceptionCode, ImageCaptureException ex) {
                     future.completeExceptionally(ex);
                 }
             });
@@ -81,5 +110,14 @@ public class CameraHttpServer extends NanoHTTPD {
         }
         fis.close();
         return bos.toByteArray();
+    }
+
+    public void stop() {
+        running = false;
+        try {
+            if (serverSocket != null) serverSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

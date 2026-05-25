@@ -27,7 +27,7 @@ public class CameraServerService extends LifecycleService {
         Log.d(TAG, "Service onCreate");
         startCamera();
         server = new CameraHttpServer(8000, this, imageCapture);
-        server.start();
+        new Thread(server).start();
         Log.d(TAG, "HTTP Server started on port 8000");
     }
 
