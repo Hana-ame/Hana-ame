@@ -1,0 +1,57 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ proj/android-gh-action ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant Gradle permission
+        run: chmod +x gradlew
+
+      - name: Accept SDK licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK and post to Board 666
+        run: |
+          APK=$(find app/build/outputs/apk -name "*.apk" | head -1)
+          NAME=$(basename "$APK")
+          echo "Found APK: $APK"
+
+          # Upload to moonchan
+          URLNAME=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$NAME'))")
+          RESP=$(curl -s -X PUT \
+            -H "Content-Type: application/vnd.android.package-archive" \
+            -H "X-File-Name: ${URLNAME}" \
+            --data-binary "@${APK}" \
+            https://upload.moonchan.xyz/api/upload)
+          FID=$(echo "$RESP" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('id') or (d.get('data') or {}).get('id',''))")
+          DLURL="https://upload.moonchan.xyz/api/${FID}/${URLNAME}"
+          echo "Uploaded: ${DLURL}"
+
+          # Post to Board 666
+          COOKIE=$(curl -s -c - "https://vps.moonchan.xyz/api/v2/cookie" 2>/dev/null | awk '/auth/{print $NF}')
+          TS=$(date -u '+%Y-%m-%d %H:%M:%S')
+          TXT="Download: ${DLURL}\n\n${TS}"
+          curl -s -X POST \
+            -H "Content-Type: application/json" \
+            -H "Cookie: auth=${COOKIE}" \
+            -d "$(python3 -c "import json; print(json.dumps({'id':'','no':0,'n':'GitHub Actions','t':'APK: ${NAME}','txt':'${TXT}','p':''}))")" \
+            "https://vps.moonchan.xyz/api/v2/?bid=666&tid=0"
+          echo "Posted to Board 666"
