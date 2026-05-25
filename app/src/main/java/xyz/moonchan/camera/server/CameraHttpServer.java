@@ -16,7 +16,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.nanohttpd.IHTTPSession;
 import org.nanohttpd.NanoHTTPD;
-import org.nanohttpd.Response;
 
 public class CameraHttpServer extends NanoHTTPD {
     private static final String TAG = "CameraHttpServer";
@@ -30,14 +29,14 @@ public class CameraHttpServer extends NanoHTTPD {
     }
 
     @Override
-    public Response serve(IHTTPSession session) {
+    public org.nanohttpd.Response serve(IHTTPSession session) {
         Log.d(TAG, "Request received: " + session.getUri());
         try {
             byte[] imageBytes = captureImage();
-            return new Response(Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
+            return new org.nanohttpd.Response(org.nanohttpd.Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
         } catch (Exception e) {
             Log.e(TAG, "Capture failed", e);
-            return new Response(Response.Status.INTERNAL_ERROR, "text/plain", "Capture failed: " + e.getMessage());
+            return new org.nanohttpd.Response(org.nanohttpd.Response.Status.INTERNAL_ERROR, "text/plain", "Capture failed: " + e.getMessage());
         }
     }
 
@@ -64,7 +63,7 @@ public class CameraHttpServer extends NanoHTTPD {
                 }
 
                 @Override
-                public void onError(int exceptionCode, ImageCaptureException ex) {
+                public void onError(ImageCaptureException ex) {
                     future.completeExceptionally(ex);
                 }
             });
