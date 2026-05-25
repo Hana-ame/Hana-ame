@@ -1,8 +1,11 @@
 package xyz.moonchan.camera;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.InetAddress;
+import android.net.NetworkInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -15,6 +18,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.net.Inetsockets;
+import java.util.Collections;
+import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -78,8 +85,32 @@ public class MainActivity extends AppCompatActivity {
     private void startCameraService() {
         Intent intent = new Intent(this, CameraServerService.class);
         startService(intent);
-        tvbg.setText("Camera Server started on port 8000\nAccess at http://localhost:8000");
-        Log.d(TAG, "Camera service started");
+        
+        String ip = getLocalIpAddress();
+        String url = "http://" + ip + ":8000";
+        tvbg.setText("Camera Server started\nAccess at: " + url);
+        Log.d(TAG, "Camera service started at " + url);
+    }
+
+    private String getLocalIpAddress() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface intf = interfaces.nextElement();
+                if (intf.isLoopback() || !intf.isUp()) continue;
+
+                Enumeration<InetAddress> addrs = intf.getInetAddresses();
+                while (addrs.hasMoreElements()) {
+                    InetAddress addr = addrs.nextElement();
+                    if (!addr.isLoopbackAddress() && addr.getHostAddress().contains(".")) {
+                        return addr.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting IP", e);
+        }
+        return "localhost";
     }
 
     @Override

@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
@@ -35,8 +36,8 @@ public class CameraHttpServer implements Runnable {
     @Override
     public void run() {
         try {
-            serverSocket = new ServerSocket(port);
-            Log.d(TAG, "HTTP Server started on port " + port);
+            serverSocket = new ServerSocket(port, 50, InetAddress.getByName("0.0.0.0"));
+            Log.d(TAG, "HTTP Server started on 0.0.0.0:" + port);
             while (running) {
                 Socket client = serverSocket.accept();
                 new Thread(() -> handleClient(client)).start();
