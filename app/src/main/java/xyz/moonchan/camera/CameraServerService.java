@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
-import android.util.Size;
 
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
@@ -21,8 +20,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.nanohttpd.IHTTPSession;
 import org.nanohttpd.NanoHTTPD;
@@ -37,9 +34,7 @@ public class CameraServerService extends LifecycleService {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "Service onCreate");
-        
         startCamera();
-        
         server = new CameraHttpServer(8000);
         server.start();
         Log.d(TAG, "HTTP Server started on port 8000");
@@ -57,7 +52,6 @@ public class CameraServerService extends LifecycleService {
                         .build();
 
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-
                 cameraProvider.unbindAll();
                 cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture);
                 Log.d(TAG, "CameraX initialized");
@@ -104,7 +98,6 @@ public class CameraServerService extends LifecycleService {
             }
 
             final CompletableFuture<byte[]> future = new CompletableFuture<>();
-            
             File photoFile = new File(getExternalFilesDir(null), "temp.jpg");
             ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(photoFile).build();
 
