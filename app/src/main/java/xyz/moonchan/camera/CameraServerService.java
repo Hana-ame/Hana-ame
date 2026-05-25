@@ -1,6 +1,5 @@
 package xyz.moonchan.camera;
 
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
@@ -10,8 +9,6 @@ import android.util.Size;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.ImageProxy;
-import androidx.camera.core.ImageCaptureUseCase;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleService;
@@ -21,14 +18,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.nanohttpd.Fixtures;
+import org.nanohttpd.IHTTPSession;
 import org.nanohttpd.NanoHTTPD;
 import org.nanohttpd.Response;
 
@@ -36,7 +32,6 @@ public class CameraServerService extends LifecycleService {
     private static final String TAG = "CameraServer";
     private CameraHttpServer server;
     private ImageCapture imageCapture;
-    private ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     public void onCreate() {
@@ -59,7 +54,6 @@ public class CameraServerService extends LifecycleService {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
                 imageCapture = new ImageCapture.Builder()
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                        .setTargetRotation(android.view.Surface.ROTATION_0)
                         .build();
 
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
@@ -84,7 +78,6 @@ public class CameraServerService extends LifecycleService {
         if (server != null) {
             server.stop();
         }
-        cameraExecutor.shutdown();
         Log.d(TAG, "Service onDestroy");
     }
 
@@ -94,15 +87,8 @@ public class CameraServerService extends LifecycleService {
         }
 
         @Override
-        public Response serve(com.sun.net.httpserver.HttpExchange exchange) {
-            return serve(null, null, null); // NanoHTTPD version difference handle
-        }
-        
-        // Overload for different NanoHTTPD versions
-        @Override
         public Response serve(IHTTPSession session) {
             Log.d(TAG, "Request received: " + session.getUri());
-            
             try {
                 byte[] imageBytes = captureImage();
                 return new Response(Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
@@ -117,12 +103,12 @@ public class CameraServerService extends LifecycleService {
                 throw new Exception("Camera not initialized");
             }
 
-            final java.util.concurrent.CompletableFuture<byte[]> future = new java.util.concurrent.CompletableFuture<>();
+            final CompletableFuture<byte[]> future = new CompletableFuture<>();
             
             File photoFile = new File(getExternalFilesDir(null), "temp.jpg");
             ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(photoFile).build();
 
-            imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this), 
+            imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(CameraServerService.this), 
                 new ImageCapture.OnImageSavedCallback() {
                     @Override
                     public void onImageSaved(ImageCapture.OutputFileResults output) {
@@ -136,7 +122,7 @@ public class CameraServerService extends LifecycleService {
                     }
 
                     @Override
-                    public void onError(int exceptionCode, Exception ex) {
+                    public void onError(int exceptionCode, ImageCaptureException ex) {
                         future.completeExceptionally(ex);
                     }
                 });
