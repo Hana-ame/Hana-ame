@@ -16,9 +16,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -33,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         tvbg = findViewById(R.id.bg);
-        tvbg.setText("Camera Server Status:\nWaiting for permissions... (v2)");
+        tvbg.setText("Camera Server Status:\nWaiting for permissions...");
 
         requestPermissions();
     }

@@ -8,58 +8,13 @@
     tools:context=".MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <EditText
-        android:id="@+id/editText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="目标地址"
-        android:inputType="text"
-        android:singleLine="true"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <EditText
-        android:id="@+id/editTextTcp1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="TCP端口"
-        android:inputType="numberDecimal"
-        android:layout_marginTop="8dp"
-        android:textSize="12sp"
-        android:singleLine="true"
-        app:layout_constraintTop_toBottomOf="@+id/editText"
-        app:layout_constraintRight_toRightOf="parent"
-
-        />
-    <EditText
-        android:id="@+id/editTextTcp2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="TCP端口"
-        android:inputType="numberDecimal"
-        android:layout_marginTop="8dp"
-        android:textSize="12sp"
-        android:singleLine="true"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTcp1"
-        app:layout_constraintRight_toRightOf="parent"
-
-        />
-    <Button
-        android:id="@+id/startForwarding"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="开始转发"
-        android:clickable="true"
-        android:onClick="startForwarding"
-        app:layout_constraintTop_toBottomOf="@+id/editTextTcp2"
-        app:layout_constraintRight_toRightOf="parent"
-        />
-
     <TextView
         android:id="@+id/bg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:text="Initializing Camera Server..."
+        android:textSize="16sp"
+        android:textAlignment="center"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
