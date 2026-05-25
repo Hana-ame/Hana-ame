@@ -91,10 +91,10 @@ public class CameraServerService extends LifecycleService {
             Log.d(TAG, "Request received: " + session.getUri());
             try {
                 byte[] imageBytes = captureImage();
-                return new org.nanohttpd.Response(org.nanohttpd.Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
+                return new Response(Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
             } catch (Exception e) {
                 Log.e(TAG, "Capture failed", e);
-                return new org.nanohttpd.Response(org.nanohttpd.Response.Status.INTERNAL_ERROR, "text/plain", "Capture failed: " + e.getMessage());
+                return new Response(Response.Status.INTERNAL_ERROR, "text/plain", "Capture failed: " + e.getMessage());
             }
         }
 
