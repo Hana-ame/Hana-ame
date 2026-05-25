@@ -7,7 +7,6 @@ import androidx.camera.core.ImageCaptureException;
 import androidx.core.content.ContextCompat;
 import org.nanohttpd.IHTTPSession;
 import org.nanohttpd.NanoHTTPD;
-import org.nanohttpd.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,17 +24,17 @@ public class CameraHttpServer extends NanoHTTPD {
         this.imageCapture = imageCapture;
     }
 
-    @Override
-    public Response serve(IHTTPSession session) {
-        Log.d(TAG, "Request received: " + session.getUri());
-        try {
-            byte[] imageBytes = captureImage();
-            return new Response(Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
-        } catch (Exception e) {
-            Log.e(TAG, "Capture failed", e);
-            return new Response(Response.Status.INTERNAL_ERROR, "text/plain", "Capture failed: " + e.getMessage());
+        @Override
+        public NanoHTTPD.Response serve(IHTTPSession session) {
+            Log.d(TAG, "Request received: " + session.getUri());
+            try {
+                byte[] imageBytes = captureImage();
+                return new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK, "image/jpeg", new java.io.ByteArrayInputStream(imageBytes));
+            } catch (Exception e) {
+                Log.e(TAG, "Capture failed", e);
+                return new NanoHTTPD.Response(NanoHTTPD.Response.Status.INTERNAL_ERROR, "text/plain", "Capture failed: " + e.getMessage());
+            }
         }
-    }
 
     private byte[] captureImage() throws Exception {
         if (imageCapture == null) {
@@ -59,10 +58,10 @@ public class CameraHttpServer extends NanoHTTPD {
                     }
                 }
 
-                @Override
-                public void onError(int exceptionCode, ImageCaptureException ex) {
-                    future.completeExceptionally(ex);
-                }
+                    @Override
+                    public void onError(ImageCaptureException ex) {
+                        future.completeExceptionally(ex);
+                    }
             });
 
         return future.get();
