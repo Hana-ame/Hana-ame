@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.InetAddress;
 import android.net.NetworkInterface;
+import android.net.InetAddress;
+import android.net.NetworkInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
