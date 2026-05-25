@@ -19,7 +19,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(keystoreProps['storeFile'] ?: 'release.keystore')
+            storeFile rootProject.file(keystoreProps['storeFile'] ?: 'release.keystore')
             storePassword keystoreProps['storePassword'] ?: 'android123'
             keyAlias keystoreProps['keyAlias'] ?: 'release'
             keyPassword keystoreProps['keyPassword'] ?: 'android123'
