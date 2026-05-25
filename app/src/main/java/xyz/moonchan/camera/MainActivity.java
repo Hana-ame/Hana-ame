@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         tvbg = findViewById(R.id.bg);
-        tvbg.setText("Camera Server Status:\nWaiting for permissions...");
+        tvbg.setText("Camera Server Status:\nWaiting for permissions... (v2)");
 
         requestPermissions();
     }
