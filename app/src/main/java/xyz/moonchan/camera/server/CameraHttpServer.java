@@ -91,10 +91,10 @@ public class CameraHttpServer implements Runnable {
                     }
                 }
 
-                @Override
-                public void onError(int exceptionCode, ImageCaptureException ex) {
-                    future.completeExceptionally(ex);
-                }
+                    @Override
+                    public void onError(ImageCaptureException ex) {
+                        future.completeExceptionally(ex);
+                    }
             });
 
         return future.get();
