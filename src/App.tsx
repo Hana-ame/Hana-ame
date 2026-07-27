@@ -444,7 +444,7 @@ function App() {
 
   const clearHistory = useCallback(() => {
     stopStreaming();
-    setHistory([]);
+    setHistory((prev) => prev.filter((m) => m.role === "system"));
     setEditingIndex(null);
   }, [stopStreaming]);
 
