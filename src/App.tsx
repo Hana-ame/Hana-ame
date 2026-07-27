@@ -7,7 +7,7 @@ import {
 } from "react-icons/fi";
 import type { Message, UserContentItem, StreamChunk, TextContentPart } from "./types.ts";
 import { STORAGE_KEYS, DEFAULT_ENDPOINT, DEFAULT_JSON_PAYLOAD, getFinishReasonMessage } from "./constants.ts";
-import { estimateTokens, generateId, compressJSON, decompressJSON } from "./utils.ts";
+import { estimateTokens, generateId } from "./utils.ts";
 import { useDebounce } from "./hooks/useDebounce.ts";
 import { MessageItem } from "./components/MessageItem.tsx";
 import { ChatInput } from "./components/ChatInput.tsx";
@@ -18,26 +18,12 @@ function App() {
   const [history, setHistory] = useState<Message[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.chatHistory);
-      if (!saved) return [];
-      if (!saved.startsWith("gz1:")) return JSON.parse(saved);
+      if (saved) return JSON.parse(saved);
     } catch (e) {
       console.error("Failed to load chat history:", e);
     }
     return [];
   });
-  // async decompress compressed history on mount
-  useEffect(() => {
-    (async () => {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEYS.chatHistory);
-        if (!saved || !saved.startsWith("gz1:")) return;
-        const decoded = await decompressJSON<Message[]>(saved);
-        setHistory(decoded);
-      } catch (e) {
-        console.error("Failed to decompress chat history:", e);
-      }
-    })();
-  }, []);
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -67,17 +53,17 @@ function App() {
     historyRef.current = history;
   }, [history]);
 
-  // debounced localStorage save with gzip compression
+  // debounced localStorage save: only runs after streaming pauses for 500ms
   const debouncedSaveHistory = useDebounce((h: Message[]) => {
-    compressJSON(h).then((stored) => {
-      localStorage.setItem(STORAGE_KEYS.chatHistory, stored);
-    }).catch((e) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(h));
+    } catch (e) {
       console.error("Failed to save chat history:", e);
       if (e instanceof DOMException && e.name === "QuotaExceededError") {
         alert("存储空间不足，将清除旧对话历史");
         setHistory((prev) => prev.slice(-20));
       }
-    });
+    }
   }, 500);
 
   useEffect(() => {
@@ -110,9 +96,9 @@ function App() {
   }, 300);
 
   useEffect(() => {
-    if (jsonError || isLoading) return;
+    if (jsonError) return;
     debouncedSyncJson.run(history, jsonPayload);
-  }, [history, jsonPayload, jsonError, isLoading, debouncedSyncJson]);
+  }, [history, jsonPayload, jsonError, debouncedSyncJson]);
 
   // --- Message Operations ---
   const deleteMessage = useCallback((index: number) => {
