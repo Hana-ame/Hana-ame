@@ -1,4 +1,4 @@
-import type { Message, TextContentPart, UserContentItem } from "./types.ts";
+import type { Message, TextContentPart } from "./types.ts";
 
 export const estimateTokens = (text: string): number => {
   return Math.ceil(text.length / 4);
@@ -19,31 +19,43 @@ export const generateId = (): string => {
   return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
-export const stringifyMessages = (history: Message[]): string => {
-  if (history.length === 0) return "[]";
+const COMPRESS_PREFIX = "gz1:";
 
-  const compact = history.map((m) => {
-    const o: Record<string, unknown> = { role: m.role, content: m.content };
-    if (m.reasoning_content) o.reasoning_content = m.reasoning_content;
-    if (m.finish_reason) o.finish_reason = m.finish_reason;
-    if (m.usage) o.usage = m.usage;
-    return o;
-  });
-  return JSON.stringify(compact);
-};
+function str2ab(str: string): Uint8Array {
+  const len = str.length;
+  const buf = new Uint8Array(len);
+  for (let i = 0; i < len; i++) buf[i] = str.charCodeAt(i) & 0xff;
+  return buf;
+}
 
-export const getUsage = (msg: Message) => msg.usage;
-export const getFinishReason = (msg: Message) => msg.finish_reason;
-export const getFinishMessage = (msg: Message) => msg.finish_message;
+function ab2str(buf: Uint8Array): string {
+  return String.fromCharCode(...buf);
+}
 
-export function shallowEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (typeof a !== "object" || typeof b !== "object" || !a || !b) return false;
-  const ka = Object.keys(a as Record<string, unknown>);
-  const kb = Object.keys(b as Record<string, unknown>);
-  if (ka.length !== kb.length) return false;
-  for (const k of ka) {
-    if ((a as Record<string, unknown>)[k] !== (b as Record<string, unknown>)[k]) return false;
+export async function compressJSON(data: unknown): Promise<string> {
+  const json = JSON.stringify(data);
+  if (json.length < 10240) return json;
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(json);
+  const cs = new CompressionStream("gzip");
+  const writer = cs.writable.getWriter();
+  writer.write(bytes);
+  writer.close();
+  const compressed = await new Response(cs.readable).blob();
+  const buf = await compressed.arrayBuffer();
+  const base64 = btoa(ab2str(new Uint8Array(buf)));
+  return COMPRESS_PREFIX + base64;
+}
+
+export async function decompressJSON<T>(stored: string): Promise<T> {
+  if (!stored.startsWith(COMPRESS_PREFIX)) {
+    return JSON.parse(stored) as T;
   }
-  return true;
+  const base64 = stored.slice(COMPRESS_PREFIX.length);
+  const bytes = str2ab(atob(base64));
+  const ds = new DecompressionStream("gzip");
+  const decompressed = await new Response(
+    new Blob([bytes]).stream().pipeThrough(ds),
+  ).text();
+  return JSON.parse(decompressed) as T;
 }
