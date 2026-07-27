@@ -160,34 +160,6 @@ function VirtualizedList({
     return () => ro.disconnect();
   }, [containerRef]);
 
-  // ResizeObserver on each item wrapper to track real-time height changes
-  // (critical during streaming when the last message grows)
-  useEffect(() => {
-    const map = itemElements.current;
-    if (map.size === 0) return;
-    const ro = new ResizeObserver((entries) => {
-      let changed = false;
-      for (const entry of entries) {
-        const el = entry.target as HTMLDivElement;
-        const h = entry.contentRect.height;
-        if (h <= 0) continue;
-        for (const [idx, element] of map.entries()) {
-          if (element === el) {
-            const old = heightCache.current.get(idx);
-            if (old !== h) {
-              heightCache.current.set(idx, h);
-              changed = true;
-            }
-            break;
-          }
-        }
-      }
-      if (changed) setCacheVersion((v) => v + 1);
-    });
-    for (const el of map.values()) ro.observe(el);
-    return () => ro.disconnect();
-  }, [startIdx, endIdx]);
-
   const { startIdx, endIdx, offsetTop, offsetBottom } = useMemo(() => {
     if (items.length === 0 || viewHeight === 0) {
       return { startIdx: 0, endIdx: 0, offsetTop: 0, offsetBottom: 0 };
@@ -220,6 +192,34 @@ function VirtualizedList({
 
     return { startIdx: s, endIdx: e, offsetTop: top, offsetBottom: bot };
   }, [items.length, scrollTop, viewHeight, getHeight, gap, overscan, cacheVersion]);
+
+  // ResizeObserver on each item wrapper to track real-time height changes
+  // (critical during streaming when the last message grows)
+  useEffect(() => {
+    const map = itemElements.current;
+    if (map.size === 0) return;
+    const ro = new ResizeObserver((entries) => {
+      let changed = false;
+      for (const entry of entries) {
+        const el = entry.target as HTMLDivElement;
+        const h = entry.contentRect.height;
+        if (h <= 0) continue;
+        for (const [idx, element] of map.entries()) {
+          if (element === el) {
+            const old = heightCache.current.get(idx);
+            if (old !== h) {
+              heightCache.current.set(idx, h);
+              changed = true;
+            }
+            break;
+          }
+        }
+      }
+      if (changed) setCacheVersion((v) => v + 1);
+    });
+    for (const el of map.values()) ro.observe(el);
+    return () => ro.disconnect();
+  }, [startIdx, endIdx]);
 
   return (
     <div
