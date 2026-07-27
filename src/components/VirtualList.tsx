@@ -25,7 +25,6 @@ const VirtualList = function VirtualList({
   const [viewHeight, setViewHeight] = useState(800);
   const heightCache = useRef<Map<number, number>>(new Map());
   const rafId = useRef<number | null>(null);
-  const itemsLen = useRef(items.length);
   const isNearBottom = useRef(true);
 
   const getHeight = useCallback(
@@ -103,14 +102,11 @@ const VirtualList = function VirtualList({
     return { startIdx: s, endIdx: e, offsetTop: top, offsetBottom: bot };
   }, [items.length, scrollTop, viewHeight, getHeight, gap, overscan]);
 
-  itemsLen.current = items.length;
-
   useLayoutEffect(() => {
     if (!isStreaming) return;
     const el = containerRef.current;
     if (!el) return;
-    const threshold = el.scrollHeight - el.clientHeight - 80;
-    if (el.scrollTop >= threshold) {
+    if (isNearBottom.current || el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
       el.scrollTop = el.scrollHeight;
     }
   });

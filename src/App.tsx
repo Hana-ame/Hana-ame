@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import {
   FiTrash2,
   FiActivity,
+  FiChevronRight,
+  FiChevronLeft,
 } from "react-icons/fi";
 import { Message, UserContentItem, StreamChunk, TextContentPart } from "./types.ts";
 import { STORAGE_KEYS, DEFAULT_ENDPOINT, DEFAULT_JSON_PAYLOAD, getFinishReasonMessage } from "./constants.ts";
@@ -42,6 +44,7 @@ function App() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
   const [expandedThinking, setExpandedThinking] = useState<Record<number, boolean>>({});
+  const [showConfig, setShowConfig] = useState(true);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const historyRef = useRef<Message[]>(history);
@@ -468,7 +471,7 @@ function App() {
   }, [streamingStartTime, currentStreamingTokens]);
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white font-sans">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white font-sans overflow-hidden">
       <div className="flex-1 flex flex-col h-full min-w-0">
         <header className="p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
           <h1 className="text-xl font-bold text-indigo-400">AI Chat Pro</h1>
@@ -486,6 +489,13 @@ function App() {
               className="text-sm text-red-400 hover:text-red-300 flex items-center gap-1"
             >
               <FiTrash2 /> Clear All
+            </button>
+            <button
+              onClick={() => setShowConfig((v) => !v)}
+              className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+              title={showConfig ? "Hide Config Panel" : "Show Config Panel"}
+            >
+              {showConfig ? <FiChevronRight /> : <FiChevronLeft />}
             </button>
           </div>
         </header>
@@ -544,17 +554,23 @@ function App() {
         />
       </div>
 
-      <ConfigPanel
-        endpointUrl={endpointUrl}
-        apiKey={apiKey}
-        jsonPayload={jsonPayload}
-        jsonError={jsonError}
-        messageCount={history.length}
-        onEndpointChange={setEndpointUrl}
-        onApiKeyChange={setApiKey}
-        onJsonChange={handleJsonChange}
-        onFormatJson={formatJson}
-      />
+      <div className={`transition-all duration-200 ease-in-out overflow-hidden ${
+        showConfig
+          ? "max-h-screen md:max-w-[450px] md:w-[450px]"
+          : "max-h-0 md:max-w-0 md:w-0"
+      }`}>
+        <ConfigPanel
+          endpointUrl={endpointUrl}
+          apiKey={apiKey}
+          jsonPayload={jsonPayload}
+          jsonError={jsonError}
+          messageCount={history.length}
+          onEndpointChange={setEndpointUrl}
+          onApiKeyChange={setApiKey}
+          onJsonChange={handleJsonChange}
+          onFormatJson={formatJson}
+        />
+      </div>
     </div>
   );
 }
