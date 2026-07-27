@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo, useLayoutEffect, useState } from "react";
+import React, { useRef, useCallback, useMemo, useLayoutEffect, useState, useEffect } from "react";
 
 interface VirtualListProps {
   items: unknown[];
@@ -53,7 +53,7 @@ const VirtualList = function VirtualList({
         ref={containerRef}
         onScroll={updateNearBottom}
         className={className}
-        style={{ overflowY: "auto" }}
+        style={{ overflowY: "auto", touchAction: "pan-y", overscrollBehavior: "contain" }}
       >
         {items.map((item, i) => (
           <div
@@ -102,6 +102,7 @@ function VirtualizedList({
   const heightCache = useRef<Map<number, number>>(new Map());
   const [cacheVersion, setCacheVersion] = useState(0);
   const rafId = useRef<number | null>(null);
+  const itemElements = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const getHeight = useCallback(
     (index: number): number => heightCache.current.get(index) ?? 80,
@@ -110,6 +111,7 @@ function VirtualizedList({
 
   const measureItem = useCallback((index: number, el: HTMLDivElement | null) => {
     if (el) {
+      itemElements.current.set(index, el);
       const h = el.getBoundingClientRect().height;
       if (h > 0) {
         const old = heightCache.current.get(index);
@@ -118,6 +120,8 @@ function VirtualizedList({
           setCacheVersion((v) => v + 1);
         }
       }
+    } else {
+      itemElements.current.delete(index);
     }
   }, []);
 
@@ -155,6 +159,34 @@ function VirtualizedList({
     ro.observe(el);
     return () => ro.disconnect();
   }, [containerRef]);
+
+  // ResizeObserver on each item wrapper to track real-time height changes
+  // (critical during streaming when the last message grows)
+  useEffect(() => {
+    const map = itemElements.current;
+    if (map.size === 0) return;
+    const ro = new ResizeObserver((entries) => {
+      let changed = false;
+      for (const entry of entries) {
+        const el = entry.target as HTMLDivElement;
+        const h = entry.contentRect.height;
+        if (h <= 0) continue;
+        for (const [idx, element] of map.entries()) {
+          if (element === el) {
+            const old = heightCache.current.get(idx);
+            if (old !== h) {
+              heightCache.current.set(idx, h);
+              changed = true;
+            }
+            break;
+          }
+        }
+      }
+      if (changed) setCacheVersion((v) => v + 1);
+    });
+    for (const el of map.values()) ro.observe(el);
+    return () => ro.disconnect();
+  }, [startIdx, endIdx]);
 
   const { startIdx, endIdx, offsetTop, offsetBottom } = useMemo(() => {
     if (items.length === 0 || viewHeight === 0) {
@@ -194,7 +226,7 @@ function VirtualizedList({
       ref={containerRef}
       onScroll={handleScrollRaf}
       className={className}
-      style={{ overflowY: "auto" }}
+      style={{ overflowY: "auto", touchAction: "pan-y", overscrollBehavior: "contain" }}
     >
       <div style={{ height: totalHeight, position: "relative" }}>
         <div style={{ height: offsetTop }} />

@@ -84,21 +84,8 @@ function App() {
     }
   }, [jsonPayload, jsonError]);
 
-  // debounced JSON sync
-  const debouncedSyncJson = useDebounce((h: Message[], jp: string) => {
-    try {
-      const current = JSON.parse(jp || "{}");
-      current.messages = h;
-      setJsonPayload(JSON.stringify(current, null, 2));
-    } catch (e) {
-      console.log(e);
-    }
-  }, 300);
-
-  useEffect(() => {
-    if (jsonError) return;
-    debouncedSyncJson.run(history, jsonPayload);
-  }, [history, jsonPayload, jsonError, debouncedSyncJson]);
+  // NOTE: jsonPayload is NOT automatically synced with history.
+  // The user can manually edit JSON to import/restore conversations.
 
   // --- Message Operations ---
   const deleteMessage = useCallback((index: number) => {
