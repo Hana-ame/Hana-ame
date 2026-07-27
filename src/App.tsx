@@ -10,6 +10,7 @@ import { useDebounce } from "./hooks/useDebounce.ts";
 import { MessageItem } from "./components/MessageItem.tsx";
 import { ChatInput } from "./components/ChatInput.tsx";
 import { ConfigPanel } from "./components/ConfigPanel.tsx";
+import { VirtualList } from "./components/VirtualList.tsx";
 
 function App() {
   const [history, setHistory] = useState<Message[]>(() => {
@@ -42,7 +43,6 @@ function App() {
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
   const [expandedThinking, setExpandedThinking] = useState<Record<number, boolean>>({});
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const historyRef = useRef<Message[]>(history);
 
@@ -96,11 +96,6 @@ function App() {
     if (jsonError) return;
     debouncedSyncJson.run(history, jsonPayload);
   }, [history, jsonPayload, jsonError, debouncedSyncJson]);
-
-  // auto-scroll without smooth to avoid layout thrashing
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [history, isLoading]);
 
   // --- Message Operations ---
   const deleteMessage = useCallback((index: number) => {
@@ -495,9 +490,9 @@ function App() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {history.length === 0 && (
-            <div className="text-center text-gray-500 mt-10">
+        {history.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center p-4">
+            <div className="text-center text-gray-500">
               <p>No messages yet. Start chatting or edit JSON directly.</p>
               <button
                 onClick={addSystemMessage}
@@ -506,26 +501,34 @@ function App() {
                 + Add System Message
               </button>
             </div>
-          )}
-
-          {history.map((msg, index) => (
-            <MessageItem
-              key={msg.id || index}
-              msg={msg}
-              index={index}
-              isEditing={editingIndex === index}
-              isExpanded={!!expandedThinking[index]}
-              editContent={editContent}
-              onStartEdit={startEditMessage}
-              onDelete={deleteMessage}
-              onSaveEdit={saveEditMessage}
-              onCancelEdit={cancelEdit}
-              onEditContentChange={handleEditContentChange}
-              onToggleThinking={toggleThinking}
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+          </div>
+        ) : (
+          <VirtualList
+            items={history}
+            renderItem={(item, index) => {
+              const msg = item as Message;
+              return (
+                <MessageItem
+                  msg={msg}
+                  index={index}
+                  isEditing={editingIndex === index}
+                  isExpanded={!!expandedThinking[index]}
+                  editContent={editContent}
+                  onStartEdit={startEditMessage}
+                  onDelete={deleteMessage}
+                  onSaveEdit={saveEditMessage}
+                  onCancelEdit={cancelEdit}
+                  onEditContentChange={handleEditContentChange}
+                  onToggleThinking={toggleThinking}
+                />
+              );
+            }}
+            estimatedItemHeight={120}
+            gap={16}
+            isStreaming={isLoading}
+            className="flex-1 p-4"
+          />
+        )}
 
         <ChatInput
           input={input}
