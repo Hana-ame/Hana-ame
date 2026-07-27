@@ -5,7 +5,7 @@ import {
   FiChevronRight,
   FiChevronLeft,
 } from "react-icons/fi";
-import { Message, UserContentItem, StreamChunk, TextContentPart } from "./types.ts";
+import type { Message, UserContentItem, StreamChunk, TextContentPart } from "./types.ts";
 import { STORAGE_KEYS, DEFAULT_ENDPOINT, DEFAULT_JSON_PAYLOAD, getFinishReasonMessage } from "./constants.ts";
 import { estimateTokens, generateId } from "./utils.ts";
 import { useDebounce } from "./hooks/useDebounce.ts";

@@ -1,4 +1,4 @@
-import { Message, TextContentPart, UserContentItem, UserMessageContent } from "./types.ts";
+import type { Message, TextContentPart, UserContentItem } from "./types.ts";
 
 export const estimateTokens = (text: string): number => {
   return Math.ceil(text.length / 4);

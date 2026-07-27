@@ -14,7 +14,7 @@ import {
   FiClock,
   FiActivity,
 } from "react-icons/fi";
-import {
+import type {
   Message,
   TextContentPart,
   UserContentItem,
