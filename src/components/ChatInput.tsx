@@ -78,7 +78,6 @@ const ChatInput = memo(function ChatInput({
           placeholder="Type message... (Shift+Enter for new line)"
           className="flex-1 bg-gray-900 border border-gray-700 rounded-lg p-3 focus:border-indigo-500 focus:outline-none resize-none min-h-[50px] max-h-[150px]"
           onKeyDown={handleKeyDown}
-          disabled={isLoading}
         />
 
         {isLoading ? (
