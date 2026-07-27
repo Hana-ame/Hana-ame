@@ -546,7 +546,7 @@ function App() {
         apiKey={apiKey}
         jsonPayload={jsonPayload}
         jsonError={jsonError}
-        history={history}
+        messageCount={history.length}
         onEndpointChange={setEndpointUrl}
         onApiKeyChange={setApiKey}
         onJsonChange={handleJsonChange}

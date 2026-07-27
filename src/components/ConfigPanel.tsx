@@ -3,14 +3,13 @@ import {
   FiEdit2,
   FiAlertCircle,
 } from "react-icons/fi";
-import { Message } from "../types.ts";
 
 interface ConfigPanelProps {
   endpointUrl: string;
   apiKey: string;
   jsonPayload: string;
   jsonError: string | null;
-  history: Message[];
+  messageCount: number;
   onEndpointChange: (value: string) => void;
   onApiKeyChange: (value: string) => void;
   onJsonChange: (value: string) => void;
@@ -22,7 +21,7 @@ const ConfigPanel = memo(function ConfigPanel({
   apiKey,
   jsonPayload,
   jsonError,
-  history,
+  messageCount,
   onEndpointChange,
   onApiKeyChange,
   onJsonChange,
@@ -106,7 +105,7 @@ const ConfigPanel = memo(function ConfigPanel({
         <div className="bg-gray-900 rounded p-3 text-xs space-y-1 text-gray-400">
           <div className="flex justify-between">
             <span>Messages in context:</span>
-            <span className="text-white">{history.length}</span>
+            <span className="text-white">{messageCount}</span>
           </div>
           <div className="flex justify-between">
             <span>Current model:</span>
