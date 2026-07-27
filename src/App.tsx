@@ -354,6 +354,7 @@ function App() {
 
               if (contentChunk) accumulatedContent += contentChunk;
               if (reasoningChunk) accumulatedReasoning += reasoningChunk;
+              setCurrentStreamingTokens(estimateTokens(accumulatedContent + accumulatedReasoning));
 
               setHistory((prev) => {
                 const h = [...prev];
