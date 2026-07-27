@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, useLayoutEffect } from "react";
+import React, { useRef, useCallback, useMemo, useLayoutEffect, useState } from "react";
 
 interface VirtualListProps {
   items: unknown[];
@@ -11,27 +11,101 @@ interface VirtualListProps {
   className?: string;
 }
 
+const VIRTUALIZE_THRESHOLD = 30;
+
 const VirtualList = function VirtualList({
   items,
   renderItem,
-  estimatedItemHeight,
   gap = 0,
-  overscan = 5,
+  overscan = 10,
   isStreaming,
   className,
 }: VirtualListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const isNearBottom = useRef(true);
+
+  const updateNearBottom = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    isNearBottom.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 80;
+  }, []);
+
+  const onVirtualScroll = useCallback<React.UIEventHandler<HTMLDivElement>>(() => {
+    updateNearBottom();
+  }, [updateNearBottom]);
+
+  useLayoutEffect(() => {
+    if (!isStreaming) return;
+    const el = containerRef.current;
+    if (!el) return;
+    if (isNearBottom.current || el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+      el.scrollTop = el.scrollHeight;
+    }
+  });
+
+  if (items.length === 0) {
+    return <div ref={containerRef} className={className} />;
+  }
+
+  if (items.length < VIRTUALIZE_THRESHOLD) {
+    return (
+      <div
+        ref={containerRef}
+        onScroll={updateNearBottom}
+        className={className}
+        style={{ overflowY: "auto" }}
+      >
+        {items.map((item, i) => (
+          <div
+            key={i}
+            style={gap && i < items.length - 1 ? { marginBottom: gap } : undefined}
+          >
+            {renderItem(item, i)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return <VirtualizedList
+    containerRef={containerRef}
+    items={items}
+    renderItem={renderItem}
+    gap={gap}
+    overscan={overscan}
+    onScroll={onVirtualScroll}
+    className={className}
+  />;
+};
+
+interface VirtualizedListProps {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  items: unknown[];
+  renderItem: (item: unknown, index: number) => React.ReactNode;
+  gap: number;
+  overscan: number;
+  onScroll: React.UIEventHandler<HTMLDivElement>;
+  className?: string;
+}
+
+function VirtualizedList({
+  containerRef,
+  items,
+  renderItem,
+  gap,
+  overscan,
+  onScroll,
+  className,
+}: VirtualizedListProps) {
   const [scrollTop, setScrollTop] = useState(0);
   const [viewHeight, setViewHeight] = useState(800);
   const heightCache = useRef<Map<number, number>>(new Map());
   const [cacheVersion, setCacheVersion] = useState(0);
   const rafId = useRef<number | null>(null);
-  const isNearBottom = useRef(true);
 
   const getHeight = useCallback(
-    (index: number): number =>
-      heightCache.current.get(index) ?? estimatedItemHeight,
-    [estimatedItemHeight],
+    (index: number): number => heightCache.current.get(index) ?? 80,
+    [],
   );
 
   const measureItem = useCallback((index: number, el: HTMLDivElement | null) => {
@@ -56,7 +130,8 @@ const VirtualList = function VirtualList({
     return total + Math.max(0, items.length - 1) * gap;
   }, [items.length, getHeight, gap, cacheVersion]);
 
-  const handleScroll = useCallback(() => {
+  const handleScrollRaf = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    onScroll(e);
     if (rafId.current !== null) cancelAnimationFrame(rafId.current);
     rafId.current = requestAnimationFrame(() => {
       rafId.current = null;
@@ -64,10 +139,8 @@ const VirtualList = function VirtualList({
       if (!el) return;
       setScrollTop(el.scrollTop);
       setViewHeight(el.clientHeight);
-      isNearBottom.current =
-        el.scrollTop + el.clientHeight >= el.scrollHeight - 60;
     });
-  }, []);
+  }, [onScroll, containerRef]);
 
   useLayoutEffect(() => {
     const el = containerRef.current;
@@ -81,7 +154,7 @@ const VirtualList = function VirtualList({
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [containerRef]);
 
   const { startIdx, endIdx, offsetTop, offsetBottom } = useMemo(() => {
     if (items.length === 0 || viewHeight === 0) {
@@ -116,23 +189,10 @@ const VirtualList = function VirtualList({
     return { startIdx: s, endIdx: e, offsetTop: top, offsetBottom: bot };
   }, [items.length, scrollTop, viewHeight, getHeight, gap, overscan, cacheVersion]);
 
-  useLayoutEffect(() => {
-    if (!isStreaming) return;
-    const el = containerRef.current;
-    if (!el) return;
-    if (isNearBottom.current || el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
-      el.scrollTop = el.scrollHeight;
-    }
-  });
-
-  if (items.length === 0) {
-    return <div ref={containerRef} className={className} />;
-  }
-
   return (
     <div
       ref={containerRef}
-      onScroll={handleScroll}
+      onScroll={handleScrollRaf}
       className={className}
       style={{ overflowY: "auto" }}
     >
@@ -154,7 +214,7 @@ const VirtualList = function VirtualList({
       </div>
     </div>
   );
-};
+}
 
 export { VirtualList };
 export type { VirtualListProps };
