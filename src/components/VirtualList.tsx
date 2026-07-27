@@ -24,6 +24,7 @@ const VirtualList = function VirtualList({
   const [scrollTop, setScrollTop] = useState(0);
   const [viewHeight, setViewHeight] = useState(800);
   const heightCache = useRef<Map<number, number>>(new Map());
+  const [cacheVersion, setCacheVersion] = useState(0);
   const rafId = useRef<number | null>(null);
   const isNearBottom = useRef(true);
 
@@ -34,9 +35,15 @@ const VirtualList = function VirtualList({
   );
 
   const measureItem = useCallback((index: number, el: HTMLDivElement | null) => {
-    if (el && !heightCache.current.has(index)) {
+    if (el) {
       const h = el.getBoundingClientRect().height;
-      if (h > 0) heightCache.current.set(index, h);
+      if (h > 0) {
+        const old = heightCache.current.get(index);
+        if (old !== h) {
+          heightCache.current.set(index, h);
+          setCacheVersion((v) => v + 1);
+        }
+      }
     }
   }, []);
 
@@ -47,7 +54,7 @@ const VirtualList = function VirtualList({
       total += getHeight(i);
     }
     return total + Math.max(0, items.length - 1) * gap;
-  }, [items.length, getHeight, gap]);
+  }, [items.length, getHeight, gap, cacheVersion]);
 
   const handleScroll = useCallback(() => {
     if (rafId.current !== null) cancelAnimationFrame(rafId.current);
@@ -67,6 +74,13 @@ const VirtualList = function VirtualList({
     if (!el) return;
     setScrollTop(el.scrollTop);
     setViewHeight(el.clientHeight);
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setViewHeight(entry.contentRect.height);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const { startIdx, endIdx, offsetTop, offsetBottom } = useMemo(() => {
@@ -100,7 +114,7 @@ const VirtualList = function VirtualList({
     for (let i = e + 1; i < items.length; i++) bot += getHeight(i) + gap;
 
     return { startIdx: s, endIdx: e, offsetTop: top, offsetBottom: bot };
-  }, [items.length, scrollTop, viewHeight, getHeight, gap, overscan]);
+  }, [items.length, scrollTop, viewHeight, getHeight, gap, overscan, cacheVersion]);
 
   useLayoutEffect(() => {
     if (!isStreaming) return;
