@@ -555,10 +555,35 @@ function App() {
         />
       </div>
 
-      <div className={`transition-all duration-200 ease-in-out overflow-hidden ${
+      {showConfig && (
+        <div className="fixed inset-0 z-50 bg-gray-900 overflow-y-auto md:hidden">
+          <div className="p-4">
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => setShowConfig(false)}
+                className="text-sm text-gray-400 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+            <ConfigPanel
+              endpointUrl={endpointUrl}
+              apiKey={apiKey}
+              jsonPayload={jsonPayload}
+              jsonError={jsonError}
+              messageCount={history.length}
+              onEndpointChange={setEndpointUrl}
+              onApiKeyChange={setApiKey}
+              onJsonChange={handleJsonChange}
+              onFormatJson={formatJson}
+            />
+          </div>
+        </div>
+      )}
+      <div className={`hidden md:block transition-all duration-200 ease-in-out overflow-hidden ${
         showConfig
-          ? "max-h-screen md:max-w-[450px] md:w-[450px]"
-          : "max-h-0 md:max-w-0 md:w-0"
+          ? "md:max-w-[450px] md:w-[450px]"
+          : "md:max-w-0 md:w-0"
       }`}>
         <ConfigPanel
           endpointUrl={endpointUrl}
