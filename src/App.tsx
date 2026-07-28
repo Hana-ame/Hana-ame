@@ -48,15 +48,25 @@ function App() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const historyRef = useRef<Message[]>(history);
-  const jsonPayloadRef = useRef(jsonPayload);
+  const prevLoadingRef = useRef(false);
 
   useEffect(() => {
     historyRef.current = history;
   }, [history]);
 
   useEffect(() => {
-    jsonPayloadRef.current = jsonPayload;
-  }, [jsonPayload]);
+    if (prevLoadingRef.current && !isLoading) {
+      try {
+        const base = JSON.parse(jsonPayload);
+        const next = JSON.stringify({ ...base, messages: history }, null, 2);
+        if (next !== jsonPayload) {
+          setJsonPayload(next);
+          setJsonError(null);
+        }
+      } catch {}
+    }
+    prevLoadingRef.current = isLoading;
+  }, [isLoading, history, jsonPayload]);
 
   // debounced localStorage save: only runs after streaming pauses for 500ms
   const debouncedSaveHistory = useDebounce((h: Message[]) => {
@@ -89,8 +99,8 @@ function App() {
     }
   }, [jsonPayload, jsonError]);
 
-  // NOTE: jsonPayload is NOT automatically synced with history.
-  // The user can manually edit JSON to import/restore conversations.
+  // jsonPayload 的 messages 在流结束/cancel 后自动与 history 同步。
+  // 用户编辑 JSON 时，从 messages 中提取并更新 history。
 
   // --- Message Operations ---
   const deleteMessage = useCallback((index: number) => {
@@ -176,16 +186,6 @@ function App() {
       setJsonError(e.message);
     }
   }, [jsonPayload]);
-
-  const syncJsonFromHistory = useCallback(() => {
-    try {
-      const base = JSON.parse(jsonPayloadRef.current);
-      setJsonPayload(JSON.stringify({ ...base, messages: historyRef.current }, null, 2));
-      setJsonError(null);
-    } catch {
-      // base payload might be invalid during editing, skip silently
-    }
-  }, []);
 
   // --- Image Upload ---
   const handleImageUpload = useCallback(
@@ -444,7 +444,6 @@ function App() {
       setIsLoading(false);
       setStreamingStartTime(null);
       abortControllerRef.current = null;
-      setTimeout(syncJsonFromHistory, 0);
     }
   }, [
     input,
