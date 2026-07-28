@@ -14,17 +14,18 @@ import { ChatInput } from "./components/ChatInput.tsx";
 import { ConfigPanel } from "./components/ConfigPanel.tsx";
 import { VirtualList } from "./components/VirtualList.tsx";
 
-function App() {
-  const [history, setHistory] = useState<Message[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.chatHistory);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error("Failed to load chat history:", e);
-    }
-    return [];
-  });
+function getMessages(payload: string): Message[] {
+  try { return JSON.parse(payload).messages || []; } catch { return []; }
+}
+function setMessages(payload: string, msgs: Message[]): string {
+  try {
+    const obj = JSON.parse(payload);
+    obj.messages = msgs;
+    return JSON.stringify(obj, null, 2);
+  } catch { return payload; }
+}
 
+function App() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [streamingStartTime, setStreamingStartTime] = useState<number | null>(null);
@@ -47,33 +48,16 @@ function App() {
   const [showConfig, setShowConfig] = useState(true);
 
   const abortControllerRef = useRef<AbortController | null>(null);
-  const historyRef = useRef<Message[]>(history);
-  const jsonPayloadRef = useRef(jsonPayload);
 
-  useEffect(() => {
-    historyRef.current = history;
-  }, [history]);
+  const history = useMemo(() => getMessages(jsonPayload), [jsonPayload]);
 
-  useEffect(() => {
-    jsonPayloadRef.current = jsonPayload;
-  }, [jsonPayload]);
-
-  // debounced localStorage save: only runs after streaming pauses for 500ms
-  const debouncedSaveHistory = useDebounce((h: Message[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.chatHistory, JSON.stringify(h));
-    } catch (e) {
-      console.error("Failed to save chat history:", e);
-      if (e instanceof DOMException && e.name === "QuotaExceededError") {
-        alert("存储空间不足，将清除旧对话历史");
-        setHistory((prev) => prev.slice(-20));
-      }
-    }
+  const debouncedSaveJson = useDebounce((j: string) => {
+    localStorage.setItem(STORAGE_KEYS.jsonPayload, j);
   }, 500);
 
   useEffect(() => {
-    debouncedSaveHistory.run(history);
-  }, [history, debouncedSaveHistory]);
+    if (!jsonError) debouncedSaveJson.run(jsonPayload);
+  }, [jsonPayload, jsonError, debouncedSaveJson]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.endpointUrl, endpointUrl);
@@ -83,23 +67,18 @@ function App() {
     localStorage.setItem(STORAGE_KEYS.apiKey, apiKey);
   }, [apiKey]);
 
-  useEffect(() => {
-    if (!jsonError) {
-      localStorage.setItem(STORAGE_KEYS.jsonPayload, jsonPayload);
-    }
-  }, [jsonPayload, jsonError]);
-
-  // jsonPayload 的 messages 在流结束/cancel 后自动与 history 同步。
-  // 用户编辑 JSON 时，从 messages 中提取并更新 history。
-
-  // --- Message Operations ---
   const deleteMessage = useCallback((index: number) => {
-    setHistory((prev) => prev.filter((_, i) => i !== index));
+    setJsonPayload((prev) => {
+      const msgs = getMessages(prev);
+      msgs.splice(index, 1);
+      return setMessages(prev, msgs);
+    });
     setEditingIndex((prev) => (prev === index ? null : prev));
   }, []);
 
   const startEditMessage = useCallback((index: number) => {
-    const msg = historyRef.current[index];
+    const msgs = getMessages(jsonPayload);
+    const msg = msgs[index];
     if (!msg) return;
     let contentStr = "";
     if (typeof msg.content === "string") {
@@ -112,15 +91,15 @@ function App() {
     }
     setEditContent(contentStr);
     setEditingIndex(index);
-  }, []);
+  }, [jsonPayload]);
 
   const saveEditMessage = useCallback((index: number) => {
-    setHistory((prev) => {
-      const next = [...prev];
-      const msg = next[index];
+    setJsonPayload((prev) => {
+      const msgs = getMessages(prev);
+      const msg = msgs[index];
       if (!msg) return prev;
       if (typeof msg.content === "string") {
-        next[index] = { ...msg, content: editContent };
+        msgs[index] = { ...msg, content: editContent };
       } else if (Array.isArray(msg.content)) {
         const newContent: UserContentItem[] = msg.content.filter(
           (p) => p.type === "image_url",
@@ -128,9 +107,9 @@ function App() {
         if (editContent.trim()) {
           newContent.unshift({ type: "text", text: editContent });
         }
-        next[index] = { ...msg, content: newContent };
+        msgs[index] = { ...msg, content: newContent };
       }
-      return next;
+      return setMessages(prev, msgs);
     });
     setEditingIndex(null);
   }, [editContent]);
@@ -144,10 +123,11 @@ function App() {
   }, []);
 
   const addSystemMessage = useCallback(() => {
-    setHistory((prev) => [
-      { role: "system", content: "You are a helpful assistant." },
-      ...prev,
-    ]);
+    setJsonPayload((prev) => {
+      const msgs = getMessages(prev);
+      msgs.unshift({ role: "system", content: "You are a helpful assistant." });
+      return setMessages(prev, msgs);
+    });
   }, []);
 
   // --- JSON Editor ---
@@ -159,7 +139,7 @@ function App() {
         const validMessages = parsed.messages.filter(
           (m: any) => m.role && m.content !== undefined,
         );
-        setHistory(validMessages);
+        setJsonPayload(setMessages(value, validMessages));
       }
       setJsonError(null);
     } catch (e: any) {
@@ -176,16 +156,6 @@ function App() {
       setJsonError(e.message);
     }
   }, [jsonPayload]);
-
-  const syncJsonFromHistory = useCallback(() => {
-    try {
-      const base = JSON.parse(jsonPayloadRef.current);
-      setJsonPayload(JSON.stringify({ ...base, messages: historyRef.current }, null, 2));
-      setJsonError(null);
-    } catch {
-      // base payload might be invalid during editing, skip silently
-    }
-  }, []);
 
   // --- Image Upload ---
   const handleImageUpload = useCallback(
@@ -260,9 +230,10 @@ function App() {
       id: generateId(),
     };
 
-    const historySnapshot = historyRef.current;
-    const newHistory = [...historySnapshot, userMessage, assistantMessage];
-    setHistory(newHistory);
+    const currentHistory = getMessages(jsonPayload);
+    const newHistory = [...currentHistory, userMessage, assistantMessage];
+    setJsonPayload(setMessages(jsonPayload, newHistory));
+
     setInput("");
     setUploadedImage(null);
     setUploadedImageName(null);
@@ -277,7 +248,7 @@ function App() {
     let body: any;
     try {
       const basePayload = JSON.parse(jsonPayload);
-      body = { ...basePayload, messages: [...historySnapshot, userMessage] };
+      body = { ...basePayload, messages: [...currentHistory, userMessage] };
     } catch (e) {
       alert("Invalid JSON payload");
       setIsLoading(false);
@@ -305,10 +276,10 @@ function App() {
           const text = await response.text();
           errorContent += ` - ${text}`;
         }
-        setHistory((prev) => {
-          const h = [...prev];
-          if (h.length > 0) h[h.length - 1].content = errorContent;
-          return h;
+        setJsonPayload((prev) => {
+          const msgs = getMessages(prev);
+          if (msgs.length > 0) msgs[msgs.length - 1].content = errorContent;
+          return setMessages(prev, msgs);
         });
         setIsLoading(false);
         setStreamingStartTime(null);
@@ -358,31 +329,31 @@ function App() {
               if (reasoningChunk) accumulatedReasoning += reasoningChunk;
               setCurrentStreamingTokens(estimateTokens(accumulatedContent + accumulatedReasoning));
 
-              setHistory((prev) => {
-                const h = [...prev];
-                const lastIdx = h.length - 1;
-                if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
+              setJsonPayload((prev) => {
+                const msgs = getMessages(prev);
+                const lastIdx = msgs.length - 1;
+                if (lastIdx >= 0 && msgs[lastIdx].role === "assistant") {
                   if (contentChunk) {
-                    h[lastIdx] = {
-                      ...h[lastIdx],
-                      content: (h[lastIdx].content as string) + contentChunk,
+                    msgs[lastIdx] = {
+                      ...msgs[lastIdx],
+                      content: (msgs[lastIdx].content as string) + contentChunk,
                     };
                   }
                   if (reasoningChunk) {
-                    h[lastIdx] = {
-                      ...h[lastIdx],
-                      reasoning_content: (h[lastIdx].reasoning_content || "") + reasoningChunk,
+                    msgs[lastIdx] = {
+                      ...msgs[lastIdx],
+                      reasoning_content: (msgs[lastIdx].reasoning_content || "") + reasoningChunk,
                     };
                   }
                   if (finishReason) {
-                    h[lastIdx] = {
-                      ...h[lastIdx],
+                    msgs[lastIdx] = {
+                      ...msgs[lastIdx],
                       finish_reason: finishReason,
                       finish_message: getFinishReasonMessage(finishReason),
                     };
                   }
                 }
-                return h;
+                return setMessages(prev, msgs);
               });
             }
           } catch (e) {
@@ -398,12 +369,12 @@ function App() {
       const completionTokens = finalUsage?.completion_tokens || estimateTokens(accumulatedContent + accumulatedReasoning);
       const promptTokens = finalUsage?.prompt_tokens || estimateTokens(JSON.stringify(body.messages));
 
-      setHistory((prev) => {
-        const h = [...prev];
-        const lastIdx = h.length - 1;
-        if (lastIdx >= 0 && h[lastIdx].role === "assistant") {
-          h[lastIdx] = {
-            ...h[lastIdx],
+      setJsonPayload((prev) => {
+        const msgs = getMessages(prev);
+        const lastIdx = msgs.length - 1;
+        if (lastIdx >= 0 && msgs[lastIdx].role === "assistant") {
+          msgs[lastIdx] = {
+            ...msgs[lastIdx],
             usage: {
               prompt_tokens: promptTokens,
               completion_tokens: completionTokens,
@@ -412,39 +383,38 @@ function App() {
             },
           };
         }
-        return h;
+        return setMessages(prev, msgs);
       });
       setCurrentStreamingTokens(completionTokens);
     } catch (error: any) {
       if (error.name === "AbortError") {
-        setHistory((prev) => {
-          const h = [...prev];
-          const lastIdx = h.length - 1;
-          if (lastIdx >= 0 && h[lastIdx].role === "assistant" && !h[lastIdx].content && !h[lastIdx].reasoning_content) {
-            h.pop();
+        setJsonPayload((prev) => {
+          const msgs = getMessages(prev);
+          const lastIdx = msgs.length - 1;
+          if (lastIdx >= 0 && msgs[lastIdx].role === "assistant" && !msgs[lastIdx].content && !msgs[lastIdx].reasoning_content) {
+            msgs.pop();
           } else if (lastIdx >= 0) {
-            h[lastIdx] = {
-              ...h[lastIdx],
-              content: (h[lastIdx].content as string) + "\n[Cancelled]",
+            msgs[lastIdx] = {
+              ...msgs[lastIdx],
+              content: (msgs[lastIdx].content as string) + "\n[Cancelled]",
             };
           }
-          return h;
+          return setMessages(prev, msgs);
         });
       } else {
-        setHistory((prev) => {
-          const h = [...prev];
-          const lastIdx = h.length - 1;
+        setJsonPayload((prev) => {
+          const msgs = getMessages(prev);
+          const lastIdx = msgs.length - 1;
           if (lastIdx >= 0) {
-            h[lastIdx] = { ...h[lastIdx], content: `Error: ${error.message}` };
+            msgs[lastIdx] = { ...msgs[lastIdx], content: `Error: ${error.message}` };
           }
-          return h;
+          return setMessages(prev, msgs);
         });
       }
     } finally {
       setIsLoading(false);
       setStreamingStartTime(null);
       abortControllerRef.current = null;
-      setTimeout(syncJsonFromHistory, 0);
     }
   }, [
     input,
@@ -460,7 +430,10 @@ function App() {
 
   const clearHistory = useCallback(() => {
     stopStreaming();
-    setHistory((prev) => prev.filter((m) => m.role === "system"));
+    setJsonPayload((prev) => {
+      const msgs = getMessages(prev).filter((m) => m.role === "system");
+      return setMessages(prev, msgs);
+    });
     setEditingIndex(null);
   }, [stopStreaming]);
 
