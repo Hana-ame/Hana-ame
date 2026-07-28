@@ -5,6 +5,7 @@ import {
   FiSettings,
   FiEdit2,
   FiX,
+  FiTrash2,
   FiChevronDown,
   FiChevronUp,
   FiAlertTriangle,
@@ -29,6 +30,7 @@ interface MessageItemProps {
   editContent: string;
   onStartEdit: (index: number) => void;
   onDelete: (index: number) => void;
+  onDeleteFrom: (index: number) => void;
   onSaveEdit: (index: number) => void;
   onCancelEdit: () => void;
   onEditContentChange: (value: string) => void;
@@ -43,6 +45,7 @@ const MessageItem = memo(function MessageItem({
   editContent,
   onStartEdit,
   onDelete,
+  onDeleteFrom,
   onSaveEdit,
   onCancelEdit,
   onEditContentChange,
@@ -86,6 +89,13 @@ const MessageItem = memo(function MessageItem({
               {msg.role}
             </span>
             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => onDeleteFrom(index)}
+                className="text-orange-400 hover:text-orange-300"
+                title="Delete messages from here"
+              >
+                <FiTrash2 size={14} />
+              </button>
               <button
                 onClick={() => onStartEdit(index)}
                 className="text-gray-400 hover:text-white"

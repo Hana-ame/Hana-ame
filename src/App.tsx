@@ -4,6 +4,9 @@ import {
   FiActivity,
   FiChevronRight,
   FiChevronLeft,
+  FiBookmark,
+  FiDownload,
+  FiX,
 } from "react-icons/fi";
 import type { Message, UserContentItem, StreamChunk, TextContentPart } from "./types.ts";
 import { STORAGE_KEYS, DEFAULT_ENDPOINT, DEFAULT_JSON_PAYLOAD, getFinishReasonMessage } from "./constants.ts";
@@ -13,6 +16,8 @@ import { MessageItem } from "./components/MessageItem.tsx";
 import { ChatInput } from "./components/ChatInput.tsx";
 import { ConfigPanel } from "./components/ConfigPanel.tsx";
 import { VirtualList } from "./components/VirtualList.tsx";
+import { saveArchive, loadArchives, deleteArchive } from "./db.ts";
+import type { ChatArchive } from "./db.ts";
 
 function getMessages(payload: string): Message[] {
   try { return JSON.parse(payload).messages || []; } catch { return []; }
@@ -46,6 +51,8 @@ function App() {
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
   const [expandedThinking, setExpandedThinking] = useState<Record<number, boolean>>({});
   const [showConfig, setShowConfig] = useState(true);
+  const [showArchives, setShowArchives] = useState(false);
+  const [archives, setArchives] = useState<ChatArchive[]>([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -74,6 +81,15 @@ function App() {
       return setMessages(prev, msgs);
     });
     setEditingIndex((prev) => (prev === index ? null : prev));
+  }, []);
+
+  const deleteFromIndex = useCallback((index: number) => {
+    setJsonPayload((prev) => {
+      const msgs = getMessages(prev);
+      msgs.splice(index);
+      return setMessages(prev, msgs);
+    });
+    setEditingIndex((prev) => (prev !== null && prev >= index ? null : prev));
   }, []);
 
   const startEditMessage = useCallback((index: number) => {
@@ -441,6 +457,32 @@ function App() {
     setExpandedThinking((prev) => ({ ...prev, [index]: !prev[index] }));
   }, []);
 
+  const handleSaveArchive = useCallback(async () => {
+    try {
+      const parsed = JSON.parse(jsonPayload);
+      const name = parsed.model || "Unnamed";
+      await saveArchive(jsonPayload, name);
+    } catch {
+      // ignore
+    }
+  }, [jsonPayload]);
+
+  const handleOpenArchives = useCallback(async () => {
+    const list = await loadArchives();
+    setArchives(list);
+    setShowArchives(true);
+  }, []);
+
+  const handleLoadArchive = useCallback((archive: ChatArchive) => {
+    setJsonPayload(archive.jsonPayload);
+    setShowArchives(false);
+  }, []);
+
+  const handleDeleteArchive = useCallback(async (id: number) => {
+    await deleteArchive(id);
+    setArchives((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
   const tokenSpeed = useMemo(() => {
     if (!streamingStartTime || currentStreamingTokens === 0) return "0.0";
     const elapsed = (Date.now() - streamingStartTime) / 1000;
@@ -461,6 +503,20 @@ function App() {
                 <span>{currentStreamingTokens} tokens</span>
               </div>
             )}
+            <button
+              onClick={handleSaveArchive}
+              className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+              title="Save archive"
+            >
+              <FiBookmark /> Save
+            </button>
+            <button
+              onClick={handleOpenArchives}
+              className="text-sm text-gray-400 hover:text-white flex items-center gap-1"
+              title="Open archives"
+            >
+              <FiDownload /> Archives
+            </button>
             <button
               onClick={clearHistory}
               className="text-sm text-red-400 hover:text-red-300 flex items-center gap-1"
@@ -503,6 +559,7 @@ function App() {
                   editContent={editContent}
                   onStartEdit={startEditMessage}
                   onDelete={deleteMessage}
+                  onDeleteFrom={deleteFromIndex}
                   onSaveEdit={saveEditMessage}
                   onCancelEdit={cancelEdit}
                   onEditContentChange={handleEditContentChange}
@@ -573,6 +630,51 @@ function App() {
           onFormatJson={formatJson}
         />
       </div>
+
+      {showArchives && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-gray-700">
+              <h2 className="text-lg font-semibold text-indigo-400 flex items-center gap-2">
+                <FiBookmark /> Chat Archives
+              </h2>
+              <button
+                onClick={() => setShowArchives(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {archives.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No saved archives yet.</p>
+              ) : (
+                archives.map((a) => (
+                  <div
+                    key={a.id}
+                    className="bg-gray-900 rounded p-3 flex items-center justify-between hover:bg-gray-750 transition-colors cursor-pointer"
+                    onClick={() => handleLoadArchive(a)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white truncate">{a.name}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {a.messageCount} messages &middot; {new Date(a.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); a.id !== undefined && handleDeleteArchive(a.id); }}
+                      className="text-red-400 hover:text-red-300 p-1 shrink-0"
+                      title="Delete"
+                    >
+                      <FiTrash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
