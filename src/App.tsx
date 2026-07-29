@@ -58,7 +58,8 @@ function App() {
   const streamingStartTimeRef = useRef<number | null>(null);
   const lastStreamFlushRef = useRef(0);
   const lastUserMessageRef = useRef<{ input: string; image: string | null }>({ input: "", image: null });
-  const [streamError, setStreamError] = useState<string | null>(null);
+  const retryPayloadRef = useRef<{ input: string; image: string | null } | null>(null);
+  const [streamError, setStreamError] = useState<{ name: string; message: string } | null>(null);
 
   const history = useMemo(() => getMessages(jsonPayload), [jsonPayload]);
 
@@ -213,8 +214,10 @@ function App() {
   }, []);
 
   const sendMessage = useCallback(async () => {
-    const currentInput = input;
-    const currentImage = uploadedImage;
+    const override = retryPayloadRef.current;
+    if (override) retryPayloadRef.current = null;
+    const currentInput = override?.input ?? input;
+    const currentImage = override?.image ?? uploadedImage;
     if (!currentInput.trim() && !currentImage) return;
     setStreamError(null);
     lastUserMessageRef.current = { input: currentInput, image: currentImage };
@@ -419,12 +422,12 @@ function App() {
           return setMessages(prev, msgs);
         });
       } else {
-        setStreamError(error.message);
+        setStreamError({ name: error.name, message: error.message });
         setJsonPayload((prev) => {
           const msgs = getMessages(prev);
           const lastIdx = msgs.length - 1;
           if (lastIdx >= 0) {
-            msgs[lastIdx] = { ...msgs[lastIdx], content: `Error: ${error.message}` };
+            msgs[lastIdx] = { ...msgs[lastIdx], content: `Error [${error.name}]: ${error.message}` };
           }
           return setMessages(prev, msgs);
         });
@@ -505,13 +508,17 @@ function App() {
     setArchives((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
+  const getKey = useCallback((item: unknown, index: number) => (item as Message).id ?? index, []);
+
   const handleRetry = useCallback(() => {
     const last = lastUserMessageRef.current;
     if (!last.input && !last.image) return;
+    retryPayloadRef.current = { input: last.input, image: last.image };
     setInput(last.input);
     setUploadedImage(last.image);
     setStreamError(null);
-  }, []);
+    sendMessage();
+  }, [sendMessage]);
 
   const tokenSpeed = useMemo(() => {
     if (!streamingStartTime || currentStreamingTokens === 0) return "0.0";
@@ -579,7 +586,7 @@ function App() {
           <VirtualList
             items={history}
             renderItem={renderItem}
-            getKey={(item, index) => (item as Message).id ?? index}
+            getKey={getKey}
             estimatedItemHeight={120}
             gap={16}
             isStreaming={isLoading}
@@ -588,17 +595,20 @@ function App() {
         )}
 
         {streamError && (
-          <div className="px-4 py-2 bg-red-900/40 border-t border-red-700 flex items-center gap-3 text-sm">
-            <span className="text-red-300 flex-1 truncate">Request failed: {streamError}</span>
+          <div className="fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-lg bg-red-900/90 border border-red-700 rounded-lg shadow-2xl flex items-start gap-3 p-4 text-sm">
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-red-200 mb-1">[{streamError.name}]</div>
+              <div className="text-red-300 break-words">{streamError.message}</div>
+            </div>
             <button
               onClick={handleRetry}
-              className="px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-white shrink-0"
+              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 rounded text-white shrink-0 mt-0.5"
             >
               Retry
             </button>
             <button
               onClick={() => setStreamError(null)}
-              className="text-gray-400 hover:text-white shrink-0"
+              className="text-gray-400 hover:text-white shrink-0 mt-0.5"
             >
               <FiX size={16} />
             </button>

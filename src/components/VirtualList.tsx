@@ -25,6 +25,13 @@ const VirtualList = React.memo(function VirtualList({
 }: VirtualListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isNearBottom = useRef(true);
+  const prevItemsLenRef = useRef(items.length);
+  const scrollBottomCache = useRef(0);
+
+  if (typeof document !== "undefined") {
+    const el = containerRef.current;
+    if (el) scrollBottomCache.current = el.scrollHeight - el.scrollTop;
+  }
 
   const updateNearBottom = useCallback(() => {
     const el = containerRef.current;
@@ -37,15 +44,27 @@ const VirtualList = React.memo(function VirtualList({
   }, [updateNearBottom]);
 
   useLayoutEffect(() => {
-    if (!isStreaming) return;
-    const raf = requestAnimationFrame(() => {
-      const el = containerRef.current;
-      if (!el) return;
-      if (isNearBottom.current || el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+    const el = containerRef.current;
+    if (!el) return;
+    const prevLen = prevItemsLenRef.current;
+    prevItemsLenRef.current = items.length;
+
+    if (isStreaming) {
+      const raf = requestAnimationFrame(() => {
+        if (isNearBottom.current || el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+          el.scrollTop = el.scrollHeight;
+        }
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+
+    if (prevLen !== items.length) {
+      if (isNearBottom.current) {
         el.scrollTop = el.scrollHeight;
+      } else {
+        el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight - scrollBottomCache.current);
       }
-    });
-    return () => cancelAnimationFrame(raf);
+    }
   });
 
   if (items.length === 0) {
