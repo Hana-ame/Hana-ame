@@ -214,7 +214,12 @@ const MessageItem = memo(function MessageItem({
 });
 
 function messagePropsAreEqual(prev: MessageItemProps, next: MessageItemProps): boolean {
-  if (prev.msg !== next.msg) return false;
+  if (prev.msg.role !== next.msg.role) return false;
+  if (prev.msg.content !== next.msg.content) return false;
+  if (prev.msg.reasoning_content !== next.msg.reasoning_content) return false;
+  if (prev.msg.finish_message !== next.msg.finish_message) return false;
+  if (prev.msg.finish_reason !== next.msg.finish_reason) return false;
+  if (prev.msg.usage !== next.msg.usage) return false;
   if (prev.isEditing !== next.isEditing) return false;
   if (prev.isExpanded !== next.isExpanded) return false;
   if (prev.editContent !== next.editContent) return false;

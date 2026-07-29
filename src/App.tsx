@@ -55,6 +55,8 @@ function App() {
   const [archives, setArchives] = useState<ChatArchive[]>([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const streamingStartTimeRef = useRef<number | null>(null);
+  const lastStreamFlushRef = useRef(0);
 
   const history = useMemo(() => getMessages(jsonPayload), [jsonPayload]);
 
@@ -255,7 +257,9 @@ function App() {
     setUploadedImage(null);
     setUploadedImageName(null);
     setIsLoading(true);
-    setStreamingStartTime(Date.now());
+    const startTime = Date.now();
+    streamingStartTimeRef.current = startTime;
+    setStreamingStartTime(startTime);
     setCurrentStreamingTokens(0);
 
     const abortController = new AbortController();
@@ -346,32 +350,22 @@ function App() {
               if (reasoningChunk) accumulatedReasoning += reasoningChunk;
               setCurrentStreamingTokens(estimateTokens(accumulatedContent + accumulatedReasoning));
 
-              setJsonPayload((prev) => {
-                const msgs = getMessages(prev);
-                const lastIdx = msgs.length - 1;
-                if (lastIdx >= 0 && msgs[lastIdx].role === "assistant") {
-                  if (contentChunk) {
+              if (finishReason || Date.now() - lastStreamFlushRef.current >= 50) {
+                lastStreamFlushRef.current = Date.now();
+                setJsonPayload((prev) => {
+                  const msgs = getMessages(prev);
+                  const lastIdx = msgs.length - 1;
+                  if (lastIdx >= 0 && msgs[lastIdx].role === "assistant") {
                     msgs[lastIdx] = {
                       ...msgs[lastIdx],
-                      content: (msgs[lastIdx].content as string) + contentChunk,
+                      content: accumulatedContent,
+                      ...(accumulatedReasoning ? { reasoning_content: accumulatedReasoning } : {}),
+                      ...(finishReason ? { finish_reason: finishReason, finish_message: getFinishReasonMessage(finishReason) } : {}),
                     };
                   }
-                  if (reasoningChunk) {
-                    msgs[lastIdx] = {
-                      ...msgs[lastIdx],
-                      reasoning_content: (msgs[lastIdx].reasoning_content || "") + reasoningChunk,
-                    };
-                  }
-                  if (finishReason) {
-                    msgs[lastIdx] = {
-                      ...msgs[lastIdx],
-                      finish_reason: finishReason,
-                      finish_message: getFinishReasonMessage(finishReason),
-                    };
-                  }
-                }
-                return setMessages(prev, msgs);
-              });
+                  return setMessages(prev, msgs);
+                });
+              }
             }
           } catch (e) {
             console.warn("Parse error:", jsonData, e);
@@ -380,8 +374,8 @@ function App() {
       }
 
       const endTime = Date.now();
-      const processingTime = streamingStartTime
-        ? (endTime - streamingStartTime) / 1000
+      const processingTime = streamingStartTimeRef.current
+        ? (endTime - streamingStartTimeRef.current) / 1000
         : 0;
       const completionTokens = finalUsage?.completion_tokens || estimateTokens(accumulatedContent + accumulatedReasoning);
       const promptTokens = finalUsage?.prompt_tokens || estimateTokens(JSON.stringify(body.messages));
@@ -392,6 +386,8 @@ function App() {
         if (lastIdx >= 0 && msgs[lastIdx].role === "assistant") {
           msgs[lastIdx] = {
             ...msgs[lastIdx],
+            content: accumulatedContent,
+            ...(accumulatedReasoning ? { reasoning_content: accumulatedReasoning } : {}),
             usage: {
               prompt_tokens: promptTokens,
               completion_tokens: completionTokens,
@@ -430,6 +426,7 @@ function App() {
       }
     } finally {
       setIsLoading(false);
+      streamingStartTimeRef.current = null;
       setStreamingStartTime(null);
       abortControllerRef.current = null;
     }
@@ -442,7 +439,6 @@ function App() {
     jsonError,
     isLoading,
     stopStreaming,
-    streamingStartTime,
   ]);
 
   const clearHistory = useCallback(() => {
@@ -457,6 +453,26 @@ function App() {
   const toggleThinking = useCallback((index: number) => {
     setExpandedThinking((prev) => ({ ...prev, [index]: !prev[index] }));
   }, []);
+
+  const renderItem = useCallback((item: unknown, index: number) => {
+    const msg = item as Message;
+    return (
+      <MessageItem
+        msg={msg}
+        index={index}
+        isEditing={editingIndex === index}
+        isExpanded={!!expandedThinking[index]}
+        editContent={editContent}
+        onStartEdit={startEditMessage}
+        onDelete={deleteMessage}
+        onDeleteFrom={deleteFromIndex}
+        onSaveEdit={saveEditMessage}
+        onCancelEdit={cancelEdit}
+        onEditContentChange={handleEditContentChange}
+        onToggleThinking={toggleThinking}
+      />
+    );
+  }, [editingIndex, expandedThinking, editContent, startEditMessage, deleteMessage, deleteFromIndex, saveEditMessage, cancelEdit, handleEditContentChange, toggleThinking]);
 
   const handleSaveArchive = useCallback(async () => {
     try {
@@ -549,25 +565,7 @@ function App() {
         ) : (
           <VirtualList
             items={history}
-            renderItem={(item, index) => {
-              const msg = item as Message;
-              return (
-                <MessageItem
-                  msg={msg}
-                  index={index}
-                  isEditing={editingIndex === index}
-                  isExpanded={!!expandedThinking[index]}
-                  editContent={editContent}
-                  onStartEdit={startEditMessage}
-                  onDelete={deleteMessage}
-                  onDeleteFrom={deleteFromIndex}
-                  onSaveEdit={saveEditMessage}
-                  onCancelEdit={cancelEdit}
-                  onEditContentChange={handleEditContentChange}
-                  onToggleThinking={toggleThinking}
-                />
-              );
-            }}
+            renderItem={renderItem}
             estimatedItemHeight={120}
             gap={16}
             isStreaming={isLoading}
