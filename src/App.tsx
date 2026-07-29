@@ -84,9 +84,10 @@ function App() {
   }, []);
 
   const deleteFromIndex = useCallback((index: number) => {
+    if (!window.confirm("Delete all messages after this one?")) return;
     setJsonPayload((prev) => {
       const msgs = getMessages(prev);
-      msgs.splice(index);
+      msgs.splice(index + 1);
       return setMessages(prev, msgs);
     });
     setEditingIndex((prev) => (prev !== null && prev >= index ? null : prev));
