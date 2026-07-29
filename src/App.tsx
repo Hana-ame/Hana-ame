@@ -57,6 +57,8 @@ function App() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const streamingStartTimeRef = useRef<number | null>(null);
   const lastStreamFlushRef = useRef(0);
+  const lastUserMessageRef = useRef<{ input: string; image: string | null }>({ input: "", image: null });
+  const [streamError, setStreamError] = useState<string | null>(null);
 
   const history = useMemo(() => getMessages(jsonPayload), [jsonPayload]);
 
@@ -214,6 +216,8 @@ function App() {
     const currentInput = input;
     const currentImage = uploadedImage;
     if (!currentInput.trim() && !currentImage) return;
+    setStreamError(null);
+    lastUserMessageRef.current = { input: currentInput, image: currentImage };
     if (!endpointUrl) {
       alert("Please enter API Endpoint URL");
       return;
@@ -415,6 +419,7 @@ function App() {
           return setMessages(prev, msgs);
         });
       } else {
+        setStreamError(error.message);
         setJsonPayload((prev) => {
           const msgs = getMessages(prev);
           const lastIdx = msgs.length - 1;
@@ -500,6 +505,14 @@ function App() {
     setArchives((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
+  const handleRetry = useCallback(() => {
+    const last = lastUserMessageRef.current;
+    if (!last.input && !last.image) return;
+    setInput(last.input);
+    setUploadedImage(last.image);
+    setStreamError(null);
+  }, []);
+
   const tokenSpeed = useMemo(() => {
     if (!streamingStartTime || currentStreamingTokens === 0) return "0.0";
     const elapsed = (Date.now() - streamingStartTime) / 1000;
@@ -566,6 +579,7 @@ function App() {
           <VirtualList
             items={history}
             renderItem={renderItem}
+            getKey={(item, index) => (item as Message).id ?? index}
             estimatedItemHeight={120}
             gap={16}
             isStreaming={isLoading}
@@ -573,6 +587,23 @@ function App() {
           />
         )}
 
+        {streamError && (
+          <div className="px-4 py-2 bg-red-900/40 border-t border-red-700 flex items-center gap-3 text-sm">
+            <span className="text-red-300 flex-1 truncate">Request failed: {streamError}</span>
+            <button
+              onClick={handleRetry}
+              className="px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-white shrink-0"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => setStreamError(null)}
+              className="text-gray-400 hover:text-white shrink-0"
+            >
+              <FiX size={16} />
+            </button>
+          </div>
+        )}
         <ChatInput
           input={input}
           isLoading={isLoading}

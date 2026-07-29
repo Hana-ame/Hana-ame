@@ -3,6 +3,7 @@ import React, { useRef, useCallback, useMemo, useLayoutEffect, useState, useEffe
 interface VirtualListProps {
   items: unknown[];
   renderItem: (item: unknown, index: number) => React.ReactNode;
+  getKey?: (item: unknown, index: number) => string | number;
   estimatedItemHeight: number;
   gap?: number;
   overscan?: number;
@@ -13,9 +14,10 @@ interface VirtualListProps {
 
 const VIRTUALIZE_THRESHOLD = 30;
 
-const VirtualList = function VirtualList({
+const VirtualList = React.memo(function VirtualList({
   items,
   renderItem,
+  getKey,
   gap = 0,
   overscan = 10,
   isStreaming,
@@ -36,11 +38,14 @@ const VirtualList = function VirtualList({
 
   useLayoutEffect(() => {
     if (!isStreaming) return;
-    const el = containerRef.current;
-    if (!el) return;
-    if (isNearBottom.current || el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
-      el.scrollTop = el.scrollHeight;
-    }
+    const raf = requestAnimationFrame(() => {
+      const el = containerRef.current;
+      if (!el) return;
+      if (isNearBottom.current || el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+        el.scrollTop = el.scrollHeight;
+      }
+    });
+    return () => cancelAnimationFrame(raf);
   });
 
   if (items.length === 0) {
@@ -57,7 +62,7 @@ const VirtualList = function VirtualList({
       >
         {items.map((item, i) => (
           <div
-            key={i}
+            key={getKey ? getKey(item, i) : i}
             style={gap && i < items.length - 1 ? { marginBottom: gap } : undefined}
           >
             {renderItem(item, i)}
@@ -71,17 +76,19 @@ const VirtualList = function VirtualList({
     containerRef={containerRef}
     items={items}
     renderItem={renderItem}
+    getKey={getKey}
     gap={gap}
     overscan={overscan}
     onScroll={onVirtualScroll}
     className={className}
   />;
-};
+});
 
 interface VirtualizedListProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
   items: unknown[];
   renderItem: (item: unknown, index: number) => React.ReactNode;
+  getKey?: (item: unknown, index: number) => string | number;
   gap: number;
   overscan: number;
   onScroll: React.UIEventHandler<HTMLDivElement>;
@@ -92,6 +99,7 @@ function VirtualizedList({
   containerRef,
   items,
   renderItem,
+  getKey,
   gap,
   overscan,
   onScroll,
@@ -234,7 +242,7 @@ function VirtualizedList({
           const realIndex = startIdx + i;
           return (
             <div
-              key={realIndex}
+              key={getKey ? getKey(item, realIndex) : realIndex}
               ref={(el) => measureItem(realIndex, el)}
               style={gap && realIndex < items.length - 1 ? { marginBottom: gap } : undefined}
             >
