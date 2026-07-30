@@ -672,8 +672,14 @@ function App() {
       </div>
 
       {showArchives && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-gray-800 rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setShowArchives(false)}
+        >
+          <div
+            className="bg-gray-800 rounded-lg w-full max-w-lg max-h-[80vh] flex flex-col cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center p-4 border-b border-gray-700">
               <h2 className="text-lg font-semibold text-indigo-400 flex items-center gap-2">
                 <FiBookmark /> Chat Archives
