@@ -60,6 +60,19 @@ function App() {
   const lastUserMessageRef = useRef<{ input: string; image: string | null }>({ input: "", image: null });
   const retryPayloadRef = useRef<{ input: string; image: string | null } | null>(null);
   const [streamError, setStreamError] = useState<{ name: string; message: string } | null>(null);
+  const [autoMode, setAutoMode] = useState(() => localStorage.getItem(STORAGE_KEYS.autoMode) === "true");
+  const [autoDelay, setAutoDelay] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.autoDelay);
+    return saved ? parseInt(saved, 10) : 5;
+  });
+
+  const autoModeRef = useRef(autoMode);
+  const autoDelayRef = useRef(autoDelay);
+  const autoModeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingAutoRef = useRef(false);
+
+  useEffect(() => { autoModeRef.current = autoMode; }, [autoMode]);
+  useEffect(() => { autoDelayRef.current = autoDelay; }, [autoDelay]);
 
   const history = useMemo(() => getMessages(jsonPayload), [jsonPayload]);
 
@@ -78,6 +91,16 @@ function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.apiKey, apiKey);
   }, [apiKey]);
+
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.autoMode, String(autoMode)); }, [autoMode]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.autoDelay, String(autoDelay)); }, [autoDelay]);
+
+  useEffect(() => {
+    if (!autoMode && autoModeTimerRef.current) {
+      clearTimeout(autoModeTimerRef.current);
+      autoModeTimerRef.current = null;
+    }
+  }, [autoMode]);
 
   const deleteMessage = useCallback((index: number) => {
     setJsonPayload((prev) => {
@@ -214,11 +237,18 @@ function App() {
   }, []);
 
   const sendMessage = useCallback(async () => {
-    const override = retryPayloadRef.current;
-    if (override) retryPayloadRef.current = null;
-    const currentInput = override?.input ?? input;
-    const currentImage = override?.image ?? uploadedImage;
-    if (!currentInput.trim() && !currentImage) return;
+    const isAutoSend = pendingAutoRef.current;
+    pendingAutoRef.current = false;
+
+    if (autoModeTimerRef.current) {
+      clearTimeout(autoModeTimerRef.current);
+      autoModeTimerRef.current = null;
+    }
+
+    const override = isAutoSend ? null : retryPayloadRef.current;
+    if (!isAutoSend && override) retryPayloadRef.current = null;
+    const currentInput = isAutoSend ? "" : (override?.input ?? input);
+    const currentImage = isAutoSend ? null : (override?.image ?? uploadedImage);
     setStreamError(null);
     lastUserMessageRef.current = { input: currentInput, image: currentImage };
     if (!endpointUrl) {
@@ -245,24 +275,37 @@ function App() {
       });
     }
 
-    const userMessage: Message = {
-      role: "user",
-      content: userContentParts,
-      id: generateId(),
-    };
-    const assistantMessage: Message = {
-      role: "assistant",
-      content: "",
-      id: generateId(),
-    };
-
     const currentHistory = getMessages(jsonPayload);
-    const newHistory = [...currentHistory, userMessage, assistantMessage];
-    setJsonPayload(setMessages(jsonPayload, newHistory));
+    let userMessage: Message | undefined;
 
-    setInput("");
-    setUploadedImage(null);
-    setUploadedImageName(null);
+    if (userContentParts.length > 0) {
+      userMessage = {
+        role: "user",
+        content: userContentParts,
+        id: generateId(),
+      };
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        id: generateId(),
+      };
+      const newHistory = [...currentHistory, userMessage, assistantMessage];
+      setJsonPayload(setMessages(jsonPayload, newHistory));
+    } else {
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        id: generateId(),
+      };
+      const newHistory = [...currentHistory, assistantMessage];
+      setJsonPayload(setMessages(jsonPayload, newHistory));
+    }
+
+    if (!isAutoSend) {
+      setInput("");
+      setUploadedImage(null);
+      setUploadedImageName(null);
+    }
     setIsLoading(true);
     const startTime = Date.now();
     streamingStartTimeRef.current = startTime;
@@ -274,9 +317,14 @@ function App() {
     const signal = abortController.signal;
 
     let body: any;
+    let sendSucceeded = false;
     try {
       const basePayload = JSON.parse(jsonPayload);
-      body = { ...basePayload, messages: [...currentHistory, userMessage] };
+      if (userContentParts.length > 0) {
+        body = { ...basePayload, messages: [...currentHistory, userMessage] };
+      } else {
+        body = { ...basePayload, messages: currentHistory };
+      }
     } catch (e) {
       alert("Invalid JSON payload");
       setIsLoading(false);
@@ -406,6 +454,7 @@ function App() {
         return setMessages(prev, msgs);
       });
       setCurrentStreamingTokens(completionTokens);
+      sendSucceeded = true;
     } catch (error: any) {
       if (error.name === "AbortError") {
         setJsonPayload((prev) => {
@@ -437,6 +486,12 @@ function App() {
       streamingStartTimeRef.current = null;
       setStreamingStartTime(null);
       abortControllerRef.current = null;
+      if (autoModeRef.current && sendSucceeded) {
+        autoModeTimerRef.current = setTimeout(() => {
+          pendingAutoRef.current = true;
+          sendMessage();
+        }, autoDelayRef.current * 1000);
+      }
     }
   }, [
     input,
@@ -620,11 +675,15 @@ function App() {
           uploadedImage={uploadedImage}
           uploadedImageName={uploadedImageName}
           jsonError={jsonError}
+          autoMode={autoMode}
+          autoDelay={autoDelay}
           onInputChange={setInput}
           onSend={sendMessage}
           onStop={stopStreaming}
           onImageUpload={handleImageUpload}
           onRemoveImage={removeUploadedImage}
+          onAutoModeChange={setAutoMode}
+          onAutoDelayChange={setAutoDelay}
         />
       </div>
 

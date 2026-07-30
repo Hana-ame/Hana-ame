@@ -3,6 +3,8 @@ export const STORAGE_KEYS = {
   apiKey: "ai_chat_pro_api_key",
   jsonPayload: "ai_chat_pro_json_payload",
   chatHistory: "ai_chat_pro_chat_history",
+  autoMode: "ai_chat_pro_auto_mode",
+  autoDelay: "ai_chat_pro_auto_delay",
 };
 
 export const DEFAULT_ENDPOINT = "https://api.siliconflow.cn/v1/chat/completions";

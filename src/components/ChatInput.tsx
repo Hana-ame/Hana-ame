@@ -7,11 +7,15 @@ interface ChatInputProps {
   uploadedImage: string | null;
   uploadedImageName: string | null;
   jsonError: string | null;
+  autoMode: boolean;
+  autoDelay: number;
   onInputChange: (value: string) => void;
   onSend: () => void;
   onStop: () => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveImage: () => void;
+  onAutoModeChange: (value: boolean) => void;
+  onAutoDelayChange: (value: number) => void;
 }
 
 const ChatInput = memo(function ChatInput({
@@ -20,11 +24,15 @@ const ChatInput = memo(function ChatInput({
   uploadedImage,
   uploadedImageName,
   jsonError,
+  autoMode,
+  autoDelay,
   onInputChange,
   onSend,
   onStop,
   onImageUpload,
   onRemoveImage,
+  onAutoModeChange,
+  onAutoDelayChange,
 }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -91,11 +99,35 @@ const ChatInput = memo(function ChatInput({
         ) : (
           <button
             onClick={onSend}
-            disabled={(!input.trim() && !uploadedImage) || !!jsonError}
+            disabled={!!jsonError}
             className="p-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiSend />
           </button>
+        )}
+      </div>
+      <div className="flex items-center gap-3 mt-2">
+        <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={autoMode}
+            onChange={(e) => onAutoModeChange(e.target.checked)}
+            className="accent-indigo-500"
+          />
+          Auto
+        </label>
+        {autoMode && (
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              value={autoDelay}
+              onChange={(e) => onAutoDelayChange(Math.max(1, parseInt(e.target.value) || 5))}
+              className="w-14 bg-gray-700 border border-gray-600 rounded px-1 py-0.5 text-xs text-white text-center"
+              min={1}
+              max={3600}
+            />
+            <span className="text-xs text-gray-400">s</span>
+          </div>
         )}
       </div>
     </div>
@@ -108,9 +140,12 @@ function inputPropsAreEqual(prev: ChatInputProps, next: ChatInputProps): boolean
     prev.isLoading === next.isLoading &&
     prev.uploadedImage === next.uploadedImage &&
     prev.uploadedImageName === next.uploadedImageName &&
-    prev.jsonError === next.jsonError
+    prev.jsonError === next.jsonError &&
+    prev.autoMode === next.autoMode &&
+    prev.autoDelay === next.autoDelay
   );
 }
 
 export { ChatInput };
 export type { ChatInputProps };
+
