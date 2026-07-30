@@ -218,7 +218,6 @@ function App() {
     if (override) retryPayloadRef.current = null;
     const currentInput = override?.input ?? input;
     const currentImage = override?.image ?? uploadedImage;
-    if (!currentInput.trim() && !currentImage) return;
     setStreamError(null);
     lastUserMessageRef.current = { input: currentInput, image: currentImage };
     if (!endpointUrl) {
@@ -245,20 +244,31 @@ function App() {
       });
     }
 
-    const userMessage: Message = {
-      role: "user",
-      content: userContentParts,
-      id: generateId(),
-    };
-    const assistantMessage: Message = {
-      role: "assistant",
-      content: "",
-      id: generateId(),
-    };
-
     const currentHistory = getMessages(jsonPayload);
-    const newHistory = [...currentHistory, userMessage, assistantMessage];
-    setJsonPayload(setMessages(jsonPayload, newHistory));
+    let userMessage: Message | undefined;
+
+    if (userContentParts.length > 0) {
+      userMessage = {
+        role: "user",
+        content: userContentParts,
+        id: generateId(),
+      };
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        id: generateId(),
+      };
+      const newHistory = [...currentHistory, userMessage, assistantMessage];
+      setJsonPayload(setMessages(jsonPayload, newHistory));
+    } else {
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        id: generateId(),
+      };
+      const newHistory = [...currentHistory, assistantMessage];
+      setJsonPayload(setMessages(jsonPayload, newHistory));
+    }
 
     setInput("");
     setUploadedImage(null);
@@ -276,7 +286,11 @@ function App() {
     let body: any;
     try {
       const basePayload = JSON.parse(jsonPayload);
-      body = { ...basePayload, messages: [...currentHistory, userMessage] };
+      if (userContentParts.length > 0) {
+        body = { ...basePayload, messages: [...currentHistory, userMessage] };
+      } else {
+        body = { ...basePayload, messages: currentHistory };
+      }
     } catch (e) {
       alert("Invalid JSON payload");
       setIsLoading(false);
