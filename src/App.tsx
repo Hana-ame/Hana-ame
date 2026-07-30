@@ -278,10 +278,6 @@ function App() {
     const currentHistory = getMessages(jsonPayload);
     let userMessage: Message | undefined;
 
-    if (userContentParts.length === 0 && isAutoSend) {
-      userContentParts.push({ type: "text", text: "" });
-    }
-
     if (userContentParts.length > 0) {
       userMessage = {
         role: "user",
@@ -305,7 +301,7 @@ function App() {
       setJsonPayload(setMessages(jsonPayload, newHistory));
     }
 
-    if (!isAutoSend) {
+    if (!isAutoSend && !autoModeRef.current) {
       setInput("");
       setUploadedImage(null);
       setUploadedImageName(null);
