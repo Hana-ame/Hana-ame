@@ -10,10 +10,14 @@ interface ConfigPanelProps {
   jsonPayload: string;
   jsonError: string | null;
   messageCount: number;
+  autoMode: boolean;
+  autoDelay: number;
   onEndpointChange: (value: string) => void;
   onApiKeyChange: (value: string) => void;
   onJsonChange: (value: string) => void;
   onFormatJson: () => void;
+  onAutoModeChange: (value: boolean) => void;
+  onAutoDelayChange: (value: number) => void;
 }
 
 const ConfigPanel = memo(function ConfigPanel({
@@ -22,10 +26,14 @@ const ConfigPanel = memo(function ConfigPanel({
   jsonPayload,
   jsonError,
   messageCount,
+  autoMode,
+  autoDelay,
   onEndpointChange,
   onApiKeyChange,
   onJsonChange,
   onFormatJson,
+  onAutoModeChange,
+  onAutoDelayChange,
 }: ConfigPanelProps) {
   const modelName = React.useMemo(() => {
     try {
@@ -69,6 +77,31 @@ const ConfigPanel = memo(function ConfigPanel({
               placeholder="sk-..."
               className="w-full bg-gray-900 border border-gray-600 rounded p-2 text-sm font-mono focus:border-indigo-500 focus:outline-none"
             />
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <label className="flex items-center gap-1.5 text-xs text-gray-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={autoMode}
+                onChange={(e) => onAutoModeChange(e.target.checked)}
+                className="accent-indigo-500"
+              />
+              Auto
+            </label>
+            {autoMode && (
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  value={autoDelay}
+                  onChange={(e) => onAutoDelayChange(Math.max(1, parseInt(e.target.value) || 5))}
+                  className="w-14 bg-gray-900 border border-gray-600 rounded px-1 py-0.5 text-xs text-white text-center"
+                  min={1}
+                  max={3600}
+                />
+                <span className="text-xs text-gray-400">s</span>
+              </div>
+            )}
           </div>
         </div>
 

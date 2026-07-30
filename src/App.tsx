@@ -245,10 +245,10 @@ function App() {
       autoModeTimerRef.current = null;
     }
 
-    const override = isAutoSend ? null : retryPayloadRef.current;
-    if (!isAutoSend && override) retryPayloadRef.current = null;
-    const currentInput = isAutoSend ? "" : (override?.input ?? input);
-    const currentImage = isAutoSend ? null : (override?.image ?? uploadedImage);
+    const override = retryPayloadRef.current;
+    if (override) retryPayloadRef.current = null;
+    const currentInput = override?.input ?? input;
+    const currentImage = override?.image ?? uploadedImage;
     setStreamError(null);
     lastUserMessageRef.current = { input: currentInput, image: currentImage };
     if (!endpointUrl) {
@@ -277,6 +277,10 @@ function App() {
 
     const currentHistory = getMessages(jsonPayload);
     let userMessage: Message | undefined;
+
+    if (userContentParts.length === 0 && isAutoSend) {
+      userContentParts.push({ type: "text", text: "" });
+    }
 
     if (userContentParts.length > 0) {
       userMessage = {
@@ -675,15 +679,11 @@ function App() {
           uploadedImage={uploadedImage}
           uploadedImageName={uploadedImageName}
           jsonError={jsonError}
-          autoMode={autoMode}
-          autoDelay={autoDelay}
           onInputChange={setInput}
           onSend={sendMessage}
           onStop={stopStreaming}
           onImageUpload={handleImageUpload}
           onRemoveImage={removeUploadedImage}
-          onAutoModeChange={setAutoMode}
-          onAutoDelayChange={setAutoDelay}
         />
       </div>
 
@@ -704,10 +704,14 @@ function App() {
               jsonPayload={jsonPayload}
               jsonError={jsonError}
               messageCount={history.length}
+              autoMode={autoMode}
+              autoDelay={autoDelay}
               onEndpointChange={setEndpointUrl}
               onApiKeyChange={setApiKey}
               onJsonChange={handleJsonChange}
               onFormatJson={formatJson}
+              onAutoModeChange={setAutoMode}
+              onAutoDelayChange={setAutoDelay}
             />
           </div>
         </div>
@@ -723,10 +727,14 @@ function App() {
           jsonPayload={jsonPayload}
           jsonError={jsonError}
           messageCount={history.length}
+          autoMode={autoMode}
+          autoDelay={autoDelay}
           onEndpointChange={setEndpointUrl}
           onApiKeyChange={setApiKey}
           onJsonChange={handleJsonChange}
           onFormatJson={formatJson}
+          onAutoModeChange={setAutoMode}
+          onAutoDelayChange={setAutoDelay}
         />
       </div>
 
