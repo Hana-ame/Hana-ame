@@ -91,7 +91,7 @@ const ChatInput = memo(function ChatInput({
         ) : (
           <button
             onClick={onSend}
-            disabled={!!jsonError}
+            disabled={(!input.trim() && !uploadedImage) || !!jsonError}
             className="p-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FiSend />
