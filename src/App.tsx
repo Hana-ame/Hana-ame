@@ -59,7 +59,7 @@ function App() {
   const lastStreamFlushRef = useRef(0);
   const lastUserMessageRef = useRef<{ input: string; image: string | null }>({ input: "", image: null });
   const retryPayloadRef = useRef<{ input: string; image: string | null } | null>(null);
-  const [streamError, setStreamError] = useState<{ name: string; message: string } | null>(null);
+  const [streamError, setStreamError] = useState<{ name: string; message: string; stack?: string } | null>(null);
 
   const history = useMemo(() => getMessages(jsonPayload), [jsonPayload]);
 
@@ -436,7 +436,7 @@ function App() {
           return setMessages(prev, msgs);
         });
       } else {
-        setStreamError({ name: error.name, message: error.message });
+        setStreamError({ name: error.name, message: error.message, stack: error.stack });
         setJsonPayload((prev) => {
           const msgs = getMessages(prev);
           const lastIdx = msgs.length - 1;
@@ -612,7 +612,7 @@ function App() {
           <div className="fixed bottom-20 left-4 right-4 z-50 mx-auto max-w-lg bg-red-900/90 border border-red-700 rounded-lg shadow-2xl flex items-start gap-3 p-4 text-sm">
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-red-200 mb-1">[{streamError.name}]</div>
-              <div className="text-red-300 break-words">{streamError.message}</div>
+              <div className="text-red-300 break-words whitespace-pre-wrap">{streamError.message}{streamError.stack ? `\n\n${streamError.stack}` : ""}</div>
             </div>
             <button
               onClick={handleRetry}
