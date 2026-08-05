@@ -265,10 +265,18 @@ export class Mahony {
 
   // 连续北向校准: 用罗盘绝对航向 alphaDeg (来自 deviceorientationabsolute, W3C 0=北)
   // 修正融合解绕世界 Z 轴的偏航漂移。kp 决定跟随速度, ki 积分消除静态偏航零偏。
+  // 注意: eulerFromQuat 的 alpha 在竖立(β→±90)万向锁区会大片失真, 此时修正会被引来
+  // 误导(注入 ±180° 偏航) -> 用距竖立的角度加权该 err, 并在极限锁区暂停偏航修正。
   correctYaw(alphaDeg, { kp = 0.3, ki = 0.02 } = {}) {
-    const { alpha } = eulerFromQuat(this.q);
-    const err = wrapDeg(alphaDeg - alpha);
-    this.yawInt = Math.max(-20, Math.min(20, this.yawInt + err * ki));
+    const { alpha, beta } = eulerFromQuat(this.q);
+    // 距竖立(β=±90)的角度; 90=水平, 0=完全竖立(万向锁)。过近则横摇/偏航不可分, 应减弱。
+    const verticalness = Math.abs(Math.cos(beta * DEG)); // 竖立≈1, 水平≈0
+    if (verticalness < 0.12) return 0;                    // |β|>~83° 直接跳过, 不回写
+    const scale = Math.max(0, Math.min(1, (1 - verticalness) / 0.88)); // 从 0(竖立)渐进到 1(水平偏转)
+    const raw = wrapDeg(alphaDeg - alpha);
+    const clamp = 45 / (0.2 + kp);       // 单帧偏航修正角上限, 堵住 |err|≈180 的一次性跳变
+    const err = Math.max(-clamp, Math.min(clamp, raw)) * scale;
+    this.yawInt += err * ki;
     const th = (err * kp + this.yawInt) * DEG;
     const h = th / 2;
     const qz = { x: 0, y: 0, z: Math.sin(h), w: Math.cos(h) };

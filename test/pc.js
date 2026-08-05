@@ -423,7 +423,7 @@ class MiniChart {
   }
 
   addSource(name, color) {
-    this.series[name] = { color, data: [], off: 0 };
+    this.series[name] = { color, data: [], off: 0, lastDelta: 0, lastRaw: null };
   }
 
   setAngle(a) {
@@ -436,6 +436,8 @@ class MiniChart {
     for (const s of Object.values(this.series)) {
       s.data = [];
       s.off = 0;
+      s.lastDelta = 0;
+      s.lastRaw = null;
     }
   }
 
@@ -443,10 +445,21 @@ class MiniChart {
     const s = this.series[name];
     if (!s) return;
     const v = this.angle === 'alpha' ? alpha : this.angle === 'beta' ? beta : gamma;
-    const last = s.data[s.data.length - 1];
-    if (last != null && Math.abs(v - last) > 180) {
-      s.off += v > last ? -360 : 360;
+    // 用"原始 v 与上一个原始值"判断是否跨过 ±180(不能用已加 off 的存储值, 否则 off 非零后
+    // 差值恒 >180, 每帧累加导致数值跑飞, 曾到 20 万度)。
+    if (s.lastRaw != null && Math.abs(v - s.lastRaw) > 180) {
+      // 跨过 ±180: 真实旋转时相邻两次过界方向一致, 持续累加一圈;
+      // 万向锁区 α/γ 会在 ±180 来回抖(方向反复) -> 撤销上一次累加, off 不会无限增大。
+      const delta = v > s.lastRaw ? -360 : 360;
+      if (s.lastDelta === 0 || s.lastDelta === delta) {
+        s.off += delta;
+        s.lastDelta = delta;
+      } else {
+        s.off -= s.lastDelta;
+        s.lastDelta = 0;
+      }
     }
+    s.lastRaw = v;
     s.data.push(v + s.off);
     if (s.data.length > this.maxPoints) s.data.shift();
   }
