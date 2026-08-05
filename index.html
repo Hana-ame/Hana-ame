@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#0a0a14" />
+    <title>BeatRift · 体感节奏击打</title>
+  </head>
+  <body>
+    <div id="app">
+      <div id="bg"></div>
+
+      <!-- ============ 身份选择 ============ -->
+      <section id="screen-role" class="screen">
+        <div class="role-card">
+          <h1 class="logo">BEAT<span>RIFT</span></h1>
+          <p class="tagline">手机挥舞 · 光剑击打 · 节奏回响</p>
+          <div class="role-btns">
+            <button id="btn-pc" class="btn btn-big btn-accent">我是 PC 显示器</button>
+            <button id="btn-mobile" class="btn btn-big">我是手机控制器</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PC: 房间 ============ -->
+      <section id="screen-pc" class="screen hidden">
+        <div class="pc-room">
+          <h2 class="section-title">PC 房间</h2>
+          <div id="pc-status" class="status">生成房间中…</div>
+          <div class="room-code-wrap">
+            <div id="pc-roomcode" class="room-code">------</div>
+            <button id="pc-newcode" class="btn btn-small">换一个</button>
+          </div>
+          <canvas id="pc-qr" width="256" height="256"></canvas>
+          <p class="hint">手机扫二维码或输入房间码连接; 也可见于下方设备列表</p>
+          <div id="pc-devices" class="devices hidden">
+            <div class="devices-title">正在等待设备…</div>
+          </div>
+          <button id="pc-start" class="btn btn-big btn-accent" disabled>开始游戏</button>
+          <button id="pc-back" class="btn btn-small btn-ghost">返回</button>
+        </div>
+      </section>
+
+      <!-- ============ Mobile: 发现 + 连接 ============ -->
+      <section id="screen-mobile" class="screen hidden">
+        <div class="mobile-connect">
+          <h2 class="section-title">找到 PC</h2>
+          <div id="mobile-list" class="device-list"></div>
+          <div class="or-row">或</div>
+          <div class="manual-join">
+            <input id="mobile-code" class="code-input" placeholder="输入房间码" maxlength="6" autocomplete="off" inputmode="text" />
+            <button id="mobile-join" class="btn">连接</button>
+          </div>
+          <button id="mobile-back" class="btn btn-small btn-ghost">返回</button>
+        </div>
+      </section>
+
+      <!-- ============ Mobile: 校准 ============ -->
+      <section id="screen-calibrate" class="screen hidden">
+        <div class="calib-card">
+          <h2 class="section-title">校准朝向</h2>
+          <p class="hint">请将手机竖直举在身前, 屏幕朝向自己, 保持静止</p>
+          <div id="calib-state" class="calib-state">等待陀螺仪…</div>
+          <button id="calib-do" class="btn btn-big btn-accent hidden">开始校准</button>
+        </div>
+      </section>
+
+      <!-- ============ Mobile: 游戏中 ============ -->
+      <section id="screen-remote" class="screen hidden">
+        <div class="remote-hud">
+          <div id="remote-status" class="remote-status">已连接</div>
+          <div id="remote-ping" class="remote-ping">-- ms</div>
+          <div class="calib-bar">
+            <button id="remote-recalib" class="btn btn-small">重新校准</button>
+            <button id="remote-vibrate" class="btn btn-small">震动测试</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PC: 游戏中 ============ -->
+      <section id="screen-game" class="screen hidden">
+        <canvas id="game-canvas"></canvas>
+        <div id="hud" class="hud hidden">
+          <div class="hud-top">
+            <div class="hud-score">
+              <span id="score">0</span>
+              <span class="hud-label">分</span>
+            </div>
+            <div id="combo" class="hud-combo">0</div>
+            <div class="hud-lives" id="lives">♥♥♥</div>
+          </div>
+          <div id="hud-acc" class="hud-acc">命中率 --</div>
+        </div>
+        <div id="end-overlay" class="overlay hidden">
+          <div class="end-card">
+            <h2 id="end-title">游戏结束</h2>
+            <div id="end-score" class="end-score">0</div>
+            <div id="end-stats" class="end-stats"></div>
+            <button id="end-replay" class="btn btn-big btn-accent">再来一次</button>
+            <button id="end-exit" class="btn btn-small btn-ghost">回房间</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
