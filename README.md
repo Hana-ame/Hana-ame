@@ -78,6 +78,52 @@ go build -o bin/peer-server ./server
 go build -o bin/go-peer ./goclient
 ```
 
+## 互通消息示例
+
+网页端与 Go 端建立 DataChannel 后, 任一方向都能收发文本(网页端 JSON 封装, Go 端直接打印)。
+
+```
+网页端 log 区:
+  [12:00:01] DataChannel 已打开 ↔ go-peer
+  [12:00:02] 发: 你好, Go
+  [12:00:03] 收: {"text":"收到, 这是 Go 桌面端"}
+
+Go 端终端:
+  2026/08/05 12:00:02 [go-peer] data channel OPEN, ready to chat!
+  <- "{\"text\":\"你好, Go\"}"
+  -> 收到, 这是 Go 桌面端
+```
+
+## 实际部署示例(HTTPS 反代 + 后台常驻)
+
+典型落地形态: **PeerServer 在 WSL/内网跑在 :8000**, 前面挂 nginx/caddy 做 HTTPS
+反代(TLS 终止), 浏览器通过域名访问。网页端会自动按当前地址填好服务器:
+
+- 打开 `https://wsl-8000.moonchan.xyz` → 页面自动填入 `srv=wsl-8000.moonchan.xyz`,
+  `port=443`, 且 `https:` 时自动走 **wss://**(信令与网页同走反代)。
+- 打开 `http://127.0.0.1:8000` → 自动填入 `127.0.0.1:8000`, 走 `ws://`。
+- 域名不带端口时按协议默认端口(https=443 / http=80), 无需手动改。
+
+后台常驻方式(示例):
+
+```bash
+# 信令+网页服务器(默认 :8000)
+setsid ./bin/peer-server -addr :8000 -path / -key peerjs -web ./web \
+  >/tmp/peer-8000.log 2>&1 </dev/null &
+
+# Go 端被叫常驻: stdin 接一个 fifo, 需要主动发消息时向 fifo 写即可
+mkfifo /tmp/go-peer-stdin
+setsid sh -c 'sleep 100000 > /tmp/go-peer-stdin' </dev/null >/dev/null 2>&1 &
+setsid ./bin/go-peer -id go-peer -server ws://127.0.0.1:8000/peerjs \
+  </tmp/go-peer-stdin >/tmp/go-peer.log 2>&1 &
+
+# 从 Go 端主动发一条给网页
+printf '你好, 来自 Go\n' > /tmp/go-peer-stdin
+```
+
+> 反向代理需支持 **WebSocket Upgrade**(nginx 示例: `proxy_http_version 1.1;
+> proxy_set_header Upgrade $http_upgrade; proxy_set_header Connection "upgrade";`)。
+
 ## 协议要点(实现时核对过 peerjs 1.5.4 / peerjs-server 1.x 源码)
 
 - **连接**: 客户端 WebSocket 到 `ws://host:port/<path>peerjs?key=…&id=…&token=…&version=…`,
@@ -96,15 +142,30 @@ go build -o bin/go-peer ./goclient
    ```bash
    ./bin/go-peer -id go-peer -server ws://vps.example.com:8000/peerjs
    ```
-4. 若双方都在对称 NAT 后打洞失败, 请在 `-stun` 里追加一个 **TURN** 服务器, 例如:
+4. 若双方都在对称 NAT 后打洞失败, 需配一个 **TURN 中继服务器**。
+   自建可用 `coturn`(`turnserver` 启用 `fingerprint`, 配一个静态用户), 例如:
+
    ```bash
-   ./bin/go-peer -stun "stun:stun.l.google.com:19302,turn:your-turn:3478" ...
+   turnserver -a -f -n --lt-cred-mech \
+     --user peerjs:peerjsp \
+     --realm peerjs --port 3478 \
+     --listening-ip 0.0.0.0
    ```
-   TURN 需要在 PeerServer 同一台/另一台机器自建(可用 `coturn`), 两端配置相同的
-   username/credential; 浏览器端 peerjs 配置也需带上同样的 TURN 服务器。
+
+   然后两端都带上同样的 TURN:
+
+   ```bash
+   # Go 端
+   ./bin/go-peer -stun "stun:stun.l.google.com:19302,turn:your-vps:3478?transport=udp" \
+     -id go-peer -server ws://vps.example.com:8000/peerjs
+   ```
+
+   - 网页端 peerjs 也需在 Peer 的 `config` 里配同样的 TURN(`urls` + `username` + `credential`)。
+   - TURN 把双方流量打到服务器中继, 因此服务器带宽成为吞吐上限。
 
 ## 已知约束
 
 - 本实现的 Go 端一次维护一个对端连接; 上一轮连接结束后自动复位, 可再次被连。
   如需同时服务多个网页端, 需要把 `p.pc/p.dc` 改成按 `connectionId` 索引的映射。
-- 网页端保证为 `secure:false`(HTTP)时才能用 `ws://`。
+- 网页端 `https:` 时信令走 `wss://`、`http:` 时走 `ws://`, 由页面自动判定;
+  若为相对路径部署(页面与信令不同端口), 需手动改页面里的 `#port`。
