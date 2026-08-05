@@ -2,6 +2,16 @@ import { quat } from './quat.js';
 import { SENSOR } from '../constants.js';
 
 const DEG = Math.PI / 180;
+const GAME_DOWN = { x: 0, y: -1, z: 0 };
+const CORRECTION_GAIN = 0.05;
+const CORRECTION_OMEGA_MAX = 1.5;
+const GRAVITY = 9.80665;
+
+function rotateVector(q, v) {
+  const qv = { x: v.x, y: v.y, z: v.z, w: 0 };
+  const r = quat.multiply(quat.multiply(q, qv), quat.invert(q));
+  return { x: r.x, y: r.y, z: r.z };
+}
 
 function bodyDelta(omegaRad, dt) {
   const mag = Math.sqrt(omegaRad.x * omegaRad.x + omegaRad.y * omegaRad.y + omegaRad.z * omegaRad.z);
@@ -99,9 +109,23 @@ export class Sensor {
         const dq = bodyDelta(w, dt);
         this._q = quat.normalize(quat.multiply(this._q, dq));
       }
+      if (e.accelerationIncludingGravity) this._correctGravity(e.accelerationIncludingGravity);
     }
 
     this._finalize(now, dt);
+  }
+
+  _correctGravity(g) {
+    const mag = Math.hypot(g.x, g.y, g.z);
+    if (Math.abs(mag - GRAVITY) > 3.5) return;
+    if (this.omega > CORRECTION_OMEGA_MAX) return;
+    const gm = { x: g.x / mag, y: g.y / mag, z: g.z / mag };
+    const predicted = rotateVector(quat.invert(this._q), GAME_DOWN);
+    const corr = quat.fromToDir(gm, predicted);
+    const { angle, axis } = quat.angleAndAxis(corr);
+    if (angle < 1e-3) return;
+    const scaled = quat.fromAxisAngle(axis, angle * CORRECTION_GAIN);
+    this._q = quat.normalize(quat.multiply(this._q, scaled));
   }
 
   _finalize(now, dt) {
@@ -224,7 +248,7 @@ export class Sensor {
       const d = Math.sqrt(x * x + y * y + z * z);
       const dir = { x: x / d, y: y / d, z: z / d };
 
-      let q = quat.fromToDir({ x: 0, y: 1, z: 0 }, dir);
+      let q = quat.fromToDir({ x: 0, y: 0, z: 1 }, dir);
       q = quat.multiply(q, quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, Math.sin(t * 0.8) * 0.3));
 
       if (boost > 0.5) omega = SENSOR.SWING_PEAK + 2.5;
