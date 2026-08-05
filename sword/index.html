@@ -12,7 +12,7 @@
       <section id="screen-role" class="screen">
         <div class="role-card">
           <h1 class="logo">光剑 <span>调试</span></h1>
-          <p class="tagline">手机屏幕法线 = 剑方向 · 屏幕即前方</p>
+          <p class="tagline">手机顶边(前端) = 剑方向 · 屏幕即前方</p>
           <div class="role-btns">
             <button id="btn-pc" class="btn btn-big btn-accent">我是 PC 显示器</button>
             <a class="btn btn-big" href="/test/#/mobile" target="_blank">手机端(test 页)</a>
@@ -22,7 +22,7 @@
 
       <section id="screen-pc" class="screen hidden">
         <header class="topbar">
-          <span class="topbar-title">光剑调试 · 屏幕即前方</span>
+          <span class="topbar-title">光剑调试 · 手机顶边 = 剑方向</span>
           <span id="pc-status" class="pill">生成房间中…</span>
           <span class="grow"></span>
           <button id="pc-back" class="btn btn-small">返回</button>
@@ -33,8 +33,8 @@
             <div class="view-wrap">
               <canvas id="pc3d"></canvas>
               <div class="view-legend">
-                青色箭头 = 手机屏幕法线(剑方向) · 金色圆环 = PC 屏幕(校准时瞄准它)<br />
-                世界: Z 上, 重力灰箭头向下
+                青色剑 = 手机顶边(前端)方向 · 金色圆环 = PC 屏幕(剑尖指向它)<br />
+                虚线 = 屏幕内部方向 · 世界: Z 上, 重力灰箭头向下
               </div>
             </div>
           </div>
@@ -56,10 +56,10 @@
             </div>
 
             <div class="card">
-              <div class="card-title">校准(单点基准: 屏幕朝前)</div>
-              <p class="note">手持手机屏幕面向你, 把手机屏幕对准 PC 屏幕中心, 静止 2 秒, 点「设为基准」。</p>
+              <div class="card-title">校准(单点基准: 手机前端朝屏幕)</div>
+              <p class="note">像握光剑一样手持手机, 让手机顶边(前端)指向 PC 屏幕中心, 静止 2 秒, 点「设为基准」。之后剑以该方向为基准, 指向屏幕内部。</p>
               <div class="row">
-                <button id="pc-setref" class="btn btn-accent">设为基准(屏幕朝前)</button>
+                <button id="pc-setref" class="btn btn-accent">设为基准(手机前端朝屏幕)</button>
                 <button id="pc-resetref" class="btn">清除</button>
               </div>
               <div class="group-label">相对基准的偏移</div>
@@ -72,8 +72,8 @@
             </div>
 
             <div class="card">
-              <div class="card-title">手机屏幕法线(世界系)</div>
-              <div class="group-label">实时 forward</div>
+              <div class="card-title">手机顶边方向(前端, 世界系)</div>
+              <div class="group-label">实时手机顶边</div>
               <div class="sensor-grid">
                 <div class="cell"><span>X</span><b id="s-fx">--</b></div>
                 <div class="cell"><span>Y</span><b id="s-fy">--</b></div>

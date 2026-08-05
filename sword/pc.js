@@ -1,13 +1,16 @@
 // PC 端: 光剑调试
-// 概念: "屏幕即前方" —— 手机屏幕法线(forward) = 剑的方向。
-// 校准时把手机屏幕对准 PC 屏幕中心, 记下基准四元数; 之后剑实时跟随手机屏幕朝向。
+// 概念: "屏幕即前方" —— 手机像握光剑一样, 顶边(+Y)指向哪里, 剑就指向哪里。
+// 校准: 让手机顶边对准 PC 屏幕中心, 点「设为基准」-> 光剑立刻对准金色圆环(指向屏幕内部),
+//       即把"校准时的手机顶边方向"重映射为"指向屏幕"。之后剑实时跟随手机顶边, 相对基准运动。
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { $, showScreen, navigate } from '../src/ui/screens.js';
 import { genRoomCode } from '../src/constants.js';
 import { P, createHost, pcAnnounce, discoveryReady, discoveryClose } from '../test/net.js';
-import QRCode from 'qrcode';import {
-  DEG, quatFromDeviceEuler, qRotate, qNormalize, qMul, qInvert, eulerFromQuat, Mahony,
+import QRCode from 'qrcode';
+import {
+  DEG, quatFromDeviceEuler, qRotate, qNormalize, qMul, qInvert, eulerFromQuat,
+  shortestArc, Mahony,
 } from '../lib/attitude.js';
 
 const fmt = (v, d = 1) => (v == null || !Number.isFinite(v) ? '--' : `${v.toFixed(d)}`);
@@ -43,7 +46,8 @@ export function initPc() {
   const mah = new Mahony({ kp: 0.5, ki: 0.05 });
   let lastQ = null;      // 系统解 (deviceorientation)
   let refQ = null;       // 基准四元数
-  let refFwd = null;     // 基准 forward
+  let refTop = null;     // 校准时手机顶边(前端)在世界系方向
+  let mapQ = null;       // 基准重映射旋转: refTop -> INTO
   let srcNow = 'fuse';
 
   function setRow(key, a, b, g) {
@@ -56,6 +60,18 @@ export function initPc() {
 
   function currentQ() {
     return srcNow === 'device' ? lastQ : mah.q;
+  }
+
+  // 手机顶边(前端, 设备 +Y)在世界系方向 —— "屏幕即前方"
+  function phoneTop(q) {
+    return qRotate(q, { x: 0, y: 1, z: 0 });
+  }
+
+  // 剑方向: 手机顶边方向, 经基准重映射(校准姿态 -> 指向屏幕 INTO)
+  function swordDir(q) {
+    const top = phoneTop(q);
+    if (mapQ) return qRotate(mapQ, top);
+    return top;
   }
 
   function onSensor(snap) {
@@ -96,11 +112,11 @@ export function initPc() {
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 50);
   camera.up.set(0, 0, 1);
-  camera.position.set(2.6, -2.2, 1.8);
-  camera.lookAt(0, 0, 0.4);
+  camera.position.set(2.6, -1.6, 1.7);
+  camera.lookAt(0, 0.5, -0.4);
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 0, 0.4);
+  controls.target.set(0, 0.5, -0.4);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
 
@@ -120,8 +136,9 @@ export function initPc() {
   scene.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-0.95, 0.95, 0.55), 0.55, 0x8899aa, 0.14, 0.08));
 
   // ---- 剑 ----
+  const PIVOT = new THREE.Vector3(0, 0.5, 1.4);
   const swordGroup = new THREE.Group();
-  swordGroup.position.set(0, 0, 0.4);
+  swordGroup.position.copy(PIVOT);
   scene.add(swordGroup);
 
   const handle = new THREE.Mesh(
@@ -144,10 +161,17 @@ export function initPc() {
   glow.position.y = 1.1;
   swordGroup.add(glow);
 
-  // 剑的默认朝向: +Y (THREE 模型); 用 quaternion 对齐到 forward
-  const BLADE = new THREE.Vector3(0, 1, 0);
+  // 剑模型默认朝 +Y (向上), 旋转对齐到剑方向 (手机顶边经基准重映射)
+  const UP = new THREE.Vector3(0, 1, 0);
+  function setSwordDir(dir) {
+    const d = new THREE.Vector3(dir.x, dir.y, dir.z);
+    if (d.lengthSq() < 1e-9) return;
+    swordGroup.quaternion.setFromUnitVectors(UP, d.normalize());
+  }
 
-  // ---- 目标环 (PC 屏幕) ----
+  // ---- PC 屏幕 (金色圆环): 在剑尖正面, 面向玩家 ----
+  const RING_POS = new THREE.Vector3(0, 0.5, -1.6);   // 屏幕中心 (玩家前方较远处)
+  const INTO = new THREE.Vector3(0, 0, -1).normalize(); // 屏幕内部方向 (剑尖应指向它)
   const targetGroup = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.9, 1.15, 40),
@@ -161,43 +185,44 @@ export function initPc() {
     new THREE.LineBasicMaterial({ color: 0xffd166 }),
   );
   targetGroup.add(ringEdge);
-  // 屏幕法线指示 (金色短箭头, 指向手机应瞄准方向)
-  scene.add(targetGroup);
+  // 屏幕法线指示 (金色短箭头, 指向"屏幕内部")
   const targetNormal = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 0.7, 0xffd166, 0.15, 0.08);
   targetGroup.add(targetNormal);
-
-  // 目标环放在 +Z (屏幕朝手机): 手机屏幕对准它
-  targetGroup.position.set(0, 0.5, 1.6);
+  targetGroup.position.copy(RING_POS);
   targetGroup.rotation.x = -Math.PI / 2;
+  scene.add(targetGroup);
 
-  // 剑沿 forward 指向 (以剑柄为原点, 刃朝 forward)
-  const UP = new THREE.Vector3(0, 1, 0);
-  function setSwordDir(dir) {
-    const d = new THREE.Vector3(dir.x, dir.y, dir.z);
-    if (d.lengthSq() < 1e-9) return;
-    swordGroup.quaternion.setFromUnitVectors(UP, d.normalize());
-  }
+  // 剑柄到圆环的瞄准线 (虚线, 显示"屏幕内部"方向)
+  const aimGeo = new THREE.BufferGeometry().setFromPoints([PIVOT, RING_POS]);
+  const aimLine = new THREE.Line(
+    aimGeo,
+    new THREE.LineDashedMaterial({ color: 0xffd166, transparent: true, opacity: 0.5, dashSize: 0.12, gapSize: 0.1 }),
+  );
+  aimLine.computeLineDistances();
+  scene.add(aimLine);
 
   function updateScene() {
     const q = currentQ();
     if (!q) return;
     window.__swordQ = q;
-    const fwd = qRotate(q, { x: 0, y: 0, z: 1 });   // 屏幕法线(世界系)
-    els.fx.textContent = fmt3(fwd.x);
-    els.fy.textContent = fmt3(fwd.y);
-    els.fz.textContent = fmt3(fwd.z);
+    const top = phoneTop(q);
+    els.fx.textContent = fmt3(top.x);
+    els.fy.textContent = fmt3(top.y);
+    els.fz.textContent = fmt3(top.z);
     els.fsrc.textContent = srcNow === 'device' ? '系统解' : 'Mahony';
 
-    setSwordDir(fwd);
+    const dir = swordDir(q);
+    setSwordDir(dir);
+    window.__swordDir = [dir.x, dir.y, dir.z];
+    window.__swordTop = [top.x, top.y, top.z];
 
-    if (refQ && refFwd) {
+    if (refQ && refTop) {
       const rel = qNormalize(qMul(qInvert(refQ), q));
       const e = eulerFromQuat(rel);
       els.yaw.textContent = fmt(e.alpha);
       els.pitch.textContent = fmt(e.beta);
       els.roll.textContent = fmt(e.gamma);
-      const dot = Math.max(-1, Math.min(1,
-        fwd.x * refFwd.x + fwd.y * refFwd.y + fwd.z * refFwd.z));
+      const dot = Math.max(-1, Math.min(1, top.x * refTop.x + top.y * refTop.y + top.z * refTop.z));
       els.delta.textContent = fmt(Math.acos(dot) / DEG);
     }
   }
@@ -251,7 +276,6 @@ export function initPc() {
 
   function refreshQr() {
     els.code.textContent = roomCode;
-    // 手机端走 /test/#/mobile?room=xxx (test 页用同一 PeerJS 前缀)
     const joinUrl = `${window.location.origin}/test/#/mobile?room=${roomCode}`;
     QRCode.toCanvas(els.qr, joinUrl, { width: 256, margin: 1 }).catch((e) => console.error('qr', e));
   }
@@ -292,14 +316,20 @@ export function initPc() {
     const q = currentQ();
     if (!q) { alert('还没收到手机数据'); return; }
     refQ = q;
-    refFwd = qRotate(q, { x: 0, y: 0, z: 1 });
-    els.setref.textContent = '已设为基准';
+    refTop = phoneTop(q);
+    mapQ = shortestArc(refTop, { x: INTO.x, y: INTO.y, z: INTO.z });
+    els.setref.textContent = '基准已设(剑指向圆环)';
+    els.setref.classList.add('ok');
+    updateScene();
   });
   els.resetref.addEventListener('click', () => {
     refQ = null;
-    refFwd = null;
-    els.setref.textContent = '设为基准(屏幕朝前)';
+    refTop = null;
+    mapQ = null;
+    els.setref.textContent = '设为基准(手机顶边朝屏幕)';
+    els.setref.classList.remove('ok');
     els.delta.textContent = els.yaw.textContent = els.pitch.textContent = els.roll.textContent = '--';
+    updateScene();
   });
   els.newcode.addEventListener('click', () => {
     roomCode = genRoomCode();
