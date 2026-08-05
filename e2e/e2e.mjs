@@ -51,7 +51,7 @@ try {
   await calibBtn.click();
   await mob.waitForSelector('#screen-calib2', { state: 'visible', timeout: 10000 });
   await mob.waitForFunction(() => document.querySelector('#calib2-step').textContent.includes('校准完成'), null, { timeout: 40000 });
-  ok('Mobile 引导校准完成(10方向)', true);
+  ok('Mobile 引导校准完成(单点基准)', true);
 
   await mob.click('#calib2-do', { force: true });
   await mob.waitForSelector('#screen-remote', { state: 'visible' });

@@ -1,22 +1,25 @@
-import { GAME, SWORD } from '../constants.js';
+// 光剑校准: 单点基准 + 连续映射
+// 玩家目视 PC 屏幕, 手机竖直举在身前, 屏幕正对眼睛, 保持约 2 秒。
+// 记录手机前方(屏幕法线)方向为基准 ref, 之后:
+//   实时 forward 相对 ref 的偏移 screenRel -> 屏幕平面连续坐标 (u,v),
+//   放大 GAIN 倍填满判定平面 (替代旧 3x3 表的自适应增益),
+//   光剑方向 = 从剑柄指向判定平面上 (u*dx, y0+v*dy, 0) 的目标点。
+// 全程连续, 无网格量化; 提示: 光剑前方 = 手机最长轴。
+import { SWORD } from '../constants.js';
 
-function span(a, b) {
-  const d = b - a;
-  return Math.abs(d) < 1e-6 ? 0 : d;
-}
+const PLANE = {
+  halfW: 2.2,   // u=±1 -> x=±2.2 (判定平面半宽)
+  midY: 1.6,    // v=0   -> y=1.6 (判定平面中心高度)
+  halfH: 1.2,   // v=±1 -> y=±1.2
+  gain: 3.0,    // screenRel 原始投影较小(≈sinθ), 放大到 ±1 填满判定平面
+};
 
 export class Calib {
   constructor() {
-    this.cells = [
-      [null, null, null],
-      [null, null, null],
-      [null, null, null],
-    ];
     this.ref = null;
   }
 
   reset() {
-    for (const row of this.cells) row.fill(null);
     this.ref = null;
   }
 
@@ -24,43 +27,16 @@ export class Calib {
     this.ref = forward;
   }
 
-  set(r, c, sx, sy) {
-    this.cells[r][c] = { sx, sy };
-  }
-
   get complete() {
-    for (const row of this.cells) {
-      for (const cell of row) if (!cell) return false;
-    }
     return !!this.ref;
   }
 
-  _u(sx) {
-    const mid = this.cells[1];
-    const xL = mid[0].sx;
-    const xM = mid[1].sx;
-    const xR = mid[2].sx;
-    if (sx <= xL) return -1;
-    if (sx >= xR) return 1;
-    if (sx <= xM) return -1 + (sx - xL) / span(xL, xM);
-    return (sx - xM) / span(xM, xR);
-  }
-
-  _v(sy) {
-    const yD = this.cells[0][1].sy;
-    const yM = this.cells[1][1].sy;
-    const yU = this.cells[2][1].sy;
-    if (sy <= yM && sy <= yD) return -1;
-    if (sy >= yM && sy >= yU) return 1;
-    if (sy <= yM) return -1 + (sy - yD) / span(yD, yM);
-    return (sy - yM) / span(yM, yU);
-  }
-
-  dir(sx, sy) {
-    const u = Math.max(-1, Math.min(1, this._u(sx)));
-    const v = Math.max(-1, Math.min(1, this._v(sy)));
-    const x = u * GAME.GRID.dx;
-    const y = GAME.GRID.y0 + v * GAME.GRID.dy;
+  // 屏幕平面连续坐标 (u,v) -> 光剑方向 (从剑柄指向判定平面目标点)
+  dir(u, v) {
+    const cu = Math.max(-1, Math.min(1, u * PLANE.gain));
+    const cv = Math.max(-1, Math.min(1, v * PLANE.gain));
+    const x = cu * PLANE.halfW;
+    const y = PLANE.midY + cv * PLANE.halfH;
     const dx = x - SWORD.PIVOT.x;
     const dy = y - SWORD.PIVOT.y;
     const dz = -SWORD.PIVOT.z;

@@ -1,7 +1,6 @@
 import { showScreen, navigate, $ } from './screens.js';
 import {
   normalizeCode, PEER_PREFIX, SENSOR, DIFFICULTY, DEFAULT_DIFFICULTY,
-  CALIB_STEPS, CALIB_HOLD_MS,
 } from '../constants.js';
 import * as discovery from '../net/discovery.js';
 import { joinPeer } from '../net/connection.js';
@@ -114,7 +113,7 @@ export function initMobile(params) {
     }, 1000);
   }
 
-  // ---- 校准 ----
+  // ---- 校准 (单点基准: 目视屏幕, 手机长轴竖直正对屏幕) ----
   function goCalibrate() {
     showScreen('screen-calibrate');
     els.calibState.classList.remove('ready');
@@ -137,30 +136,23 @@ export function initMobile(params) {
     }
     setDiff(diff);
     sensor.recalibrate();
-    startGuidedCalibration();
+    startCalibration();
   }
 
-  function startGuidedCalibration() {
+  // 单点基准: 玩家目视 PC 屏幕, 手机竖直举在身前, 屏幕正对眼睛。
+  // 保持约 2 秒自动采样手机前方方向, 记录为基准 ref; 之后光剑连续跟随。
+  function startCalibration() {
     calib.reset();
     calibrating = true;
     streaming = false;
     els.calib2Do.classList.add('hidden');
     showScreen('screen-calib2');
-    nextCalibStep(0);
-  }
-
-  function nextCalibStep(i) {
-    if (i >= CALIB_STEPS.length) {
-      finishCalibration();
-      return;
-    }
-    const step = CALIB_STEPS[i];
-    els.calib2Dir.textContent = step.label;
-    els.calib2Step.textContent = `步骤 ${i + 1}/${CALIB_STEPS.length}`;
+    els.calib2Dir.textContent = '正视屏幕';
+    els.calib2Step.textContent = '请目视屏幕, 手机竖直举起, 屏幕正对眼睛';
     sampleBuf.length = 0;
     const holdStart = performance.now();
     const tick = () => {
-      const p = Math.min(1, (performance.now() - holdStart) / CALIB_HOLD_MS);
+      const p = Math.min(1, (performance.now() - holdStart) / 2000);
       els.calib2Fill.style.width = `${(p * 100).toFixed(1)}%`;
       if (p < 1) {
         rafFill = requestAnimationFrame(tick);
@@ -171,12 +163,9 @@ export function initMobile(params) {
         let g = 0;
         let b = 0;
         for (const s of sampleBuf) { g += s.gamma; b += s.beta; }
-        const fwd = computeForward(b / n, g / n).forward;
-        if (!calib.ref) calib.setRef(fwd);
-        const rel = screenRel(fwd, calib.ref);
-        calib.set(step.r, step.c, rel.onScreen.x, rel.onScreen.y);
+        calib.setRef(computeForward(b / n, g / n).forward);
       }
-      nextCalibStep(i + 1);
+      finishCalibration();
     };
     rafFill = requestAnimationFrame(tick);
   }

@@ -12,39 +12,23 @@ const HIT_RADIUS = 1.2;
 
 const COLORS = [0x4de3ff, 0xff2d78, 0xffd166, 0xb06dff, 0x3ddc84, 0xff8a3d, 0x66b3ff, 0xff5c8a, 0x9af0c0];
 
-function mulberry32(a) {
-  return function () {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+// 谱面: JSON 数组 { beat, x, y }, beat 为该音符到达判定平面的拍数,
+// x/y 为判定平面上(世界系)的连续坐标。可手写, 见 charts/*.json。
+export async function loadChart(name = 'default') {
+  const res = await fetch(`/charts/${name}.json`);
+  if (!res.ok) throw new Error(`谱面加载失败: charts/${name}.json (${res.status})`);
+  const raw = await res.json();
+  return raw.map((n) => ({
+    beat: n.beat,
+    step: n.beat * 4,
+    pos: new THREE.Vector3(n.x, n.y, GAME.NOTE_PLANE_Z),
+    color: n.color ?? pickColor(n.x),
+  }));
 }
 
-export function genChart(seed = 20260805) {
-  const rng = mulberry32(seed);
-  const chart = Array.from({ length: 64 }, () => []);
-  let prev = -1;
-  for (let s = 0; s < 64; s++) {
-    const onBeat = s % 4 === 0;
-    const offBeat = s % 4 === 2 && rng() < 0.32;
-    if (onBeat || offBeat) {
-      let cell = Math.floor(rng() * 9);
-      while (cell === prev) cell = Math.floor(rng() * 9);
-      chart[s].push(cell);
-      prev = cell;
-    }
-  }
-  return chart;
-}
-
-function distanceToSegment(p, a, b) {
-  const ab = b.clone().sub(a);
-  const lenSq = ab.lengthSq();
-  if (lenSq < 1e-6) return p.distanceTo(a);
-  const t = Math.max(0, Math.min(1, p.clone().sub(a).dot(ab) / lenSq));
-  return p.distanceTo(a.clone().addScaledVector(ab, t));
+export function pickColor(x) {
+  const i = Math.round((x + 2.2) / 4.4 * (COLORS.length - 1));
+  return COLORS[Math.max(0, Math.min(COLORS.length - 1, i))];
 }
 
 export class Game {
@@ -59,8 +43,7 @@ export class Game {
     this.hitRadius = diff?.hitRadius ?? HIT_RADIUS;
     this.hitSteps = diff?.hitSteps ?? HIT_STEPS;
 
-    this.grid = scene.gridPos;
-    this.chart = genChart();
+    this.chart = [];
     this.notes = [];
     this.spawnCursor = 0;
 
@@ -79,6 +62,12 @@ export class Game {
     this._missLater = [];
   }
 
+  setChart(chart) {
+    this.chart = [...chart].sort((a, b) => a.step - b.step);
+    this.spawnCursor = 0;
+    this.notes = [];
+  }
+
   setSwordDir(dir) {
     this.swordDir = dir;
     this.swordVisible = true;
@@ -89,9 +78,10 @@ export class Game {
 
     const step = this.music.currentStep;
 
-    while (this.spawnCursor < step) {
-      const cells = this.chart[((this.spawnCursor % 64) + 64) % 64];
-      for (const cell of cells) this._spawnNote(cell, this.spawnCursor + TRAVEL_STEPS);
+    while (this.spawnCursor < this.chart.length) {
+      const n = this.chart[this.spawnCursor];
+      if (n.step - TRAVEL_STEPS > step) break;
+      this._spawnNote(n, step);
       this.spawnCursor += 1;
     }
 
@@ -109,11 +99,15 @@ export class Game {
     this._updateSword(dt);
   }
 
-  _spawnNote(cell, targetStep) {
-    const pos = this.grid[cell];
-    const mesh = this.scene.notePool.spawn(pos, COLORS[cell]);
+  _spawnNote(chartNote, _step) {
+    const mesh = this.scene.notePool.spawn(chartNote.pos.clone(), chartNote.color);
     mesh.position.z = GAME.NOTE_SPAWN_Z;
-    this.notes.push({ cell, targetStep, mesh, dead: false });
+    this.notes.push({
+      targetStep: chartNote.step,
+      pos: chartNote.pos.clone(),
+      mesh,
+      dead: false,
+    });
   }
 
   _updateSword(dt) {
@@ -150,7 +144,7 @@ export class Game {
   onSwing(omega) {
     if (this.ended || !this.swordVisible) return;
     const step = this.music.currentStep;
-    const { pivot, tip } = this._swordPose();
+    const { tip } = this._swordPose();
 
     let best = null;
     let bestDist = Infinity;
@@ -160,7 +154,8 @@ export class Game {
       if (z < -2.2 || z > 1.6) continue;
       const off = Math.abs(step - n.targetStep);
       if (off > this.hitSteps) continue;
-      const d = distanceToSegment(n.mesh.position, pivot, tip);
+      // 屏幕平面距离: 剑尖投影到判定平面(z=0) 与音符的平面距离
+      const d = Math.hypot(tip.x - n.pos.x, tip.y - n.pos.y);
       if (d < bestDist) {
         bestDist = d;
         best = n;
@@ -169,7 +164,7 @@ export class Game {
 
     if (best && bestDist <= this.hitRadius) {
       this._hit(best, step);
-    } else if (best && bestDist <= this.hitRadius + 0.6) {
+    } else if (best && bestDist <= this.hitRadius + 0.8) {
       // 擦边: 仍算命中但基础分
       this._hit(best, step, true);
     }

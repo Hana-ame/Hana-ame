@@ -20,24 +20,10 @@ export const SWORD = {
   LEN: 2.6,
 };
 
-export const CALIB_STEPS = [
-  { r: 1, c: 1, label: '正前' },
-  { r: 1, c: 0, label: '正左' },
-  { r: 1, c: 2, label: '正右' },
-  { r: 1, c: 1, label: '正前' },
-  { r: 2, c: 1, label: '正上' },
-  { r: 0, c: 1, label: '正下' },
-  { r: 2, c: 0, label: '左上' },
-  { r: 0, c: 0, label: '左下' },
-  { r: 2, c: 2, label: '右上' },
-  { r: 0, c: 2, label: '右下' },
-];
-export const CALIB_HOLD_MS = 2000;
-
 export const DIFFICULTY = {
-  easy: { hitRadius: 1.7, hitSteps: 6.0, swingPeak: 2.0, swingMin: 0.7 },
-  normal: { hitRadius: 1.2, hitSteps: 4.5, swingPeak: 3.2, swingMin: 1.2 },
-  hard: { hitRadius: 0.85, hitSteps: 3.0, swingPeak: 4.2, swingMin: 1.6 },
+  easy: { hitRadius: 2.2, hitSteps: 6.0, swingPeak: 2.0, swingMin: 0.7 },
+  normal: { hitRadius: 1.7, hitSteps: 4.5, swingPeak: 3.2, swingMin: 1.2 },
+  hard: { hitRadius: 1.3, hitSteps: 3.0, swingPeak: 4.2, swingMin: 1.6 },
 };
 export const DEFAULT_DIFFICULTY = 'easy';
 
@@ -52,13 +38,6 @@ export const GAME = {
   MISS_Z: 4.2,
   LIVES: 3,
   INVINCIBLE: true,
-  GRID: {
-    rows: 3,
-    cols: 3,
-    dx: 2.1,
-    dy: 1.7,
-    y0: 1.1,
-  },
 };
 
 export function genRoomCode() {

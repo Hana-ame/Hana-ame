@@ -1,23 +1,8 @@
 import * as THREE from 'three';
-import { GAME } from '../constants.js';
 
 const SWORD_PIVOT = new THREE.Vector3(0, 0.7, 1.6);
 const SWORD_LEN = 2.6;
 const TRAIL_LEN = 14;
-
-export function gridPositions() {
-  const out = [];
-  for (let r = 0; r < GAME.GRID.rows; r++) {
-    for (let c = 0; c < GAME.GRID.cols; c++) {
-      out.push(new THREE.Vector3(
-        (c - 1) * GAME.GRID.dx,
-        GAME.GRID.y0 + (r - 1) * GAME.GRID.dy,
-        0,
-      ));
-    }
-  }
-  return out;
-}
 
 export function createGameScene(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -62,7 +47,6 @@ export function createGameScene(canvas) {
     sword,
     trail,
     notePool,
-    gridPos: gridPositions(),
     getSword() {
       const dir = new THREE.Vector3(0, 1, 0).applyQuaternion(sword.group.quaternion);
       const tip = SWORD_PIVOT.clone().addScaledVector(dir, SWORD_LEN);
@@ -92,12 +76,17 @@ function addStars(scene) {
 }
 
 function addGridMarkers(scene) {
-  const pos = gridPositions();
   const ringMat = new THREE.MeshBasicMaterial({
     color: 0x2a2a44, transparent: true, opacity: 0.5,
   });
   const ringGeo = new THREE.RingGeometry(0.55, 0.72, 32);
-  for (const p of pos) {
+  const marks = [];
+  for (let x = -2; x <= 2; x += 2) {
+    for (let y = 0.6; y <= 2.6; y += 1) {
+      marks.push(new THREE.Vector3(x, y, 0));
+    }
+  }
+  for (const p of marks) {
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = -Math.PI / 2;
     ring.position.copy(p);

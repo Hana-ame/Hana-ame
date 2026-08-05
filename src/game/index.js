@@ -4,7 +4,7 @@ import { createGameScene } from './scene.js';
 import { Fx } from './fx.js';
 import { ShardPhysics } from './physics.js';
 import { Music } from './music.js';
-import { Game } from './gameplay.js';
+import { Game, loadChart } from './gameplay.js';
 import { P } from '../net/protocol.js';
 
 let ctx = null;
@@ -20,9 +20,16 @@ export function handleControl(msg) {
   if (msg.t === P.START) startGame({ host: ctx?.host, roomCode: ctx?.roomCode, bpm: msg.bpm });
 }
 
-export function startGame({ host, roomCode, bpm, diff }) {
+export async function startGame({ host, roomCode, bpm, diff }) {
   cleanup();
   ctx = { host, roomCode, bpm };
+
+  let chart = null;
+  try {
+    chart = await loadChart();
+  } catch (e) {
+    console.warn(e);
+  }
 
   const canvas = document.querySelector('#game-canvas');
   const app = createGameScene(canvas);
@@ -38,6 +45,7 @@ export function startGame({ host, roomCode, bpm, diff }) {
   };
 
   const game = new Game({ scene: app, music, fx, physics, popup, hud, onEnd, diff });
+  if (chart) game.setChart(chart);
   ctx.game = game;
   ctx.app = app;
   ctx.fx = fx;
