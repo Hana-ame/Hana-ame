@@ -40,9 +40,9 @@ export function initPc() {
       .catch((e) => console.error('qr failed', e));
   }
 
-  async function makeHost() {
+  async function makeHost(attempt = 0) {
     if (host) { try { host.close(); } catch { /* noop */ } }
-    setStatus('正在生成房间…');
+    setStatus(attempt > 0 ? `正在重连信令服务器 (${attempt}/3)…` : '正在生成房间…');
     try {
       host = await createHost(roomCode, handlers());
       els.devices.classList.remove('hidden');
@@ -52,11 +52,15 @@ export function initPc() {
       if (e?.type === 'unavailable-id') {
         roomCode = genRoomCode();
         refreshCodeUI();
-        await makeHost();
+        await makeHost(0);
+        return;
+      }
+      if (attempt < 3) {
+        setTimeout(() => makeHost(attempt + 1), 800);
         return;
       }
       console.error(e);
-      setStatus(`房间生成失败: ${e?.type || e?.message}`, false);
+      setStatus(`信令服务器连不上, 点「换一个」重试`, false);
     }
   }
 

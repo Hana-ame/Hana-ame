@@ -30,11 +30,24 @@
 | 症状 | 排查 |
 |------|------|
 | Mobile 列表为空 | MQTT 公共 broker 偶发慢; 直接手输房间码(PeerJS 不依赖 MQTT) |
-| 连不上/超时 | PeerJS 公共云不可达; 换网络重试; 房间码与 peerId 要一致(`beatrift-{code}`) |
-| 校准后剑不动 | 检查 motion 通道: PC DevTools 里 `__beatriftDebug.getGame().swordVisible` 是否为 true |
-| 剑晃动大/方向怪 | 重新校准; 保持手机静止 3s 期间不要抖动 |
+| 连不上/超时 | PeerJS 公共云不可达, 已自动重试; 换网络重试; 房间码与 peerId 要一致(`beatrift-{code}`) |
+| 剑方向反了/左右反 | 陀螺仪轴符号因机型而异, 调 `src/motion/sensor.js` 中 `_onDeviceMotion` 的 `w` 符号 |
+| 剑缓慢漂移 | 重力修正只修俯仰/横滚, 偏航会随时间漂移; 重新校准即可 |
 | 命中率极低 | 挥击要「快+准」, 窗口约 ±150ms; 先练习挥到位再加快 |
 | 判定太严 | 调 `src/game/gameplay.js` 的 `HIT_RADIUS` / `HIT_STEPS` |
+
+## 体感说明(2026-08 新版)
+
+- 姿态改用 **DeviceMotion `rotationRate`(陀螺仪)角速度积分**, 不再用 alpha/beta/gamma 欧拉角,
+  彻底消除旧版挥舞经过 ±90°/±180° 边界时的 180/360 翻转。
+- 低频时用加速度计做**重力修正**, 俯仰/横滚不漂移; 挥舞过程中自动暂停修正。
+- 剑身方向 = 手机**背向**(屏幕朝自己时背朝音符场), 像拿手电筒一样**指哪打哪**, 无需看手机屏幕。
+- 若设备没有 `DeviceMotion`, 自动回退到 `DeviceOrientation`。
+
+## 无敌模式
+
+`src/constants.js` 中 `GAME.INVINCIBLE = true`: 漏击不断命、不结束, 生命显示 ∞, 可无限玩。
+游戏结束面板通过 PC 屏幕右上角「退出」按钮调出。
 
 ## 性能提示
 

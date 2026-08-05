@@ -156,11 +156,11 @@ export function initMobile(params) {
     goCalibrate();
   }
 
-  async function doJoin(code) {
+  async function doJoin(code, attempt = 0) {
     code = normalizeCode(code);
     if (!code) return;
     showScreen('screen-calibrate');
-    els.calibState.textContent = '正在连接…';
+    els.calibState.textContent = attempt > 0 ? `重连中 (${attempt}/2)…` : '正在连接…';
     els.calibDo.classList.add('hidden');
     try {
       sess = await joinPeer(`${PEER_PREFIX}-${code}`, handlers());
@@ -169,6 +169,10 @@ export function initMobile(params) {
       goCalibrate();
     } catch (e) {
       console.error(e);
+      if (attempt < 2) {
+        setTimeout(() => doJoin(code, attempt + 1), 700);
+        return;
+      }
       els.calibState.textContent = `连接失败: ${e?.message || e?.type || '未知'}`;
       setTimeout(() => { showScreen('screen-mobile'); renderList(); }, 1200);
     }

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GAME } from '../constants.js';
-import { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN } from './scene.js';
+import { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN, SWORD_LOCAL_DIR } from './scene.js';
 
 const TRAVEL_STEPS = Math.round(Math.abs(GAME.NOTE_SPAWN_Z) / GAME.NOTE_SPEED * 4 * GAME.BPM / 60);
 const HIT_STEPS = 4.5;
@@ -139,7 +139,7 @@ export class Game {
 
   _swordPose() {
     const q = this.swordQuat;
-    const dir = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
+    const dir = SWORD_LOCAL_DIR.clone().applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
     const tip = SWORD_PIVOT.clone().addScaledVector(dir, SWORD_LEN);
     return { pivot: SWORD_PIVOT, dir, tip };
   }
@@ -203,8 +203,8 @@ export class Game {
   _miss(n) {
     n.dead = true;
     this.combo = 0;
-    this.lives -= 1;
     this.misses += 1;
+    if (!GAME.INVINCIBLE) this.lives -= 1;
 
     const pos = n.mesh.position.clone();
     this.scene.notePool.release(n.mesh);
@@ -215,7 +215,11 @@ export class Game {
     this.popup('MISS', 'miss');
 
     this.hud.update({ score: this.score, combo: this.combo, lives: this.lives, perfect: this.perfect, good: this.good, misses: this.misses });
-    if (this.lives <= 0) this._end();
+    if (!GAME.INVINCIBLE && this.lives <= 0) this._end();
+  }
+
+  finish() {
+    if (!this.ended) this._end();
   }
 
   _end() {

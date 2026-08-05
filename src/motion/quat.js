@@ -50,11 +50,16 @@ export const quat = {
   },
 
   fromAxisAngle(axis, angle, out = { x: 0, y: 0, z: 0, w: 1 }) {
+    const al = Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    if (al < 1e-8) return quat.identity();
+    const ax = axis.x / al;
+    const ay = axis.y / al;
+    const az = axis.z / al;
     const h = angle / 2;
     const s = Math.sin(h);
-    out.x = axis.x * s;
-    out.y = axis.y * s;
-    out.z = axis.z * s;
+    out.x = ax * s;
+    out.y = ay * s;
+    out.z = az * s;
     out.w = Math.cos(h);
     return out;
   },

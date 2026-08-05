@@ -4,6 +4,7 @@ import { GAME } from '../constants.js';
 const SWORD_PIVOT = new THREE.Vector3(0, 0.7, 1.6);
 const SWORD_LEN = 2.6;
 const TRAIL_LEN = 14;
+const SWORD_LOCAL_DIR = new THREE.Vector3(0, 0, -1);
 
 export function gridPositions() {
   const out = [];
@@ -64,7 +65,7 @@ export function createGameScene(canvas) {
     notePool,
     gridPos: gridPositions(),
     getSword() {
-      const dir = new THREE.Vector3(0, 1, 0).applyQuaternion(sword.group.quaternion);
+      const dir = SWORD_LOCAL_DIR.clone().applyQuaternion(sword.group.quaternion);
       const tip = SWORD_PIVOT.clone().addScaledVector(dir, SWORD_LEN);
       return { pivot: SWORD_PIVOT, dir, tip };
     },
@@ -213,4 +214,4 @@ function createNotePool(scene) {
   return { spawn, release, active };
 }
 
-export { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN };
+export { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN, SWORD_LOCAL_DIR };

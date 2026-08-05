@@ -27,6 +27,7 @@ export const GAME = {
   HIT_WINDOW_Z: 2.4,
   MISS_Z: 4.2,
   LIVES: 3,
+  INVINCIBLE: true,
   GRID: {
     rows: 3,
     cols: 3,

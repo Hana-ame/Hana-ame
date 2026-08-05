@@ -92,7 +92,7 @@ try {
         }
         if (best) {
           const dir = best.mesh.position.clone().sub(new (best.mesh.position.constructor)(pivot.x, pivot.y, pivot.z)).normalize();
-          const q = fromToDir({ x: 0, y: 1, z: 0 }, { x: dir.x, y: dir.y, z: dir.z });
+          const q = fromToDir({ x: 0, y: 0, z: -1 }, { x: dir.x, y: dir.y, z: dir.z });
           d.handleMotion({ q, omega: 4, hit: 4 });
           swings++;
         }

@@ -65,15 +65,21 @@ export function startGame({ host, roomCode, bpm }) {
 
   const replay = document.querySelector('#end-replay');
   const exit = document.querySelector('#end-exit');
+  const hudExit = document.querySelector('#hud-exit');
   replay.onclick = () => startGame({ host, roomCode, bpm });
   exit.onclick = () => {
     cleanup();
     window.location.hash = '/pc';
   };
+  hudExit.onclick = () => {
+    const g = ctx?.game;
+    if (g) g.finish();
+  };
 
   ctx.cleanupButtons = () => {
     replay.onclick = null;
     exit.onclick = null;
+    hudExit.onclick = null;
   };
 
   window.__beatriftDebug = {
@@ -109,7 +115,7 @@ function bindHud() {
       els.combo.textContent = combo > 0 ? `${combo} COMBO` : '0';
       els.combo.classList.remove('pop');
       if (combo > 0) void els.combo.offsetWidth, els.combo.classList.add('pop');
-      els.lives.textContent = '♥'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, GAME.LIVES - lives));
+      els.lives.textContent = GAME.INVINCIBLE ? '∞' : '♥'.repeat(Math.max(0, lives)) + '♡'.repeat(Math.max(0, GAME.LIVES - lives));
       const total = perfect + good + misses;
       els.acc.textContent = total ? `命中率 ${Math.round((perfect + good * 0.6) / total * 100)}%` : '命中率 --';
 

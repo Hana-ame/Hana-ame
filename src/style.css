@@ -190,6 +190,17 @@ html, body {
 .hud-lives { font-size: 20px; letter-spacing: 4px; color: var(--bad); text-shadow: 0 0 8px var(--bad); }
 .hud-acc { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: var(--dim); font-size: 13px; }
 
+.hud-exit {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  margin: 0;
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--dim);
+}
+
 .hud-pop {
   position: fixed;
   left: 50%;
