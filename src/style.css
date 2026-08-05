@@ -156,6 +156,10 @@ html, body {
 .calib-state { color: var(--dim); font-size: 14px; margin: 10px 0; min-height: 20px; }
 .calib-state.ready { color: var(--ok); }
 
+.diff-row { display: flex; gap: 8px; justify-content: center; margin: 6px 0 14px; }
+.diff-btn { margin-top: 0; min-width: 64px; }
+.diff-btn.active { border-color: var(--accent); color: var(--accent-3); box-shadow: 0 0 10px rgba(255, 45, 120, 0.35); }
+
 /* remote hud */
 .remote-hud { background: transparent; border: none; box-shadow: none; padding: 0; }
 .remote-status { color: var(--ok); font-size: 15px; font-weight: 600; }

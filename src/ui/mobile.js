@@ -1,5 +1,5 @@
 import { showScreen, navigate, $ } from './screens.js';
-import { normalizeCode, PEER_PREFIX, SENSOR } from '../constants.js';
+import { normalizeCode, PEER_PREFIX, SENSOR, DIFFICULTY, DEFAULT_DIFFICULTY } from '../constants.js';
 import * as discovery from '../net/discovery.js';
 import { joinPeer } from '../net/connection.js';
 import { P, encodeMotion } from '../net/protocol.js';
@@ -12,6 +12,7 @@ export function initMobile(params) {
     join: $('#mobile-join'),
     calibState: $('#calib-state'),
     calibDo: $('#calib-do'),
+    diffBtns: [...document.querySelectorAll('.diff-btn')],
     remoteStatus: $('#remote-status'),
     ping: $('#remote-ping'),
   };
@@ -22,6 +23,18 @@ export function initMobile(params) {
   let unsubscribe = null;
   let pingTimer = null;
   let calibTimer = null;
+  let diff = DEFAULT_DIFFICULTY;
+
+  function setDiff(d) {
+    diff = DIFFICULTY[d] ? d : DEFAULT_DIFFICULTY;
+    els.diffBtns.forEach((b) => b.classList.toggle('active', b.dataset.diff === diff));
+    if (sensor) {
+      const c = DIFFICULTY[diff];
+      sensor.setSwingThresholds(c.swingPeak, c.swingMin);
+    }
+  }
+  els.diffBtns.forEach((b) => b.addEventListener('click', () => setDiff(b.dataset.diff)));
+  setDiff(DEFAULT_DIFFICULTY);
 
   if (params?.get('room')) els.code.value = normalizeCode(params.get('room'));
 
@@ -110,6 +123,7 @@ export function initMobile(params) {
     if (!sensor.calibrated) {
       sensor.start((f) => onFrame(f), (s) => onSwing(s));
     }
+    setDiff(diff);
     els.calibState.textContent = '请保持手机静止… 2';
     sensor.recalibrate();
     let n = 2;
@@ -131,7 +145,7 @@ export function initMobile(params) {
 
   function enterRemote() {
     els.calibDo.onclick = null;
-    sess.sendControl({ t: P.READY });
+    sess.sendControl({ t: P.READY, diff });
     showScreen('screen-remote');
     els.remoteStatus.textContent = '已连接 · 挥舞手机!';
     startStream();

@@ -2,16 +2,6 @@ import { quat } from './quat.js';
 import { SENSOR } from '../constants.js';
 
 const DEG = Math.PI / 180;
-const WORLD_DOWN = { x: 0, y: 0, z: -1 };
-const CORRECTION_GAIN = 0.03;
-const CORRECTION_OMEGA_MAX = 1.5;
-const GRAVITY_9_8 = 9.80665;
-
-function rotateVector(q, v) {
-  const qv = { x: v.x, y: v.y, z: v.z, w: 0 };
-  const r = quat.multiply(quat.multiply(q, qv), quat.invert(q));
-  return { x: r.x, y: r.y, z: r.z };
-}
 
 function bodyDelta(omegaRad, dt) {
   const mag = Math.sqrt(omegaRad.x * omegaRad.x + omegaRad.y * omegaRad.y + omegaRad.z * omegaRad.z);
@@ -41,6 +31,8 @@ export class Sensor {
     this._gyroMode = false;
     this._prev = null;
     this._prevTs = 0;
+    this._peak = SENSOR.SWING_PEAK;
+    this._min = SENSOR.SWING_MIN;
     this._listeners = { frame: [], swing: [] };
     this._armed = false;
     this._lastSwingTs = 0;
@@ -107,23 +99,9 @@ export class Sensor {
         const dq = bodyDelta(w, dt);
         this._q = quat.normalize(quat.multiply(this._q, dq));
       }
-      if (e.accelerationIncludingGravity) this._correctGravity(e.accelerationIncludingGravity);
     }
 
     this._finalize(now, dt);
-  }
-
-  _correctGravity(g) {
-    const mag = Math.hypot(g.x, g.y, g.z);
-    if (Math.abs(mag - GRAVITY_9_8) > 3.5) return;
-    if (this.omega > CORRECTION_OMEGA_MAX) return;
-    const gm = { x: g.x / mag, y: g.y / mag, z: g.z / mag };
-    const predicted = rotateVector(quat.invert(this._q), WORLD_DOWN);
-    const corr = quat.fromToDir(gm, predicted);
-    const { angle, axis } = quat.angleAndAxis(corr);
-    if (angle < 1e-3) return;
-    const scaled = quat.fromAxisAngle(axis, angle * CORRECTION_GAIN);
-    this._q = quat.normalize(quat.multiply(this._q, scaled));
   }
 
   _finalize(now, dt) {
@@ -164,14 +142,19 @@ export class Sensor {
     this._emit('frame', { q: this.quaternion, omega: this.omega });
   }
 
+  setSwingThresholds(peak, min) {
+    this._peak = peak;
+    this._min = min;
+  }
+
   _checkSwing() {
     const now = performance.now();
     if (now - this._lastSwingTs < SENSOR.SWING_COOLDOWN_MS) return;
     if (this._armed) {
-      if (this.omega < SENSOR.SWING_MIN) {
+      if (this.omega < this._min) {
         this._armed = false;
       }
-    } else if (this.omega > SENSOR.SWING_PEAK) {
+    } else if (this.omega > this._peak) {
       this._armed = true;
       this._lastSwingTs = now;
       this._emit('swing', { omega: this.omega });
@@ -241,7 +224,7 @@ export class Sensor {
       const d = Math.sqrt(x * x + y * y + z * z);
       const dir = { x: x / d, y: y / d, z: z / d };
 
-      let q = quat.fromToDir({ x: 0, y: 0, z: -1 }, dir);
+      let q = quat.fromToDir({ x: 0, y: 1, z: 0 }, dir);
       q = quat.multiply(q, quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, Math.sin(t * 0.8) * 0.3));
 
       if (boost > 0.5) omega = SENSOR.SWING_PEAK + 2.5;

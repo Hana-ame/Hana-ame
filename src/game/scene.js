@@ -4,7 +4,7 @@ import { GAME } from '../constants.js';
 const SWORD_PIVOT = new THREE.Vector3(0, 0.7, 1.6);
 const SWORD_LEN = 2.6;
 const TRAIL_LEN = 14;
-const SWORD_LOCAL_DIR = new THREE.Vector3(0, 0, -1);
+const SWORD_LOCAL_DIR = new THREE.Vector3(0, 1, 0);
 
 export function gridPositions() {
   const out = [];

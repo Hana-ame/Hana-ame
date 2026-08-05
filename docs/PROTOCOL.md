@@ -29,7 +29,7 @@ WebRTC 单一 DataChannel(`reliable:false` → `ordered:false`)同时承载控�
 | type      | 方向         | 负载                                        | 说明                        |
 |-----------|--------------|---------------------------------------------|-----------------------------|
 | `hello`   | mobile→pc    | `v`, `role`                                 | 连接握手                    |
-| `ready`   | mobile→pc    | —                                           | 校准完成, 可开始            |
+| `ready`   | mobile→pc    | `diff` (`easy`/`normal`/`hard`)             | 校准完成 + 所选难度          |
 | `start`   | pc→mobile    | `bpm`                                       | 游戏开始                    |
 | `state`   | pc→mobile    | `score`, `combo`, `lives`                   | 实时状态(≤4 次/秒节流)      |
 | `end`     | pc→mobile    | `score`, `maxCombo`, `perfect`, `good`, `misses`, `acc` | 游戏结束统计 |

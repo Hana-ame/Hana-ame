@@ -17,6 +17,13 @@ export const SENSOR = {
   SWING_COOLDOWN_MS: 160,
 };
 
+export const DIFFICULTY = {
+  easy: { hitRadius: 1.7, hitSteps: 6.0, swingPeak: 2.0, swingMin: 0.7 },
+  normal: { hitRadius: 1.2, hitSteps: 4.5, swingPeak: 3.2, swingMin: 1.2 },
+  hard: { hitRadius: 0.85, hitSteps: 3.0, swingPeak: 4.2, swingMin: 1.6 },
+};
+export const DEFAULT_DIFFICULTY = 'easy';
+
 export const GAME = {
   BPM: 128,
   BEATS_PER_BAR: 4,

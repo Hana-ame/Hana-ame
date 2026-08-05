@@ -20,7 +20,7 @@ export function handleControl(msg) {
   if (msg.t === P.START) startGame({ host: ctx?.host, roomCode: ctx?.roomCode, bpm: msg.bpm });
 }
 
-export function startGame({ host, roomCode, bpm }) {
+export function startGame({ host, roomCode, bpm, diff }) {
   cleanup();
   ctx = { host, roomCode, bpm };
 
@@ -37,7 +37,7 @@ export function startGame({ host, roomCode, bpm }) {
     host?.sendControl({ t: P.END, ...stats });
   };
 
-  const game = new Game({ scene: app, music, fx, physics, popup, hud, onEnd });
+  const game = new Game({ scene: app, music, fx, physics, popup, hud, onEnd, diff });
   ctx.game = game;
   ctx.app = app;
   ctx.fx = fx;
@@ -66,7 +66,7 @@ export function startGame({ host, roomCode, bpm }) {
   const replay = document.querySelector('#end-replay');
   const exit = document.querySelector('#end-exit');
   const hudExit = document.querySelector('#hud-exit');
-  replay.onclick = () => startGame({ host, roomCode, bpm });
+  replay.onclick = () => startGame({ host, roomCode, bpm, diff });
   exit.onclick = () => {
     cleanup();
     window.location.hash = '/pc';

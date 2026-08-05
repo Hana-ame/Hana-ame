@@ -20,6 +20,7 @@ export function initPc() {
   let host = null;
   let cleanupAnnounce = null;
   let connected = false;
+  let diff = null;
 
   const setStatus = (text, ok) => {
     els.status.textContent = text;
@@ -74,6 +75,7 @@ export function initPc() {
       },
       onControl(msg) {
         if (msg?.t === P.PING) host?.sendControl({ t: P.PONG, ts: msg.ts });
+        if (msg?.t === P.READY && msg.diff) diff = msg.diff;
         handleControl(msg);
       },
       onMotion(frame) {
@@ -92,7 +94,7 @@ export function initPc() {
   function onStart() {
     if (!connected || !host) return;
     host.sendControl({ t: P.START, bpm: GAME.BPM });
-    startGame({ host, roomCode });
+    startGame({ host, roomCode, diff });
     showScreen('screen-game');
   }
 

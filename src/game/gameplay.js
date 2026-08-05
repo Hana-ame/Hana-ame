@@ -46,7 +46,7 @@ function distanceToSegment(p, a, b) {
 }
 
 export class Game {
-  constructor({ scene, music, fx, physics, popup, hud, onEnd }) {
+  constructor({ scene, music, fx, physics, popup, hud, onEnd, diff }) {
     this.scene = scene;
     this.music = music;
     this.fx = fx;
@@ -54,6 +54,8 @@ export class Game {
     this.popup = popup;
     this.hud = hud;
     this.onEnd = onEnd;
+    this.hitRadius = diff?.hitRadius ?? HIT_RADIUS;
+    this.hitSteps = diff?.hitSteps ?? HIT_STEPS;
 
     this.grid = scene.gridPos;
     this.chart = genChart();
@@ -156,7 +158,7 @@ export class Game {
       const z = n.mesh.position.z;
       if (z < -2.2 || z > 1.6) continue;
       const off = Math.abs(step - n.targetStep);
-      if (off > HIT_STEPS) continue;
+      if (off > this.hitSteps) continue;
       const d = distanceToSegment(n.mesh.position, pivot, tip);
       if (d < bestDist) {
         bestDist = d;
@@ -164,9 +166,9 @@ export class Game {
       }
     }
 
-    if (best && bestDist <= HIT_RADIUS) {
+    if (best && bestDist <= this.hitRadius) {
       this._hit(best, step);
-    } else if (best && bestDist <= HIT_RADIUS + 0.6) {
+    } else if (best && bestDist <= this.hitRadius + 0.6) {
       // 擦边: 仍算命中但基础分
       this._hit(best, step, true);
     }
