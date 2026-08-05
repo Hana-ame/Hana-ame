@@ -74,16 +74,18 @@ console.log('== W3C 规范示例 ==');
 
 console.log('== 仅重力(静态)解算 ==');
 {
-  const e = accelStaticEuler({ x: 0, y: 0, z: 9.8 }, 0);
-  ok('平放(0,0,9.8) -> beta=0,gamma=0', near(e.beta, 0, 1e-9) && near(e.gamma, 0, 1e-9), `β=${e.beta.toFixed(2)} γ=${e.gamma.toFixed(2)}`);
-  const e2 = accelStaticEuler({ x: 0, y: 9.8, z: 0 }, 0);
-  ok('竖立(0,9.8,0) -> beta=90', near(e2.beta, 90, 1e-6), `β=${e2.beta.toFixed(2)}`);
+  const e = accelStaticEuler({ x: 0, y: 0, z: -9.8 }, 0);
+  ok('平放屏上(0,0,-9.8) -> beta=0,gamma=0', near(e.beta, 0, 1e-9) && near(e.gamma, 0, 1e-9), `β=${e.beta.toFixed(2)} γ=${e.gamma.toFixed(2)}`);
+  const e1b = accelStaticEuler({ x: 0, y: 0, z: 9.8 }, 0);
+  ok('平放屏下(0,0,9.8) -> beta=0,gamma=±180', near(e1b.beta, 0, 1e-9) && near(Math.abs(e1b.gamma), 180, 1e-6), `β=${e1b.beta.toFixed(2)} γ=${e1b.gamma.toFixed(2)}`);
+  const e2 = accelStaticEuler({ x: 0, y: -9.8, z: 0 }, 0);
+  ok('竖立顶朝上(0,-9.8,0) -> beta=90', near(e2.beta, 90, 1e-6), `β=${e2.beta.toFixed(2)}`);
   const e3 = accelStaticEuler({
-    x: -9.8 * Math.cos(45 * DEG) * Math.sin(30 * DEG),
-    y: 9.8 * Math.sin(45 * DEG),
-    z: 9.8 * Math.cos(45 * DEG) * Math.cos(30 * DEG),
+    x: 9.8 * Math.cos(45 * DEG) * Math.sin(30 * DEG),
+    y: -9.8 * Math.sin(45 * DEG),
+    z: -9.8 * Math.cos(45 * DEG) * Math.cos(30 * DEG),
   }, 0);
-  ok('gamma=30,beta=45 读回一致', near(e3.beta, 45, 1e-6) && near(e3.gamma, 30, 1e-6), `β=${e3.beta.toFixed(2)} γ=${e3.gamma.toFixed(2)}`);
+  ok('beta=45,gamma=30 读回一致', near(e3.beta, 45, 1e-6) && near(e3.gamma, 30, 1e-6), `β=${e3.beta.toFixed(2)} γ=${e3.gamma.toFixed(2)}`);
 }
 
 // 自适应增益 (与 PC 端一致): 静止时大 Kp 快速收敛 + Ki 消零偏; 运动时降低, 避免线性加速度污染

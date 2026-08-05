@@ -161,13 +161,38 @@ export function upInDevice(q) {
   return qRotate(inv, up);
 }
 
+// 最短弧旋转: 从 from 单位向量转到 to 单位向量的四元数
+export function shortestArc(from, to) {
+  const f = normalize3(from), t = normalize3(to);
+  const d = f.x * t.x + f.y * t.y + f.z * t.z;
+  if (d > 1 - 1e-10) return { x: 0, y: 0, z: 0, w: 1 };
+  if (d < -1 + 1e-10) {
+    const ax = Math.abs(f.x) < 0.9 ? { x: 1, y: 0, z: 0 } : { x: 0, y: 1, z: 0 };
+    const c = normalize3({
+      x: f.y * ax.z - f.z * ax.y,
+      y: f.z * ax.x - f.x * ax.z,
+      z: f.x * ax.y - f.y * ax.x,
+    });
+    return { x: c.x, y: c.y, z: c.z, w: 0 };
+  }
+  const s = Math.sqrt((1 + d) * 2);
+  const v = {
+    x: (f.y * t.z - f.z * t.y) / s,
+    y: (f.z * t.x - f.x * t.z) / s,
+    z: (f.x * t.y - f.y * t.x) / s,
+  };
+  return qNormalize({ x: v.x, y: v.y, z: v.z, w: s / 2 });
+}
+
 // ---------- 仅重力(静态)解算 ----------
-// 静止/慢速时由加速度计读数直接估计俯仰角 beta 与横滚角 gamma; 偏航 alpha 不可观测(需罗盘)
+// 静止/慢速时由加速度计读数直接估计俯仰角 beta 与横滚角 gamma; 偏航 alpha 不可观测(需罗盘)。
+// 原理: 加速度计(含重力)测的是"上"方向, 先由最短弧转到世界+Z, 解出 beta/gamma。
+// 注意旧实现 gamma=atan2(-a.x,a.z) 在屏幕水平(平放)时会把平放屏上/屏下颠倒, 已废弃。
 export function accelStaticEuler(accel, alphaHint) {
   const a = normalize3(accel);
-  const beta = Math.asin(Math.max(-1, Math.min(1, a.y))) / DEG;
-  const gamma = Math.atan2(-a.x, a.z) / DEG;
-  return { alpha: alphaHint ?? 0, beta, gamma };
+  const u = { x: -a.x, y: -a.y, z: -a.z };   // 世界"上"在设备系中的方向
+  const e = eulerFromQuat(shortestArc(u, { x: 0, y: 0, z: 1 }));
+  return { alpha: alphaHint ?? 0, beta: e.beta, gamma: e.gamma };
 }
 
 export function quatFromAccel(accel, alphaHint) {
