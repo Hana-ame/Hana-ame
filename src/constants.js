@@ -1,5 +1,3 @@
-export const APP_BASE = '/webrtc/';
-
 export const MQTT = {
   URL: 'wss://broker.hivemq.com:8884/mqtt',
   ROOM_TOPIC: 'beatrift/rooms',

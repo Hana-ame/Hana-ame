@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 
-const BASE = process.env.E2E_BASE || 'http://localhost:5173/webrtc/';
+const BASE = process.env.E2E_BASE || 'http://localhost:5173/';
 const results = [];
 const ok = (label, cond, detail = '') => {
   results.push({ label, cond });
