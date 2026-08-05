@@ -5,7 +5,7 @@ import { createHost } from '../net/connection.js';
 import { P } from '../net/protocol.js';
 import { buildJoinUrl } from '../net/joinUrl.js';
 import QRCode from 'qrcode';
-import { startGame } from '../game/index.js';
+import { startGame, handleMotion, handleControl } from '../game/index.js';
 
 export function initPc() {
   const els = {
@@ -71,8 +71,11 @@ export function initPc() {
       onControl(msg) {
         if (msg?.t === P.PING) host?.sendControl({ t: P.PONG, ts: msg.ts });
         if (msg?.t === P.READY) console.info('[pc] mobile ready');
+        handleControl(msg);
       },
-      onMotion() { /* consumed by game later */ },
+      onMotion(frame) {
+        handleMotion(frame);
+      },
       onClose() {
         connected = false;
         els.start.disabled = true;
