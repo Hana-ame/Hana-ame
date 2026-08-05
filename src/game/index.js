@@ -6,6 +6,7 @@ import { ShardPhysics } from './physics.js';
 import { Music } from './music.js';
 import { Game, loadChart } from './gameplay.js';
 import { P } from '../net/protocol.js';
+import { showScreen } from '../ui/screens.js';
 
 let ctx = null;
 
@@ -77,7 +78,7 @@ export async function startGame({ host, roomCode, bpm, diff }) {
   replay.onclick = () => startGame({ host, roomCode, bpm, diff });
   exit.onclick = () => {
     cleanup();
-    window.location.hash = '/pc';
+    showScreen('screen-pc');
   };
   hudExit.onclick = () => {
     const g = ctx?.game;
