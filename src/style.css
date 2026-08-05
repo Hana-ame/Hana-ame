@@ -136,9 +136,10 @@ html, body {
 .device-list { min-height: 60px; }
 .mobile-empty { color: var(--dim); font-size: 14px; padding: 20px 0; }
 .or-row { color: var(--dim); font-size: 13px; margin: 16px 0 12px; position: relative; }
-.manual-join { display: flex; gap: 10px; }
+.manual-join { display: flex; gap: 10px; align-items: stretch; }
 .code-input {
   flex: 1;
+  min-width: 0;
   background: var(--panel-2);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
@@ -150,6 +151,7 @@ html, body {
   text-transform: uppercase;
   font-family: 'Courier New', monospace;
 }
+.manual-join .btn { flex-shrink: 0; white-space: nowrap; }
 .code-input:focus { outline: none; border-color: var(--accent); }
 
 /* calibrate */
