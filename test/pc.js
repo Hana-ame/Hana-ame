@@ -32,7 +32,6 @@ export function initPc() {
     newcode: $('#pc-newcode'),
     reset: $('#pc-reset'),
     fusionNote: $('#pc-fusion-note'),
-    northcal: $('#pc-northcal'),
     yawflip: $('#pc-yawflip'),
     oa: $('#s-oa'), ob: $('#s-ob'), og: $('#s-og'), oabs: $('#s-oabs'),
     ax: $('#s-ax'), ay: $('#s-ay'), az: $('#s-az'), amag: $('#s-amag'),
@@ -57,7 +56,6 @@ export function initPc() {
 
   // ---- 解算选项 ----
   let yawFlip = false;    // 反转偏航方向 (个别设备 alpha 方向与 W3C 相反)
-  let northCal = true;    // 连续北向校准: 用罗盘航向修正融合解偏航漂移
   const useAlpha = (a) => (yawFlip ? wrapDeg(-a) : a);
 
   // ---- 解算状态 ----
@@ -66,7 +64,6 @@ export function initPc() {
   let inited = false;
   let lastRecv = 0;
   let gainsNow = { kp: 0.8, ki: 0.2 };
-  let yawErrNow = 0;
 
   function reinit() {
     if (!lastQ) return;
@@ -141,13 +138,6 @@ export function initPc() {
     mah.update(dt, gyrRad, aig);
     gyroInt.update(dt, gyrRad);
 
-    // 连续北向校准: 融合解偏航会漂移, 用罗盘绝对航向(deviceorientationabsolute)修正。
-    // 仅当按到绝对朝向 (o.abs) 时才启用, 否则 alpha 是相对值, 校准会错误。
-    if (northCal && o.abs && Number.isFinite(alpha)) {
-      const calm = gainsNow.ki > 0;   // 静止时给更强权重
-      yawErrNow = mah.correctYaw(alpha, { kp: calm ? 0.5 : 0.25, ki: calm ? 0.05 : 0.01 });
-    }
-
     const sols = {
       device: { q: lastQ },
       fuse: { q: mah.q },
@@ -164,7 +154,7 @@ export function initPc() {
     const still = gainsNow.ki > 0;
     els.fusionNote.textContent = inited
       ? `状态: ${still ? '静止 → 快速收敛(Kp 0.8, Ki 0.2, 积分消零偏)' : '运动 → 低增益跟手(Kp 0.15, 防线性加速度污染)'} · `
-        + `北向校准${northCal ? (o.abs ? `开(Δα ${fmt(yawErrNow)} · 罗盘)` : '开(等待绝对朝向…)') : '关(偏航会漂移)'} · 偏航${yawFlip ? '反转' : '正常'}`
+        + `偏航${yawFlip ? '反转' : '正常'}`
       : '等待有效帧…';
 
     // 曲线
@@ -180,7 +170,7 @@ export function initPc() {
     els.frames.textContent = frames;
 
     window.__attitudeTest = {
-      frames, inited, src: srcNow, yawFlip, northCal, yawErrNow,
+      frames, inited, src: srcNow, yawFlip,
       device: sols.device.e, fuse: sols.fuse.e, gyro: sols.gyro.e, accel: sols.accel.e,
       gains: gainsNow,
     };
@@ -376,12 +366,6 @@ export function initPc() {
     makeHost();
   });
   els.reset.addEventListener('click', reinit);
-  els.northcal.addEventListener('change', () => {
-    northCal = els.northcal.checked;
-    if (!northCal) {
-      mah.yawInt = 0;
-    }
-  });
   els.yawflip.addEventListener('change', () => {
     yawFlip = els.yawflip.checked;
     // 切换偏航方向后重算基准, 避免融合解和系统解方向不一致
