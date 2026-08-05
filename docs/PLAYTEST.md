@@ -31,7 +31,7 @@
 |------|------|
 | Mobile 列表为空 | MQTT 公共 broker 偶发慢; 直接手输房间码(PeerJS 不依赖 MQTT) |
 | 连不上/超时 | PeerJS 公共云不可达, 已自动重试; 换网络重试; 房间码与 peerId 要一致(`beatrift-{code}`) |
-| 剑方向反了/左右反 | 轴符号因机型而异, 调 `src/motion/sensor.js` 中 `_onDeviceMotion` 的陀螺仪/加速度计符号 |
+| 剑方向反了/左右反 | 轴符号因机型而异, 调 `src/motion/sensor.js` 中 `_onMotion` 的陀螺仪/加速度计符号 |
 | 剑缓慢漂移 | Mahony 融合偏航参考重力方向, 时间久了会缓慢漂移; 重新校准即可 |
 | 命中率极低 | 挥击要「快+准」, 窗口约 ±150ms; 先练习挥到位再加快 |
 | 判定太严 | 调 `src/constants.js` 的 `DIFFICULTY`(`hitRadius` / `hitSteps`) |
