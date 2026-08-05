@@ -143,26 +143,16 @@ export class Sensor {
     let t = 0;
     let lastSwing = 0;
     let boost = 0;
-    // 校准期间(calibrated=false)保持中性姿态(beta=90,gamma=0), 模拟玩家稳定持握对准屏幕中心
-    let holdUntil = 0;
+    // 校准期间(calibrated=false)保持中性姿态(beta=90,gamma=0), 模拟玩家稳定持握对准屏幕中心。
+    // 由 sensor.calibrate() 在采样完成后置 true 恢复挥舞, 故这里不自行计时翻转。
     this._simTimer = setInterval(() => {
       t += 0.016;
       const now = performance.now();
       let gamma, beta, omega;
       if (!this.calibrated) {
-        // 模拟玩家对准屏幕中心保持 2.5s
-        if (holdUntil === 0) holdUntil = now + 2500;
-        if (now < holdUntil) {
-          gamma = 0;
-          beta = 90;
-          omega = 0.3;
-        } else {
-          this.calibrated = true;
-          holdUntil = 0;
-          gamma = 0;
-          beta = 90;
-          omega = 0.3;
-        }
+        gamma = 0;
+        beta = 90;
+        omega = 0.3;
       } else {
         gamma = Math.sin(t * 1.2) * 55;
         beta = Math.sin(t * 0.7) * 45 + 90;

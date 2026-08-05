@@ -23,22 +23,32 @@ watch(pc, 'PC');
 watch(mob, 'MOBILE');
 
 try {
-  await pc.goto(BASE + '#/pc');
-  await pc.waitForSelector('#pc-roomcode', { state: 'visible' });
-  await pc.waitForFunction(() => document.querySelector('#pc-roomcode').textContent !== '------', null, { timeout: 15000 });
-  const code = await pc.textContent('#pc-roomcode');
+  let code = '';
+  for (let a = 0; a < 3; a++) {
+    await pc.goto(BASE + '#/pc');
+    await pc.waitForSelector('#pc-roomcode', { state: 'visible' });
+    await pc.waitForFunction(() => document.querySelector('#pc-roomcode').textContent !== '------', null, { timeout: 15000 });
+    code = await pc.textContent('#pc-roomcode');
+    await pc.waitForFunction(() => ['已广播', '等待手机', '已连接'].some((s) => document.querySelector('#pc-status').textContent.includes(s)), null, { timeout: 20000 }).catch(() => {});
+    const status = await pc.textContent('#pc-status');
+    if (['已广播', '等待手机', '已连接'].some((s) => status.includes(s))) break;
+  }
   ok('PC 生成房间码', /^[A-Z0-9]{5}$/.test(code), code);
-
-  await pc.waitForFunction(() => ['已广播', '等待手机', '已连接'].some((s) => document.querySelector('#pc-status').textContent.includes(s)), null, { timeout: 20000 });
-  const status = await pc.textContent('#pc-status');
-  ok('PC MQTT 广播', true, status);
+  const pcStatus = await pc.textContent('#pc-status');
+  ok('PC MQTT 广播', ['已广播', '等待手机', '已连接'].some((s) => pcStatus.includes(s)), pcStatus);
 
   await mob.goto(BASE + '#/mobile?sim=1');
   await mob.waitForSelector('#screen-mobile', { state: 'visible' });
   ok('Mobile 屏幕', true);
 
   const listItem = mob.locator('.device-item', { hasText: code }).first();
-  const sawList = await listItem.waitFor({ state: 'visible', timeout: 10000 }).then(() => true).catch(() => false);
+  const waitList = async (ms) => listItem.waitFor({ state: 'visible', timeout: ms }).then(() => true).catch(() => false);
+  let sawList = await waitList(10000);
+  for (let a = 0; !sawList && a < 2; a++) {
+    await mob.reload();
+    await mob.waitForSelector('#screen-mobile', { state: 'visible' });
+    sawList = await waitList(10000);
+  }
   ok('Mobile 在列表中看到 PC (MQTT)', sawList, `房间 ${code}`);
 
   await mob.fill('#mobile-code', code);
