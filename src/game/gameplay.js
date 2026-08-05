@@ -4,7 +4,7 @@ import { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN } from './scene.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 
-const TRAVEL_STEPS = Math.round(Math.abs(GAME.NOTE_SPAWN_Z) / GAME.NOTE_SPEED * 4 * GAME.BPM / 60);
+const TRAVEL_STEPS = Math.round(Math.abs(GAME.NOTE_SPAWN_Y) / GAME.NOTE_SPEED * 4 * GAME.BPM / 60);
 const HIT_STEPS = 4.5;
 const PERFECT_STEPS = 2;
 const MISS_STEPS = 6;
@@ -13,7 +13,7 @@ const HIT_RADIUS = 1.2;
 const COLORS = [0x4de3ff, 0xff2d78, 0xffd166, 0xb06dff, 0x3ddc84, 0xff8a3d, 0x66b3ff, 0xff5c8a, 0x9af0c0];
 
 // 谱面: JSON 数组 { beat, x, y }, beat 为该音符到达判定平面的拍数,
-// x/y 为判定平面上(世界系)的连续坐标。可手写, 见 charts/*.json。
+// x 为判定平面上的水平坐标, y 为竖直坐标 (世界系 z-up, 平面在 y=NOTE_PLANE_Y)。
 export async function loadChart(name = 'default') {
   const res = await fetch(`/charts/${name}.json`);
   if (!res.ok) throw new Error(`谱面加载失败: charts/${name}.json (${res.status})`);
@@ -21,7 +21,7 @@ export async function loadChart(name = 'default') {
   return raw.map((n) => ({
     beat: n.beat,
     step: n.beat * 4,
-    pos: new THREE.Vector3(n.x, n.y, GAME.NOTE_PLANE_Z),
+    pos: new THREE.Vector3(n.x, GAME.NOTE_PLANE_Y, n.y),
     color: n.color ?? pickColor(n.x),
   }));
 }
@@ -47,7 +47,7 @@ export class Game {
     this.notes = [];
     this.spawnCursor = 0;
 
-    this.swordDir = { x: 0, y: 1, z: 0 };
+    this.swordDir = { x: 0, y: 0, z: 1 };
     this.swordVisible = false;
 
     this.score = 0;
@@ -88,7 +88,7 @@ export class Game {
     for (const n of this.notes) {
       if (n.dead) continue;
       const p = (step - n.targetStep + TRAVEL_STEPS) / TRAVEL_STEPS;
-      n.mesh.position.z = GAME.NOTE_SPAWN_Z * (1 - Math.min(p, 1.4));
+      n.mesh.position.y = GAME.NOTE_SPAWN_Y + (GAME.NOTE_PLANE_Y - GAME.NOTE_SPAWN_Y) * Math.min(p, 1.4);
       n.mesh.rotation.y += dt * 2.4;
       n.mesh.rotation.x += dt * 1.6;
       if (p > 1 + MISS_STEPS / TRAVEL_STEPS) this._missLater.push(n);
@@ -101,7 +101,7 @@ export class Game {
 
   _spawnNote(chartNote, _step) {
     const mesh = this.scene.notePool.spawn(chartNote.pos.clone(), chartNote.color);
-    mesh.position.z = GAME.NOTE_SPAWN_Z;
+    mesh.position.y = GAME.NOTE_SPAWN_Y;
     this.notes.push({
       targetStep: chartNote.step,
       pos: chartNote.pos.clone(),
@@ -150,12 +150,12 @@ export class Game {
     let bestDist = Infinity;
     for (const n of this.notes) {
       if (n.dead) continue;
-      const z = n.mesh.position.z;
-      if (z < -2.2 || z > 1.6) continue;
+      const y = n.mesh.position.y;
+      if (y < GAME.NOTE_PLANE_Y - 2.2 || y > GAME.NOTE_PLANE_Y + 1.6) continue;
       const off = Math.abs(step - n.targetStep);
       if (off > this.hitSteps) continue;
-      // 屏幕平面距离: 剑尖投影到判定平面(z=0) 与音符的平面距离
-      const d = Math.hypot(tip.x - n.pos.x, tip.y - n.pos.y);
+      // 屏幕平面距离: 剑尖投影到判定平面(y=NOTE_PLANE_Y) 与音符的平面距离
+      const d = Math.hypot(tip.x - n.pos.x, tip.z - n.pos.z);
       if (d < bestDist) {
         bestDist = d;
         best = n;

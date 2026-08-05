@@ -1,7 +1,38 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
+import { readFileSync, writeFileSync } from 'node:fs';
+
+const versionUrl = new URL('./src/version.js', import.meta.url);
+function writeVersion() {
+  let commit = 'unknown';
+  try {
+    commit = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+  } catch { /* not a git checkout */ }
+  let dirty = '';
+  try {
+    dirty = execSync('git status --porcelain', { encoding: 'utf8' }).trim() ? '+' : '';
+  } catch { /* ignore */ }
+  const app = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
+  const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  writeFileSync(
+    versionUrl,
+    `// auto-generated (vite) — do not edit\n` +
+    `export const VERSION = { app: '${app}', commit: '${commit}${dirty}', built: '${stamp}' };\n` +
+    `export const VERSION_STR = \`v\${VERSION.app} (\${VERSION.commit}) \${VERSION.built}\`;\n`,
+  );
+}
+
+function versionPlugin() {
+  return {
+    name: 'generate-version',
+    configResolved() { writeVersion(); },
+    buildStart() { writeVersion(); },
+  };
+}
 
 export default defineConfig({
+  plugins: [versionPlugin()],
   server: {
     host: true,
     port: 5173,

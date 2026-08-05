@@ -1,6 +1,7 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const SWORD_PIVOT = new THREE.Vector3(0, 0.7, 1.6);
+const SWORD_PIVOT = new THREE.Vector3(0, 0.5, 1.4);
 const SWORD_LEN = 2.6;
 const TRAIL_LEN = 14;
 
@@ -12,10 +13,20 @@ export function createGameScene(canvas) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0a16);
   scene.fog = new THREE.Fog(0x0a0a16, 18, 55);
+  scene.up.set(0, 0, 1);
 
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
-  camera.position.set(0, 0.5, 7);
-  camera.lookAt(0, 0.8, -6);
+  camera.up.set(0, 0, 1);
+  camera.position.set(0, 5.6, 1.4);
+  camera.lookAt(0, 0.5, 1.4);
+
+  const debugCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+  debugCamera.up.set(0, 0, 1);
+  const debugControls = new OrbitControls(debugCamera, renderer.domElement);
+  debugControls.target.set(0, -0.5, 1.4);
+  debugCamera.position.set(9, 4, 7);
+  debugControls.enabled = false;
+  debugControls.update();
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const key = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -37,6 +48,8 @@ export function createGameScene(canvas) {
   function onResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
+    debugCamera.aspect = window.innerWidth / window.innerHeight;
+    debugCamera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
@@ -44,6 +57,8 @@ export function createGameScene(canvas) {
     scene,
     camera,
     renderer,
+    debugCamera,
+    debugControls,
     sword,
     trail,
     notePool,
@@ -66,8 +81,8 @@ function addStars(scene) {
   const arr = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     arr[i * 3] = (Math.random() - 0.5) * 120;
-    arr[i * 3 + 1] = (Math.random() - 0.5) * 60;
-    arr[i * 3 + 2] = -5 - Math.random() * 80;
+    arr[i * 3 + 1] = -5 - Math.random() * 80;
+    arr[i * 3 + 2] = (Math.random() - 0.5) * 50 + 15;
   }
   geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
   scene.add(new THREE.Points(geo, new THREE.PointsMaterial({
@@ -81,16 +96,16 @@ function addGridMarkers(scene) {
   });
   const ringGeo = new THREE.RingGeometry(0.55, 0.72, 32);
   const marks = [];
-  for (let x = -2; x <= 2; x += 2) {
-    for (let y = 0.6; y <= 2.6; y += 1) {
-      marks.push(new THREE.Vector3(x, y, 0));
+  for (const x of [-1.2, 1.2]) {
+    for (const z of [1.0, 2.0]) {
+      marks.push(new THREE.Vector3(x, -2.7, z));
     }
   }
   for (const p of marks) {
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = -Math.PI / 2;
     ring.position.copy(p);
-    ring.position.z = 0.02;
+    ring.position.y = -2.68;
     scene.add(ring);
   }
 }

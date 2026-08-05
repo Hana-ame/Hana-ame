@@ -259,6 +259,23 @@ html, body {
 .hud-pop.fade { opacity: 0; transform: translate(-50%, -80%) scale(1.4); }
 .hud-pop.hidden { display: none; }
 
+.debugcam-badge {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 20;
+  padding: 6px 10px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #ffd166;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 209, 102, 0.4);
+  border-radius: 6px;
+  pointer-events: none;
+  font-family: monospace;
+}
+.debugcam-badge.hidden { display: none; }
+
 /* overlays */
 .overlay {
   position: fixed;

@@ -3,9 +3,9 @@
 // 记录手机前方(屏幕法线)方向为基准 ref, 之后:
 //   实时 forward 相对 ref 的偏移 screenRel -> 屏幕平面连续坐标 (u,v),
 //   放大 GAIN 倍填满摆动范围 (替代旧 3x3 表的自适应增益),
-//   光剑方向保持在屏幕平面内 (dir.z=0): 中性位竖直向上,
-//     u 控制左右倾斜, v 控制上下摆动。
-// 剑尖始终平行屏幕(相机可见剑刃全长), 判定用 tip.x/tip.y, 与 z 无关。
+//   光剑方向保持在屏幕平面内 (dir.y=0, 世界系 z-up, 屏幕平面为垂直 XZ 面):
+//     中性位竖直向上 (+Z), u 控制左右倾斜, v 控制上下摆动。
+// 剑尖始终平行屏幕(相机可见剑刃全长), 判定用 tip.x/tip.z, 与 y 无关。
 // 全程连续, 无网格量化; 提示: 光剑前方 = 手机前端。
 //
 // 方向符号: screenRel 的 onScreen.x 定义为 right 轴分量, right=cross(n,up)。
@@ -38,13 +38,13 @@ export class Calib {
     return !!this.refForward;
   }
 
-  // 屏幕平面连续坐标 (u,v) -> 光剑方向 (保持在屏幕平面内, 中性位竖直向上)
+  // 屏幕平面连续坐标 (u,v) -> 光剑方向 (保持在屏幕平面内, 中性位竖直向上 +Z)
   dir(u, v) {
     const cu = Math.max(-1, Math.min(1, -u * GAIN));
     const cv = Math.max(-1, Math.min(1, v * GAIN));
     const bx = Math.sin(cu * MAX_U);
-    const by = Math.cos((1 - cv) * MAX_V);
-    const len = Math.sqrt(bx * bx + by * by) || 1;
-    return { x: bx / len, y: by / len, z: 0 };
+    const bz = Math.cos((1 - cv) * MAX_V);
+    const len = Math.sqrt(bx * bx + bz * bz) || 1;
+    return { x: bx / len, y: 0, z: bz / len };
   }
 }

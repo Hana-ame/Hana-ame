@@ -6,31 +6,31 @@ const SHARD_FADE = 3.0;
 
 export class ShardPhysics {
   constructor() {
-    this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, -14, 0) });
+    this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, -14) });
     this.world.allowSleep = true;
 
     const mat = new CANNON.Material({ friction: 0.3, restitution: 0.45 });
     const ground = new CANNON.Body({
       type: CANNON.Body.STATIC,
       shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, -2.6, 0),
+      position: new CANNON.Vec3(0, 0, -2.6),
     });
     const ceil = new CANNON.Body({
       type: CANNON.Body.STATIC,
       shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, 6.2, 0),
+      position: new CANNON.Vec3(0, 0, 6.2),
       quaternion: new CANNON.Quaternion().setFromEuler(Math.PI, 0, 0),
     });
     const back = new CANNON.Body({
       type: CANNON.Body.STATIC,
       shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, 0, -7),
+      position: new CANNON.Vec3(0, -7, 0),
       quaternion: new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0),
     });
     const front = new CANNON.Body({
       type: CANNON.Body.STATIC,
       shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, 0, 5),
+      position: new CANNON.Vec3(0, 5, 0),
       quaternion: new CANNON.Quaternion().setFromEuler(Math.PI / 2, 0, 0),
     });
     for (const b of [ground, ceil, back, front]) {
@@ -59,8 +59,8 @@ export class ShardPhysics {
       body.angularDamping = 0.2;
       const v = new CANNON.Vec3(
         impulse.x * (4 + Math.random() * 5) + (Math.random() - 0.5) * 3,
-        impulse.y * (4 + Math.random() * 5) + 2 + Math.random() * 4,
-        impulse.z * (4 + Math.random() * 5) + (Math.random() - 0.5) * 3,
+        impulse.y * (4 + Math.random() * 5) + (Math.random() - 0.5) * 3,
+        impulse.z * (4 + Math.random() * 5) + 2 + Math.random() * 4,
       );
       body.velocity.set(v.x, v.y, v.z);
       body.angularVelocity.set(
@@ -104,7 +104,7 @@ export class ShardPhysics {
       s.mesh.quaternion.copy(s.body.quaternion);
       const alpha = Math.min(1, s.life / 0.8);
       s.mesh.material.opacity = alpha;
-      if (s.life <= 0 || s.body.position.y < -3.5) {
+      if (s.life <= 0 || s.body.position.z < -3.5) {
         scene.remove(s.mesh);
         s.mesh.material.dispose();
         this.world.removeBody(s.body);

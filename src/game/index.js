@@ -40,6 +40,22 @@ export async function startGame({ host, roomCode, bpm, diff }) {
   const hud = bindHud();
   const popup = bindPopup();
 
+  let debugCameraOn = false;
+  const toggleDebugCamera = (on = !debugCameraOn) => {
+    debugCameraOn = on;
+    app.debugControls.enabled = on;
+    if (on) app.debugControls.update();
+    const badge = document.querySelector('#debugcam-badge');
+    if (badge) badge.classList.toggle('hidden', !on);
+  };
+  const onKey = (e) => {
+    if (e.code !== 'KeyC' || e.metaKey || e.ctrlKey || e.altKey) return;
+    toggleDebugCamera();
+    e.preventDefault();
+  };
+  window.addEventListener('keydown', onKey);
+  ctx.removeKey = onKey;
+
   const onEnd = (stats) => {
     hud.showEnd(stats);
     host?.sendControl({ t: P.END, ...stats });
@@ -67,7 +83,8 @@ export async function startGame({ host, roomCode, bpm, diff }) {
     physics.update(dt, app.scene);
     fx.update(dt);
     game.update(dt);
-    app.renderer.render(app.scene, app.camera);
+    if (debugCameraOn) app.debugControls.update();
+    app.renderer.render(app.scene, debugCameraOn ? app.debugCamera : app.camera);
   };
   ctx.raf = raf;
   loop();
@@ -95,18 +112,21 @@ export async function startGame({ host, roomCode, bpm, diff }) {
     getGame: () => ctx?.game,
     getMusic: () => ctx?.music,
     handleMotion,
+    toggleDebugCamera: (on) => toggleDebugCamera(on),
   };
 }
 
 export function cleanup() {
   if (!ctx) return;
   cancelAnimationFrame(ctx.raf);
+  window.removeEventListener('keydown', ctx.removeKey);
   ctx.game?.notes?.forEach?.((n) => ctx.app?.notePool?.release?.(n.mesh));
   ctx.physics?.dispose?.(ctx.app?.scene);
   ctx.app?.dispose?.();
   ctx.music?.stop?.();
   ctx.cleanupButtons?.();
   document.querySelector('#hud')?.classList.add('hidden');
+  document.querySelector('#debugcam-badge')?.classList.add('hidden');
   ctx = null;
 }
 

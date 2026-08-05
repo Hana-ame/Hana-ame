@@ -112,11 +112,11 @@ export function initPc() {
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 50);
   camera.up.set(0, 0, 1);
-  camera.position.set(2.6, -1.6, 1.7);
-  camera.lookAt(0, 0.5, -0.4);
+  camera.position.set(0, 3.6, 1.4); // 屏幕→光剑延长线上, 剑后方, 看向屏幕
+  camera.lookAt(0, -1.2, 1.4);
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 0.5, -0.4);
+  controls.target.set(0, -1.2, 1.4);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
 
@@ -132,8 +132,89 @@ export function initPc() {
   grid.rotation.x = Math.PI / 2;
   scene.add(grid);
 
-  // 重力箭头
-  scene.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), new THREE.Vector3(-0.95, 0.95, 0.55), 0.55, 0x8899aa, 0.14, 0.08));
+  // ---- 几何常量: 屏幕(圆环)与内部方向 ----
+  const INTO = new THREE.Vector3(0, -1, 0);       // 屏幕内部方向 (剑尖应指向它, 水平, 与重力垂直)
+  const RING_POS = new THREE.Vector3(0, -2.7, 1.4); // 屏幕中心 (剑正前方, 水平)
+
+  // ---- 辅助: 文字标签精灵 ----
+  function makeLabel(text, color = '#ffffff', size = 0.32) {
+    const cv = document.createElement('canvas');
+    const dpr = 2;
+    const fw = 36 * text.length + 40;
+    cv.width = fw * dpr;
+    cv.height = 48 * dpr;
+    const ctx = cv.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.font = 'bold 30px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.strokeText(text, cv.width / dpr / 2, 24);
+    ctx.fillStyle = color;
+    ctx.fillText(text, cv.width / dpr / 2, 24);
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false }));
+    sp.scale.set(size * (text.length * 0.6 + 0.7), size, 1);
+    return sp;
+  }
+  function labelAt(text, color, pos, size) {
+    const sp = makeLabel(text, color, size);
+    sp.position.copy(pos);
+    scene.add(sp);
+    return sp;
+  }
+
+  // ---- 世界坐标轴 (X 红, Y 绿, Z 蓝), 原点在剑与屏幕之间 ----
+  const AXIS_ORIGIN = new THREE.Vector3(0, -1.0, 1.4);
+  const AXIS_LEN = 0.8;
+  const axisDefs = [
+    [0xff5555, new THREE.Vector3(1, 0, 0), 'X'],
+    [0x55ff88, new THREE.Vector3(0, 1, 0), 'Y'],
+    [0x55aaff, new THREE.Vector3(0, 0, 1), 'Z'],
+  ];
+  for (const [color, dir, name] of axisDefs) {
+    scene.add(new THREE.ArrowHelper(dir.clone(), AXIS_ORIGIN, AXIS_LEN, color, 0.14, 0.07));
+    labelAt(name, `#${color.toString(16).padStart(6, '0')}`, AXIS_ORIGIN.clone().add(dir.clone().multiplyScalar(AXIS_LEN + 0.18)), 0.28);
+  }
+
+  // ---- 方向标注 ----
+  const gravTip = new THREE.Vector3(1.5, -1.0, 0.6);
+  scene.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), new THREE.Vector3(1.5, -1.0, 0.9), 0.55, 0x8899aa, 0.14, 0.08));
+  labelAt('重力 g ↓', '#8899aa', gravTip, 0.3);
+  const normTip = new THREE.Vector3(0, -3.45, 1.4);
+  scene.add(new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), RING_POS, 0.7, 0xffd166, 0.16, 0.09));
+  labelAt('屏幕内 INTO', '#ffd166', normTip, 0.3);
+  const upTip = new THREE.Vector3(0, -2.7, 2.1);
+  scene.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), RING_POS, 0.55, 0xffffff, 0.12, 0.07));
+  labelAt('屏幕上', '#ffffff', upTip, 0.28);
+
+  // ---- 相机位置标注 (透视) ----
+  const camAnchor = new THREE.Group();
+  scene.add(camAnchor);
+  const camPos = new THREE.Vector3(0, 3.6, 1.4);
+  camAnchor.position.copy(camPos);
+  const camBody = new THREE.Mesh(
+    new THREE.BoxGeometry(0.34, 0.22, 0.5),
+    new THREE.MeshBasicMaterial({ color: 0x66aaff, transparent: true, opacity: 0.85 }),
+  );
+  camAnchor.add(camBody);
+  const camLens = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.09, 0.09, 0.1, 12),
+    new THREE.MeshBasicMaterial({ color: 0xffffff }),
+  );
+  camLens.rotation.x = Math.PI / 2;
+  camLens.position.z = 0.3;
+  camAnchor.add(camLens);
+  scene.add(new THREE.ArrowHelper(camera.getWorldDirection(new THREE.Vector3()).clone().negate(), camPos, 0.35, 0x66aaff, 0.12, 0.06));
+  scene.add(new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), camPos.clone().add(new THREE.Vector3(0.5, 0, 0)), 0.3, 0x66aaff, 0.1, 0.05));
+  labelAt('相机上', '#66aaff', camPos.clone().add(new THREE.Vector3(0.9, 0, 0.15)), 0.28);
+  labelAt('相机', '#66aaff', camPos.clone().add(new THREE.Vector3(0.55, -0.1, 0)), 0.3);
+
+  function syncCamMarker() {
+    camAnchor.quaternion.copy(camera.quaternion);
+  }
 
   // ---- 剑 ----
   const PIVOT = new THREE.Vector3(0, 0.5, 1.4);
@@ -169,14 +250,13 @@ export function initPc() {
     swordGroup.quaternion.setFromUnitVectors(UP, d.normalize());
   }
 
-  // ---- PC 屏幕 (金色圆环): 在剑尖正面, 面向玩家 ----
-  const RING_POS = new THREE.Vector3(0, 0.5, -1.6);   // 屏幕中心 (玩家前方较远处)
-  const INTO = new THREE.Vector3(0, 0, -1).normalize(); // 屏幕内部方向 (剑尖应指向它)
+  // ---- PC 屏幕 (金色圆环): 在剑前方, 环面垂直于剑方向 (水平), 面向剑 ----
   const targetGroup = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.9, 1.15, 40),
     new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, opacity: 0.85, side: THREE.DoubleSide }),
   );
+  ring.rotation.z = Math.PI; // 让屏幕"上"= 世界 +Z (向上), 而非朝下
   targetGroup.add(ring);
   const ringEdge = new THREE.LineLoop(
     new THREE.BufferGeometry().setFromPoints([
@@ -184,9 +264,10 @@ export function initPc() {
     ]),
     new THREE.LineBasicMaterial({ color: 0xffd166 }),
   );
+  ringEdge.rotation.z = Math.PI;
   targetGroup.add(ringEdge);
   // 屏幕法线指示 (金色短箭头, 指向"屏幕内部")
-  const targetNormal = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 0.7, 0xffd166, 0.15, 0.08);
+  const targetNormal = new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 0, 0), 0.7, 0xffd166, 0.15, 0.08);
   targetGroup.add(targetNormal);
   targetGroup.position.copy(RING_POS);
   targetGroup.rotation.x = -Math.PI / 2;
@@ -241,6 +322,7 @@ export function initPc() {
   const loop = () => {
     raf = requestAnimationFrame(loop);
     controls.update();
+    syncCamMarker();
     renderer.render(scene, camera);
   };
 

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const GRAVITY = new THREE.Vector3(0, -9, 0);
+const GRAVITY = new THREE.Vector3(0, 0, -9);
 const LIFETIME = 1.1;
 
 export class Fx {
@@ -85,7 +85,7 @@ export class Fx {
       this.camera.position.x += (Math.random() - 0.5) * 0.5 * k;
       this.camera.position.y += (Math.random() - 0.5) * 0.5 * k;
       this.camera.position.z += (Math.random() - 0.5) * 0.3 * k;
-      this.camera.lookAt(0, 0.6, -8);
+      this.camera.lookAt(0, 0.5, 1.4);
     }
 
     if (this._bursts.length === 0) {

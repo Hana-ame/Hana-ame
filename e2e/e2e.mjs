@@ -85,7 +85,8 @@ try {
   const scoreBefore = await pc.textContent('#score');
   const injected = await pc.evaluate(async () => {
     const d = window.__beatriftDebug;
-    const pivot = { x: 0, y: 0.7, z: 1.6 };
+    const pivot = { x: 0, y: 0.5, z: 1.4 };
+    const planeY = -2.7;
     let swings = 0;
     for (let i = 0; i < 80; i++) {
       const game = d.getGame();
@@ -93,8 +94,8 @@ try {
       if (game) {
         for (const n of game.notes) {
           if (n.dead) continue;
-          const z = n.mesh.position.z;
-          if (z < -2.2 || z > 1.6) continue;
+          const y = n.mesh.position.y;
+          if (y < planeY - 2.2 || y > planeY + 1.6) continue;
           const dist = n.mesh.position.distanceToSquared(new (n.mesh.position.constructor)(pivot.x, pivot.y, pivot.z));
           if (dist < bestP) { bestP = dist; best = n; }
         }

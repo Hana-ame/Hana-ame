@@ -16,7 +16,7 @@ export const SENSOR = {
 };
 
 export const SWORD = {
-  PIVOT: { x: 0, y: 0.7, z: 1.6 },
+  PIVOT: { x: 0, y: 0.5, z: 1.4 },
   LEN: 2.6,
 };
 
@@ -30,12 +30,12 @@ export const DEFAULT_DIFFICULTY = 'easy';
 export const GAME = {
   BPM: 128,
   BEATS_PER_BAR: 4,
-  NOTE_PLANE_Z: 0,
-  NOTE_SPAWN_Z: -46,
+  NOTE_PLANE_Y: -2.7,
+  NOTE_SPAWN_Y: -46,
   NOTE_SPEED: 13,
   NOTE_LIFETIME: 9999,
-  HIT_WINDOW_Z: 2.4,
-  MISS_Z: 4.2,
+  HIT_WINDOW_Y: 2.4,
+  MISS_Y: 4.2,
   LIVES: 3,
   INVINCIBLE: true,
 };
