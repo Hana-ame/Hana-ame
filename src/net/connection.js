@@ -13,14 +13,13 @@ function waitOpen(peer, timeout = 12000) {
   });
 }
 
-function setup(conn, handlers, initiator) {
-  let motion = null;
+function setup(session, conn, handlers, initiator) {
   const attachMotion = (ch) => {
     if (ch.label !== MOTION_CHANNEL) return;
-    motion = ch;
-    motion.binaryType = 'arraybuffer';
-    motion.onmessage = (ev) => handlers.onMotion?.(decodeMotion(ev.data));
-    motion.onopen = () => handlers.onMotionOpen?.();
+    session.motion = ch;
+    ch.binaryType = 'arraybuffer';
+    ch.onmessage = (ev) => handlers.onMotion?.(decodeMotion(ev.data));
+    ch.onopen = () => handlers.onMotionOpen?.();
   };
 
   if (!initiator) {
@@ -32,9 +31,7 @@ function setup(conn, handlers, initiator) {
           ordered: false,
           maxRetransmits: 0,
         });
-        ch.binaryType = 'arraybuffer';
-        motion = ch;
-        motion.onopen = () => handlers.onMotionOpen?.();
+        attachMotion(ch);
       } catch (e) {
         handlers.onError?.(e);
       }
@@ -51,36 +48,47 @@ export async function createHost(roomCode, handlers) {
   const id = `${PEER_PREFIX}-${roomCode}`;
   const peer = new Peer(id, { debug: 0 });
   const hostId = await waitOpen(peer);
-  let conn = null;
-
-  peer.on('connection', (c) => {
-    conn = c;
-    setup(c, handlers, false);
-  });
-
-  return {
-    id: hostId,
-    sendControl: (obj) => { if (conn) conn.send(obj); },
-    get hasClient() { return !!conn; },
+  const session = {
+    motion: null,
+    conn: null,
+    sendControl: (obj) => { if (session.conn) session.conn.send(obj); },
+    sendMotion: (buf) => {
+      const ch = session.motion;
+      if (ch && ch.readyState === 'open') ch.send(buf);
+    },
+    get hasClient() { return !!session.conn; },
     close: () => peer.destroy(),
   };
+
+  peer.on('connection', (c) => {
+    session.conn = c;
+    session.motion = null;
+    setup(session, c, handlers, false);
+  });
+
+  return { id: hostId, ...session };
 }
 
 export async function joinPeer(targetId, handlers) {
   const peer = new Peer({ debug: 0 });
   const myId = await waitOpen(peer);
   const conn = peer.connect(targetId, { reliable: true });
-  setup(conn, handlers, true);
+  const session = {
+    motion: null,
+    conn,
+    sendControl: (obj) => conn.send(obj),
+    sendMotion: (buf) => {
+      const ch = session.motion;
+      if (ch && ch.readyState === 'open') ch.send(buf);
+    },
+    close: () => peer.destroy(),
+  };
+  setup(session, conn, handlers, true);
 
   await new Promise((resolve, reject) => {
     conn.once('open', resolve);
     conn.once('error', reject);
   });
 
-  return {
-    myId,
-    conn,
-    sendControl: (obj) => conn.send(obj),
-    close: () => peer.destroy(),
-  };
+  return { myId, ...session };
 }

@@ -1,19 +1,27 @@
 import { showScreen, navigate, $ } from './screens.js';
-import { normalizeCode } from '../constants.js';
-import { PEER_PREFIX } from '../constants.js';
+import { normalizeCode, PEER_PREFIX, SENSOR } from '../constants.js';
 import * as discovery from '../net/discovery.js';
 import { joinPeer } from '../net/connection.js';
-import { P } from '../net/protocol.js';
+import { P, encodeMotion } from '../net/protocol.js';
+import { Sensor } from '../motion/sensor.js';
 
 export function initMobile(params) {
   const els = {
     list: $('#mobile-list'),
     code: $('#mobile-code'),
     join: $('#mobile-join'),
+    calibState: $('#calib-state'),
+    calibDo: $('#calib-do'),
+    remoteStatus: $('#remote-status'),
+    ping: $('#remote-ping'),
   };
   const known = new Map();
   let sess = null;
+  let sensor = null;
+  let streaming = false;
   let unsubscribe = null;
+  let pingTimer = null;
+  let calibTimer = null;
 
   if (params?.get('room')) els.code.value = normalizeCode(params.get('room'));
 
@@ -58,26 +66,26 @@ export function initMobile(params) {
     return {
       onOpen() {
         sess.sendControl({ t: P.HELLO, v: 1, role: 'mobile' });
-        showScreen('screen-remote');
-        $('#remote-status').textContent = '已连接 · 挥舞手机开始';
         pingLoop();
+        goCalibrate();
       },
       onControl(msg) {
         if (msg?.t === P.PING) sess.sendControl({ t: P.PONG, ts: msg.ts });
         if (msg?.t === P.PONG) {
           const dt = Date.now() - msg.ts;
-          $('#remote-ping').textContent = `${dt} ms`;
+          els.ping.textContent = `${dt} ms`;
         }
       },
-      onMotionOpen() { console.info('[mobile] motion channel open'); },
+      onMotionOpen() {
+        if (streaming) startStream();
+      },
       onClose() {
-        $('#remote-status').textContent = '连接已断开';
+        els.remoteStatus.textContent = '连接已断开';
       },
       onError(e) { console.error('[mobile] conn error', e); },
     };
   }
 
-  let pingTimer = null;
   function pingLoop() {
     clearInterval(pingTimer);
     pingTimer = setInterval(() => {
@@ -85,31 +93,104 @@ export function initMobile(params) {
     }, 1000);
   }
 
+  // ---- 校准 ----
+  function goCalibrate() {
+    showScreen('screen-calibrate');
+    els.calibState.classList.remove('ready');
+    els.calibState.textContent = '请授权陀螺仪, 并保持手机静止';
+    els.calibDo.classList.remove('hidden');
+    els.calibDo.textContent = '开始校准';
+    els.calibDo.onclick = runCalibration;
+  }
+
+  async function runCalibration() {
+    els.calibDo.disabled = true;
+    const granted = await sensor.requestPermission();
+    if (!granted) {
+      els.calibState.textContent = '陀螺仪权限被拒绝';
+      els.calibDo.disabled = false;
+      return;
+    }
+    if (!sensor.calibrated) {
+      sensor.start((f) => onFrame(f), (s) => onSwing(s));
+    }
+    els.calibState.textContent = '请保持手机静止… 2';
+    sensor.recalibrate();
+    let n = 2;
+    calibTimer = setInterval(() => {
+      n -= 1;
+      if (n <= 0) {
+        clearInterval(calibTimer);
+        sensor.calibrate();
+        els.calibState.textContent = '校准完成! 准备挥舞';
+        els.calibState.classList.add('ready');
+        els.calibDo.disabled = false;
+        els.calibDo.textContent = '进入游戏';
+        els.calibDo.onclick = enterRemote;
+      } else {
+        els.calibState.textContent = `请保持手机静止… ${n}`;
+      }
+    }, 1000);
+  }
+
+  function enterRemote() {
+    els.calibDo.onclick = null;
+    sess.sendControl({ t: P.READY });
+    showScreen('screen-remote');
+    els.remoteStatus.textContent = '已连接 · 挥舞手机!';
+    startStream();
+  }
+
+  // ---- 传感器流 ----
+  function startStream() {
+    streaming = true;
+  }
+  function onFrame(f) {
+    if (!streaming || !sess) return;
+    sess.sendMotion(encodeMotion(f.q, f.omega, 0));
+  }
+  function onSwing(s) {
+    sensor.vibrate(s.omega / (SENSOR.SWING_PEAK * 2));
+    if (streaming && sess) sess.sendMotion(encodeMotion(sensor.quaternion, s.omega, 1));
+  }
+
+  function recalibrate() {
+    streaming = false;
+    sensor.recalibrate();
+    goCalibrate();
+  }
+
   async function doJoin(code) {
     code = normalizeCode(code);
-    if (code.length < 1) return;
+    if (!code) return;
     showScreen('screen-calibrate');
-    $('#calib-state').textContent = '正在连接…';
+    els.calibState.textContent = '正在连接…';
+    els.calibDo.classList.add('hidden');
     try {
       sess = await joinPeer(`${PEER_PREFIX}-${code}`, handlers());
     } catch (e) {
       console.error(e);
-      $('#calib-state').textContent = `连接失败: ${e?.message || e?.type || '未知'}`;
-      setTimeout(() => showScreen('screen-mobile'), 1200);
+      els.calibState.textContent = `连接失败: ${e?.message || e?.type || '未知'}`;
+      setTimeout(() => { showScreen('screen-mobile'); renderList(); }, 1200);
     }
   }
 
   $('#mobile-join').addEventListener('click', () => doJoin(els.code.value));
   els.code.addEventListener('keydown', (e) => { if (e.key === 'Enter') doJoin(els.code.value); });
   $('#mobile-back').addEventListener('click', () => navigate('/'));
+  $('#remote-recalib').addEventListener('click', recalibrate);
+  $('#remote-vibrate').addEventListener('click', () => sensor?.vibrate(1));
 
+  sensor = new Sensor();
   showScreen('screen-mobile');
   renderList();
   initDiscovery();
 
   return () => {
     clearInterval(pingTimer);
+    if (calibTimer) clearInterval(calibTimer);
     unsubscribe?.();
+    sensor?.stop();
     if (sess) { try { sess.close(); } catch { /* noop */ } }
     discovery.close();
   };
