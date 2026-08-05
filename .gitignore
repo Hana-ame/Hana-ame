@@ -1,0 +1,10 @@
+# 编译产物
+/bin/
+
+# 临时/日志
+*.log
+*.tmp
+
+# 前端缓存
+.vite/
+node_modules/

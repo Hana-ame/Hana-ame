@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PeerJS Go <-> Web 互通演示</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: 20px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .status { font-family: monospace; background: #f4f4f4; padding: 8px; border-radius: 6px; min-height: 20px; }
+    .connected { color: #0a7d32; font-weight: bold; }
+    .row { display: flex; gap: 8px; margin: 8px 0; }
+    input, button { padding: 8px 10px; font-size: 14px; }
+    input[type=text] { flex: 1; }
+    #log { font-family: monospace; white-space: pre-wrap; min-height: 200px; max-height: 400px;
+           overflow-y: auto; background: #111; color: #0f0; padding: 12px; border-radius: 6px; }
+    .in  { color: #4fc3f7; }
+    .out { color: #fff; }
+  </style>
+</head>
+<body>
+  <h1>PeerJS 互通演示: <span id="peerId">...</span></h1>
+  <div class="card">
+    <div class="row">
+      <label>服务器</label>
+      <input type="text" id="srv" value="localhost" />
+      <input type="text" id="port" value="8000" style="width:70px" />
+    </div>
+    <div class="row">
+      <label>我的ID</label>
+      <input type="text" id="myId" value="web-peer" />
+      <button id="initBtn">注册 / 重连</button>
+    </div>
+    <div class="row">
+      <label>对端ID</label>
+      <input type="text" id="peerIdInput" value="go-peer" />
+      <button id="connectBtn">连接</button>
+      <button id="reconnectPeer">重连服务器</button>
+    </div>
+    <div class="status" id="status">未连接</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input type="text" id="msg" placeholder="输入要发给对端的消息…" />
+      <button id="sendBtn">发送</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="status" id="cstate">未建立 DataChannel</div>
+    <div id="log"></div>
+  </div>
+
+  <script src="./peerjs.min.js"></script>
+  <script>
+    let peer = null;      // Peer(信令)
+    let conn = null;      // DataConnection(数据通道)
+
+    const $ = (id) => document.getElementById(id);
+    function setStatus(s) {
+      $('status').textContent = s;
+      $('status').className = 'status ' + (s.startsWith('已连接') ? 'connected' : '');
+    }
+    function log(tag, msg) {
+      const line = document.createElement('div');
+      line.className = tag;
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      $('log').appendChild(line);
+      $('log').scrollTop = $('log').scrollHeight;
+    }
+
+    function destroy() {
+      if (conn) { try { conn.close(); } catch(e){} conn = null; }
+      if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
+      $('peerId').textContent = '...';
+      $('cstate').textContent = '未建立 DataChannel';
+    }
+
+    function init() {
+      destroy();
+      const host = $('srv').value.trim();
+      const port = parseInt($('port').value, 10) || 8000;
+      const id   = $('myId').value.trim() || 'web-peer';
+      // 页面若为 HTTPS 就用 wss://, 否则用 ws://。
+      const secure = window.location.protocol === 'https:';
+      log('in', `信令: ${secure ? 'wss' : 'ws'}://${host}:${port}/peerjs`);
+
+      peer = new Peer(id, {
+        host, port,
+        path: '/',           // 与服务器 -path 一致
+        key: 'peerjs',       // 与服务器 -key 一致
+        secure,
+        debug: 3,            // 0=安静, 3=全量日志(控制台)
+      });
+
+      peer.on('open', (pid) => {
+        setStatus(`已连接信令服务器, 我的ID = ${pid}`);
+        $('peerId').textContent = pid;
+        log('in', `Peer 已打开: ${pid}`);
+      });
+
+      peer.on('connection', (c) => setupConn(c));
+
+      peer.on('disconnected', () => {
+        setStatus('与信令服务器断开(可点重连)');
+        log('in', '信令服务器断开');
+      });
+
+      peer.on('close', () => { setStatus('Peer 已关闭'); });
+      peer.on('error', (err) => {
+        setStatus('错误: ' + err.type);
+        log('in', 'Peer错误: ' + (err.message || err.type));
+      });
+    }
+
+    function setupConn(c) {
+      conn = c;
+      $('cstate').textContent = '连接建立中…';
+      log('in', `收到 / 建立连接: ${conn.peer} (${conn.connectionId})`);
+
+      conn.on('open', () => {
+        $('cstate').textContent = `DataChannel 已打开 ↔ ${conn.peer}`;
+        $('cstate').className = 'status connected';
+        log('in', `DataChannel 已打开 ↔ ${conn.peer}`);
+      });
+      conn.on('data', (data) => {
+        const text = typeof data === 'object' ? JSON.stringify(data) : String(data);
+        log('in', `收: ${text}`);
+      });
+      conn.on('close', () => {
+        $('cstate').textContent = 'DataChannel 已关闭';
+        log('in', 'DataChannel 关闭');
+        conn = null;
+      });
+      conn.on('error', (e) => log('in', '连接错误: ' + (e.message || e)));
+    }
+
+    // ---- 按钮事件 ----
+    $('initBtn').onclick = init;
+    $('reconnectPeer').onclick = () => { if (peer) peer.reconnect(); };
+
+    $('connectBtn').onclick = () => {
+      const target = $('peerIdInput').value.trim();
+      if (!target) return;
+      if (!peer) init();
+      // serialization=json: 与 Go 端约定的数据通道序列化方式。
+      const c = peer.connect(target, { serialization: 'json', reliable: false });
+      setupConn(c);
+      log('in', `正在连接 ${target} …`);
+    };
+
+    function send() {
+      const v = $('msg').value;
+      if (!v) return;
+      if (!conn || !conn.open) { log('out', '尚未连接对端'); return; }
+      try {
+        conn.send(JSON.stringify({ text: v }));
+        log('out', `发: ${v}`);
+        $('msg').value = '';
+      } catch (e) { log('out', '发送失败: ' + e.message); }
+    }
+    $('sendBtn').onclick = send;
+    $('msg').onkeydown = (e) => { if (e.key === 'Enter') send(); };
+
+    // 自动按当前访问地址填服务器: 域名取 location.hostname,
+    // 端口: 页面自带端口则用页面的, 否则用协议默认端口(https=443/http=80),
+    // 信令 WebSocket 与网页走同一个反代/端口。
+    (function autoFill() {
+      const loc = window.location;
+      $('srv').value = loc.hostname || 'localhost';
+      const p = parseInt(loc.port, 10);
+      $('port').value = p ? p : (loc.protocol === 'https:' ? 443 : 80);
+    })();
+
+    init();
+  </script>
+</body>
+</html>
