@@ -1,6 +1,6 @@
 import { GAME, SWORD } from '../constants.js';
 
-function safeSpan(a, b) {
+function span(a, b) {
   const d = b - a;
   return Math.abs(d) < 1e-6 ? 0 : d;
 }
@@ -12,47 +12,53 @@ export class Calib {
       [null, null, null],
       [null, null, null],
     ];
+    this.ref = null;
   }
 
   reset() {
     for (const row of this.cells) row.fill(null);
+    this.ref = null;
   }
 
-  set(r, c, gamma, beta) {
-    this.cells[r][c] = { gamma, beta };
+  setRef(forward) {
+    this.ref = forward;
+  }
+
+  set(r, c, sx, sy) {
+    this.cells[r][c] = { sx, sy };
   }
 
   get complete() {
     for (const row of this.cells) {
       for (const cell of row) if (!cell) return false;
     }
-    return true;
+    return !!this.ref;
   }
 
-  _u(gamma) {
+  _u(sx) {
     const mid = this.cells[1];
-    const gL = mid[0].gamma;
-    const gM = mid[1].gamma;
-    const gR = mid[2].gamma;
-    if (gamma <= gL) return -1;
-    if (gamma >= gR) return 1;
-    if (gamma <= gM) return -1 + (gamma - gL) / safeSpan(gL, gM);
-    return (gamma - gM) / safeSpan(gM, gR);
+    const xL = mid[0].sx;
+    const xM = mid[1].sx;
+    const xR = mid[2].sx;
+    if (sx <= xL) return -1;
+    if (sx >= xR) return 1;
+    if (sx <= xM) return -1 + (sx - xL) / span(xL, xM);
+    return (sx - xM) / span(xM, xR);
   }
 
-  _v(beta) {
-    const bD = this.cells[0][1].beta;
-    const bM = this.cells[1][1].beta;
-    const bU = this.cells[2][1].beta;
-    if (beta <= bD) return -1;
-    if (beta >= bU) return 1;
-    if (beta <= bM) return -1 + (beta - bD) / safeSpan(bD, bM);
-    return (beta - bM) / safeSpan(bM, bU);
+  _v(sy) {
+    const yD = this.cells[0][1].sy;
+    const yM = this.cells[1][1].sy;
+    const yU = this.cells[2][1].sy;
+    if (sy <= yM && sy <= yD) return -1;
+    if (sy >= yM && sy >= yU) return 1;
+    if (sy <= yM) return -1 + (sy - yD) / span(yD, yM);
+    return (sy - yM) / span(yM, yU);
   }
 
-  dir(gamma, beta) {
-    const u = Math.max(-1, Math.min(1, this._u(gamma)));
-    const v = Math.max(-1, Math.min(1, this._v(beta)));
+  dir(sx, sy) {
+    const u = Math.max(-1, Math.min(1, this._u(sx)));
+    const v = Math.max(-1, Math.min(1, this._v(sy)));
     const x = u * GAME.GRID.dx;
     const y = GAME.GRID.y0 + v * GAME.GRID.dy;
     const dx = x - SWORD.PIVOT.x;
