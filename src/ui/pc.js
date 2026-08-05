@@ -1,13 +1,114 @@
 import { showScreen, navigate, $ } from './screens.js';
+import { GAME, genRoomCode, normalizeCode } from '../constants.js';
+import * as discovery from '../net/discovery.js';
+import { createHost } from '../net/connection.js';
+import { P } from '../net/protocol.js';
+import { buildJoinUrl } from '../net/joinUrl.js';
+import QRCode from 'qrcode';
+import { startGame } from '../game/index.js';
 
 export function initPc() {
-  showScreen('screen-pc');
-  $('#pc-status').textContent = '连接层开发中…';
-  $('#pc-start').disabled = true;
+  const els = {
+    status: $('#pc-status'),
+    code: $('#pc-roomcode'),
+    qr: $('#pc-qr'),
+    start: $('#pc-start'),
+    devices: $('#pc-devices'),
+    newcode: $('#pc-newcode'),
+  };
+  let roomCode = genRoomCode();
+  let host = null;
+  let cleanupAnnounce = null;
+  let connected = false;
 
+  const setStatus = (text, ok) => {
+    els.status.textContent = text;
+    els.status.classList.toggle('ok', !!ok);
+  };
+
+  async function announce() {
+    setStatus('正在启动发现服务…');
+    await discovery.connect();
+    cleanupAnnounce?.();
+    cleanupAnnounce = discovery.pcAnnounce(roomCode, host.id);
+    setStatus('房间已广播, 等待手机连接…', true);
+  }
+
+  function refreshCodeUI() {
+    els.code.textContent = roomCode;
+    QRCode.toCanvas(els.qr, buildJoinUrl(roomCode), { width: 256, margin: 1 })
+      .catch((e) => console.error('qr failed', e));
+  }
+
+  async function makeHost() {
+    if (host) { try { host.close(); } catch { /* noop */ } }
+    setStatus('正在生成房间…');
+    try {
+      host = await createHost(roomCode, handlers());
+      els.devices.classList.remove('hidden');
+      els.devices.innerHTML = '<div class="devices-title">正在等待设备…</div>';
+      await announce();
+    } catch (e) {
+      if (e?.type === 'unavailable-id') {
+        roomCode = genRoomCode();
+        refreshCodeUI();
+        await makeHost();
+        return;
+      }
+      console.error(e);
+      setStatus(`房间生成失败: ${e?.type || e?.message}`, false);
+    }
+  }
+
+  function handlers() {
+    return {
+      onOpen() {
+        connected = true;
+        els.devices.innerHTML = `<div class="device-item"><span>手机已连接</span><span class="dot on"></span></div>`;
+        els.start.disabled = false;
+        setStatus('已连接, 可以开始游戏', true);
+      },
+      onControl(msg) {
+        if (msg?.t === P.PING) host?.sendControl({ t: P.PONG, ts: msg.ts });
+        if (msg?.t === P.READY) console.info('[pc] mobile ready');
+      },
+      onMotion() { /* consumed by game later */ },
+      onClose() {
+        connected = false;
+        els.start.disabled = true;
+        els.devices.innerHTML = '<div class="devices-title">手机已断开, 等待重连…</div>';
+        setStatus('手机已断开', false);
+      },
+      onError(e) { console.error('[pc] conn error', e); },
+    };
+  }
+
+  function onStart() {
+    if (!connected || !host) return;
+    host.sendControl({ t: P.START, bpm: GAME.BPM });
+    startGame({ host, roomCode });
+    showScreen('screen-game');
+  }
+
+  showScreen('screen-pc');
+  refreshCodeUI();
+  makeHost();
+
+  els.newcode.addEventListener('click', () => {
+    roomCode = genRoomCode();
+    refreshCodeUI();
+    makeHost();
+  });
+  els.start.addEventListener('click', onStart);
+  els.start.disabled = true;
   $('#pc-back').addEventListener('click', () => navigate('/'));
 
   return () => {
+    cleanupAnnounce?.();
+    if (host) { try { host.close(); } catch { /* noop */ } }
+    discovery.close();
+    els.newcode.removeEventListener('click', () => {});
+    els.start.removeEventListener('click', onStart);
     $('#pc-back').removeEventListener('click', () => navigate('/'));
   };
 }
