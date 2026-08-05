@@ -71,6 +71,16 @@ html, body {
   margin-bottom: 8px;
 }
 .tagline { color: var(--dim); margin-bottom: 28px; font-size: 14px; }
+.version-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border: 1px solid var(--line, #2a2a3f);
+  border-radius: 999px;
+  color: var(--dim, #8b8ba3);
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  margin-bottom: 18px;
+}
 
 .section-title { font-size: 20px; margin-bottom: 18px; }
 

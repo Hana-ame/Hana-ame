@@ -1,5 +1,10 @@
 import './style.css';
 import { bindRoleButtons, parseRoute, navigate, showScreen } from './ui/screens.js';
+import { VERSION_STR } from './version.js';
+
+document.title = `BeatRift · 体感节奏击打 ${VERSION_STR}`;
+const vBadge = document.getElementById('version-badge');
+if (vBadge) vBadge.textContent = VERSION_STR;
 
 let current = { role: null, cleanup: null };
 

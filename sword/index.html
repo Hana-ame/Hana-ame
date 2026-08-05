@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#0a0a14" />
+    <title>光剑调试 · 屏幕即前方</title>
+  </head>
+  <body>
+    <div id="app">
+
+      <section id="screen-role" class="screen">
+        <div class="role-card">
+          <h1 class="logo">光剑 <span>调试</span></h1>
+          <p class="tagline">手机屏幕法线 = 剑方向 · 屏幕即前方</p>
+          <div class="role-btns">
+            <button id="btn-pc" class="btn btn-big btn-accent">我是 PC 显示器</button>
+            <a class="btn btn-big" href="/test/#/mobile" target="_blank">手机端(test 页)</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-pc" class="screen hidden">
+        <header class="topbar">
+          <span class="topbar-title">光剑调试 · 屏幕即前方</span>
+          <span id="pc-status" class="pill">生成房间中…</span>
+          <span class="grow"></span>
+          <button id="pc-back" class="btn btn-small">返回</button>
+        </header>
+
+        <div class="pc-layout">
+          <div class="view-col">
+            <div class="view-wrap">
+              <canvas id="pc3d"></canvas>
+              <div class="view-legend">
+                青色箭头 = 手机屏幕法线(剑方向) · 金色圆环 = PC 屏幕(校准时瞄准它)<br />
+                世界: Z 上, 重力灰箭头向下
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-col">
+            <div class="card">
+              <div class="card-title">房间</div>
+              <div class="room-row">
+                <span id="pc-roomcode" class="roomcode">------</span>
+                <button id="pc-newcode" class="btn btn-small">换一个</button>
+              </div>
+              <canvas id="pc-qr" width="256" height="256"></canvas>
+              <div id="pc-device" class="muted">等待手机连接…</div>
+              <div class="stats-row">
+                <span>延迟 <b id="pc-ping">--</b></span>
+                <span>接收 <b id="pc-hz">0 Hz</b></span>
+                <span>帧 <b id="pc-frames">0</b></span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">校准(单点基准: 屏幕朝前)</div>
+              <p class="note">手持手机屏幕面向你, 把手机屏幕对准 PC 屏幕中心, 静止 2 秒, 点「设为基准」。</p>
+              <div class="row">
+                <button id="pc-setref" class="btn btn-accent">设为基准(屏幕朝前)</button>
+                <button id="pc-resetref" class="btn">清除</button>
+              </div>
+              <div class="group-label">相对基准的偏移</div>
+              <div class="sensor-grid">
+                <div class="cell"><span>方向角 °</span><b id="ref-delta">--</b></div>
+                <div class="cell"><span>左右 °</span><b id="ref-yaw">--</b></div>
+                <div class="cell"><span>上下 °</span><b id="ref-pitch">--</b></div>
+                <div class="cell"><span>Roll °</span><b id="ref-roll">--</b></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">手机屏幕法线(世界系)</div>
+              <div class="group-label">实时 forward</div>
+              <div class="sensor-grid">
+                <div class="cell"><span>X</span><b id="s-fx">--</b></div>
+                <div class="cell"><span>Y</span><b id="s-fy">--</b></div>
+                <div class="cell"><span>Z</span><b id="s-fz">--</b></div>
+                <div class="cell"><span>来源</span><b id="s-fsrc">--</b></div>
+              </div>
+              <div class="group-label">姿态解算 (W3C 角 °)</div>
+              <table class="att">
+                <thead>
+                  <tr><th>来源</th><th>α</th><th>β</th><th>γ</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-src="device"><td>系统解</td><td class="a">--</td><td class="b">--</td><td class="g">--</td></tr>
+                  <tr data-src="fuse" class="hl"><td>Mahony 融合</td><td class="a">--</td><td class="b">--</td><td class="g">--</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <div class="card-title">跟随来源</div>
+              <div class="view-source" style="position:static; padding:0">
+                <label><input type="radio" name="src" value="fuse" checked /><span>Mahony 融合</span></label>
+                <label><input type="radio" name="src" value="device" /><span>系统解</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="/sword/main.js"></script>
+  </body>
+</html>

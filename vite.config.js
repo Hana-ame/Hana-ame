@@ -14,6 +14,7 @@ export default defineConfig({
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         test: fileURLToPath(new URL('./test/index.html', import.meta.url)),
         ahrs: fileURLToPath(new URL('./ahrs/index.html', import.meta.url)),
+        sword: fileURLToPath(new URL('./sword/index.html', import.meta.url)),
       },
       output: {
         manualChunks: {

@@ -74,7 +74,8 @@ export class Fx {
   }
 
   addShake(amount) {
-    this.shake = Math.min(1.6, this.shake + amount);
+    // TODO(视角): 暂关镜头晃动, 待光剑方向稳定后再启用
+    // this.shake = Math.min(1.6, this.shake + amount);
   }
 
   update(dt) {
