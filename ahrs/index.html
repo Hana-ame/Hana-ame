@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#0a0a14" />
+    <title>姿态解算 · ahrs 融合测试台</title>
+  </head>
+  <body>
+    <div id="app">
+
+      <!-- ============ 身份选择 ============ -->
+      <section id="screen-role" class="screen">
+        <div class="role-card">
+          <h1 class="logo">姿态解算 <span>ahrs</span></h1>
+          <p class="tagline">手机原始传感器 → PeerJS → PC 解算(ahrs 包) → 长方体 3D 姿态</p>
+          <div class="role-btns">
+            <button id="btn-pc" class="btn btn-big btn-accent">我是 PC 显示器</button>
+            <button id="btn-mobile" class="btn btn-big">我是手机</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PC: 主机 + 3D + 解算 ============ -->
+      <section id="screen-pc" class="screen hidden">
+        <header class="topbar">
+          <span class="topbar-title">姿态解算 · 手机 IMU 测试台</span>
+          <span id="pc-status" class="pill">生成房间中…</span>
+          <span class="grow"></span>
+          <button id="pc-back" class="btn btn-small">返回</button>
+        </header>
+
+        <div class="pc-layout">
+          <div class="view-col">
+            <div class="view-wrap">
+              <canvas id="pc3d"></canvas>
+              <div class="view-legend">设备轴: X 右(红) · Y 顶(绿) · Z 屏外(蓝) &nbsp;|&nbsp; 世界: Z = 天, 灰箭头 = 重力(下)</div>
+              <div class="view-source">
+                <span>3D 跟随:</span>
+                <label><input type="radio" name="src" value="fuse" checked /><span>Mahony 融合</span></label>
+                <label><input type="radio" name="src" value="device" /><span>系统解</span></label>
+                <label><input type="radio" name="src" value="gyro" /><span>纯陀螺</span></label>
+                <label><input type="radio" name="src" value="accel" /><span>仅重力</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-col">
+            <div class="card">
+              <div class="card-title">房间</div>
+              <div class="room-row">
+                <span id="pc-roomcode" class="roomcode">------</span>
+                <button id="pc-newcode" class="btn btn-small">换一个</button>
+              </div>
+              <canvas id="pc-qr" width="256" height="256"></canvas>
+              <div id="pc-device" class="muted">等待手机连接…</div>
+              <div class="stats-row">
+                <span>延迟 <b id="pc-ping">--</b></span>
+                <span>接收 <b id="pc-hz">0 Hz</b></span>
+                <span>帧 <b id="pc-frames">0</b></span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">完整传感器内容</div>
+              <div class="group-label">设备朝向 deviceorientation</div>
+              <div class="sensor-grid">
+                <div class="cell"><span>α °</span><b id="s-oa">--</b></div>
+                <div class="cell"><span>β °</span><b id="s-ob">--</b></div>
+                <div class="cell"><span>γ °</span><b id="s-og">--</b></div>
+                <div class="cell"><span>类型</span><b id="s-oabs">--</b></div>
+              </div>
+              <div class="group-label">加速度计 accelerationIncludingGravity (m/s²)</div>
+              <div class="sensor-grid">
+                <div class="cell"><span>aX</span><b id="s-ax">--</b></div>
+                <div class="cell"><span>aY</span><b id="s-ay">--</b></div>
+                <div class="cell"><span>aZ</span><b id="s-az">--</b></div>
+                <div class="cell"><span>|a|</span><b id="s-amag">--</b></div>
+              </div>
+              <div class="group-label">线性加速度 acceleration (m/s²)</div>
+              <div class="sensor-grid">
+                <div class="cell"><span>lX</span><b id="s-lx">--</b></div>
+                <div class="cell"><span>lY</span><b id="s-ly">--</b></div>
+                <div class="cell"><span>lZ</span><b id="s-lz">--</b></div>
+                <div class="cell"><span>|l|</span><b id="s-lmag">--</b></div>
+              </div>
+              <div class="group-label">陀螺仪 rotationRate (deg/s)</div>
+              <div class="sensor-grid">
+                <div class="cell"><span>ωX</span><b id="s-gx">--</b></div>
+                <div class="cell"><span>ωY</span><b id="s-gy">--</b></div>
+                <div class="cell"><span>ωZ</span><b id="s-gz">--</b></div>
+                <div class="cell"><span>|ω|</span><b id="s-gmag">--</b></div>
+              </div>
+              <div class="group-label">采样 / 时间</div>
+              <div class="sensor-grid">
+                <div class="cell"><span>间隔</span><b id="s-iv">--</b></div>
+                <div class="cell"><span>屏幕方向</span><b id="s-so">--</b></div>
+                <div class="cell"><span>帧时间</span><b id="s-t">--</b></div>
+                <div class="cell"><span>帧序号</span><b id="s-seq">--</b></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">手机姿态解算 (W3C Z-X'-Y'' 角, 单位 °)</div>
+              <table class="att">
+                <thead>
+                  <tr><th>来源</th><th>α 偏航</th><th>β 俯仰</th><th>γ 横滚</th><th>四元数 w x y z</th></tr>
+                </thead>
+                <tbody>
+                  <tr data-src="device"><td>系统解 <span class="muted">(deviceorientation)</span></td><td class="a">--</td><td class="b">--</td><td class="g">--</td><td class="q">--</td></tr>
+                  <tr data-src="fuse" class="hl"><td>Mahony 融合 <span class="muted">(陀螺+重力)</span></td><td class="a">--</td><td class="b">--</td><td class="g">--</td><td class="q">--</td></tr>
+                  <tr data-src="gyro"><td>纯陀螺积分 <span class="muted">(会漂移)</span></td><td class="a">--</td><td class="b">--</td><td class="g">--</td><td class="q">--</td></tr>
+                  <tr data-src="accel"><td>仅重力(静态) <span class="muted">(偏航不可观)</span></td><td class="a">--</td><td class="b">--</td><td class="g">--</td><td class="q">--</td></tr>
+                </tbody>
+              </table>
+              <div id="pc-fusion-note" class="note"></div>
+              <div class="row">
+                <label class="toggle"><input type="checkbox" id="pc-yawflip" /> 反转偏航</label>
+                <button id="pc-reset" class="btn">重设基准</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">解算对比曲线 (10s 窗口)</div>
+              <div class="chart-tabs">
+                <button data-ang="alpha" class="active">α 偏航</button>
+                <button data-ang="beta">β 俯仰</button>
+                <button data-ang="gamma">γ 横滚</button>
+              </div>
+              <canvas id="pc-chart"></canvas>
+              <div class="legend">
+                <span class="lg" style="--c:#ffd166">系统解</span>
+                <span class="lg" style="--c:#4de3ff">Mahony 融合</span>
+                <span class="lg" style="--c:#ff6b81">纯陀螺</span>
+                <span class="lg" style="--c:#b48cff">仅重力</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 手机: 连接 ============ -->
+      <section id="screen-mob-connect" class="screen hidden">
+        <div class="mob-card">
+          <h1 class="mob-title">手机端 · 姿态解算</h1>
+          <p class="muted">找到 PC 并连接, 启用传感器后原始数据实时发送</p>
+          <div id="mob-status" class="status">寻找 PC…</div>
+          <div id="mob-list" class="list"></div>
+          <div class="or">或</div>
+          <div class="join-row">
+            <input id="mob-code" class="code-input" maxlength="5" placeholder="房间码" autocomplete="off" inputmode="text" />
+            <button id="mob-join" class="btn">连接</button>
+          </div>
+          <button id="mob-back" class="btn btn-small ghost">返回</button>
+        </div>
+      </section>
+
+      <!-- ============ 手机: 发送中 ============ -->
+      <section id="screen-mob-live" class="screen hidden">
+        <div class="mob-card">
+          <h1 class="mob-title">传感器流</h1>
+          <div id="mob-live-status" class="status">已连接</div>
+          <button id="mob-enable" class="btn btn-accent" disabled>启用传感器</button>
+          <div class="group-label">实时读数</div>
+          <div class="sensor-grid">
+            <div class="cell"><span>α °</span><b id="mob-oa">--</b></div>
+            <div class="cell"><span>β °</span><b id="mob-ob">--</b></div>
+            <div class="cell"><span>γ °</span><b id="mob-og">--</b></div>
+            <div class="cell"><span>类型</span><b id="mob-oabs">--</b></div>
+            <div class="cell"><span>aX</span><b id="mob-ax">--</b></div>
+            <div class="cell"><span>aY</span><b id="mob-ay">--</b></div>
+            <div class="cell"><span>aZ</span><b id="mob-az">--</b></div>
+            <div class="cell"><span>|a|</span><b id="mob-amag">--</b></div>
+            <div class="cell"><span>ωX</span><b id="mob-gx">--</b></div>
+            <div class="cell"><span>ωY</span><b id="mob-gy">--</b></div>
+            <div class="cell"><span>ωZ</span><b id="mob-gz">--</b></div>
+            <div class="cell"><span>|ω|</span><b id="mob-gmag">--</b></div>
+            <div class="cell"><span>间隔</span><b id="mob-iv">--</b></div>
+            <div class="cell"><span>屏幕方向</span><b id="mob-so">--</b></div>
+            <div class="cell" style="grid-column: span 2"><span>发送</span><b id="mob-send-hz">0 Hz</b></div>
+          </div>
+          <div class="stats-row">
+            <span>帧 <b id="mob-frames">0</b></span>
+            <span>延迟 <b id="mob-ping">--</b></span>
+          </div>
+          <div class="row">
+            <button id="mob-reset" class="btn">重设解算基准</button>
+            <button id="mob-disconnect" class="btn danger">断开</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script type="module" src="/ahrs/main.js"></script>
+  </body>
+</html>

@@ -10,6 +10,7 @@
     "test:e2e": "node e2e/e2e.mjs"
   },
   "dependencies": {
+    "ahrs": "^1.3.3",
     "cannon-es": "^0.20.0",
     "mqtt": "^5.10.1",
     "peerjs": "^1.5.4",
