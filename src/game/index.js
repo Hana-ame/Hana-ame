@@ -9,10 +9,13 @@ import { P } from '../net/protocol.js';
 import { showScreen } from '../ui/screens.js';
 
 let ctx = null;
+let lastDir = { x: 0, y: 0, z: 1 };
 
 export function handleMotion(frame) {
   if (!ctx?.game || !frame) return;
   ctx.game.setSwordDir(frame.dir);
+  lastDir = frame.dir;
+  ctx.dirTimerTicks = (ctx.dirTimerTicks || 0) + 1;
   if (frame.hit > 0) ctx.game.onSwing(frame.omega || frame.hit);
 }
 
@@ -77,6 +80,17 @@ export async function startGame({ host, roomCode, bpm, diff }) {
 
   game.setSwordDir({ x: 0, y: 0, z: 1 });
 
+  const dirEl = document.querySelector('#pc-dir');
+  const dirTimer = setInterval(() => {
+    if (!dirEl) return;
+    const g = ctx?.game;
+    const d = ctx.dirTimerTicks || 0;
+    ctx.dirTimerTicks = 0;
+    const s = g ? g.swordDir : lastDir;
+    dirEl.textContent = `dir(${s.x.toFixed(2)},${s.y.toFixed(2)},${s.z.toFixed(2)}) · ${d} 帧/s`;
+  }, 1000);
+  ctx.dirTimer = dirTimer;
+
   document.querySelector('#hud').classList.remove('hidden');
   document.querySelector('#end-overlay').classList.add('hidden');
 
@@ -129,6 +143,7 @@ export function cleanup() {
   cancelAnimationFrame(ctx.raf);
   window.removeEventListener('keydown', ctx.removeKey);
   ctx.removeCamClick?.();
+  if (ctx.dirTimer) clearInterval(ctx.dirTimer);
   ctx.game?.notes?.forEach?.((n) => ctx.app?.notePool?.release?.(n.mesh));
   ctx.physics?.dispose?.(ctx.app?.scene);
   ctx.app?.dispose?.();

@@ -292,6 +292,21 @@ html, body {
   border-color: #ffd166;
 }
 
+.pc-dir {
+  position: fixed;
+  right: 14px;
+  top: 52px;
+  z-index: 21;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #9fe8ff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(159, 232, 255, 0.35);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
 /* overlays */
 .overlay {
   position: fixed;

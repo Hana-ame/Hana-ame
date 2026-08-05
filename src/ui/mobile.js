@@ -175,8 +175,19 @@ export function initMobile(params) {
         const avgQ = { x: x / len, y: y / len, z: z / len, w: w / len };
         const fwd = quatAxes(avgQ).forward;
         calib.setRef(avgQ, fwd);
+        finishCalibration();
+      } else {
+        // 没有采到任何姿态 → 传感器未在产生数据 (权限/安全上下文/设备不支持)
+        cancelAnimationFrame(rafFill);
+        calibrating = false;
+        streaming = false;
+        sensor.recalibrate();
+        els.calib2Fill.style.width = '0%';
+        els.calib2Step.textContent = '未检测到传感器数据, 请确认已授权(需 HTTPS)后重新校准';
+        els.calib2Do.classList.remove('hidden');
+        els.calib2Do.textContent = '重试校准';
+        els.calib2Do.onclick = startCalibration;
       }
-      finishCalibration();
     };
     rafFill = requestAnimationFrame(tick);
   }
