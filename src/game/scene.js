@@ -213,4 +213,4 @@ function createNotePool(scene) {
   return { spawn, release, active };
 }
 
-export { SWORD_PIVOT, SWORD_LEN };
+export { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN };

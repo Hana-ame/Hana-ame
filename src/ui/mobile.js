@@ -64,13 +64,9 @@ export function initMobile(params) {
 
   function handlers() {
     return {
-      onOpen() {
-        sess.sendControl({ t: P.HELLO, v: 1, role: 'mobile' });
-        pingLoop();
-        goCalibrate();
-      },
+      onOpen() {},
       onControl(msg) {
-        if (msg?.t === P.PING) sess.sendControl({ t: P.PONG, ts: msg.ts });
+        if (msg?.t === P.PING) sess?.sendControl({ t: P.PONG, ts: msg.ts });
         if (msg?.t === P.PONG) {
           const dt = Date.now() - msg.ts;
           els.ping.textContent = `${dt} ms`;
@@ -168,6 +164,9 @@ export function initMobile(params) {
     els.calibDo.classList.add('hidden');
     try {
       sess = await joinPeer(`${PEER_PREFIX}-${code}`, handlers());
+      sess.sendControl({ t: P.HELLO, v: 1, role: 'mobile' });
+      pingLoop();
+      goCalibrate();
     } catch (e) {
       console.error(e);
       els.calibState.textContent = `连接失败: ${e?.message || e?.type || '未知'}`;
@@ -181,7 +180,8 @@ export function initMobile(params) {
   $('#remote-recalib').addEventListener('click', recalibrate);
   $('#remote-vibrate').addEventListener('click', () => sensor?.vibrate(1));
 
-  sensor = new Sensor();
+  const forceSim = params?.get('sim') === '1';
+  sensor = new Sensor({ forceSim });
   showScreen('screen-mobile');
   renderList();
   initDiscovery();

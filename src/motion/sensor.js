@@ -13,12 +13,13 @@ function deviceOrientationToQuaternion(alpha, beta, gamma, out) {
 }
 
 export class Sensor {
-  constructor() {
+  constructor({ forceSim = false } = {}) {
     this.enabled = false;
     this.quaternion = quat.identity();
     this.omega = 0;
     this.calibrated = false;
     this.calibRef = null;
+    this.forceSim = forceSim;
 
     this._raw = quat.identity();
     this._prev = null;
@@ -40,11 +41,12 @@ export class Sensor {
   async requestPermission() {
     const DOE = window.DeviceOrientationEvent;
     if (DOE && typeof DOE.requestPermission === 'function') {
-      try {
-        return (await DOE.requestPermission()) === 'granted';
-      } catch {
-        return false;
-      }
+      return new Promise((resolve) => {
+        const t = setTimeout(() => resolve(true), 1500);
+        DOE.requestPermission()
+          .then((r) => { clearTimeout(t); resolve(r === 'granted'); })
+          .catch(() => { clearTimeout(t); resolve(false); });
+      });
     }
     return true;
   }
@@ -54,8 +56,8 @@ export class Sensor {
     if (onSwing) this._listeners.swing.push(onSwing);
     if (this._handler) return;
 
-    if (!window.DeviceOrientationEvent) {
-      console.warn('[sensor] DeviceOrientation not supported, using simulator');
+    if (this.forceSim || !window.DeviceOrientationEvent) {
+      console.warn('[sensor] 使用模拟器 (无 DeviceOrientationEvent 或 forceSim)');
       this._startSimulator();
       return;
     }
@@ -141,26 +143,33 @@ export class Sensor {
   // ----- 桌面模拟器: 无陀螺仪环境用于开发调试 -----
   _startSimulator() {
     let t = 0;
-    let swingAxis = { x: 0, y: 1, z: 0 };
     let lastSwing = 0;
+    let boost = 0;
     this._simTimer = setInterval(() => {
       t += 0.016;
       const now = performance.now();
 
-      let q = quat.multiply(
-        quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, Math.sin(t * 0.9) * 0.8),
-        quat.fromAxisAngle({ x: 1, y: 0, z: 0 }, Math.sin(t * 0.5) * 0.3),
-      );
-
-      let omega = Math.abs(Math.cos(t * 0.9)) * 0.9 + 0.1;
+      const zen = 0.9 + Math.sin(t * 0.45) * 0.45;
+      let az = Math.sin(t * 1.4) * 0.9;
+      let omega = 1.0 + Math.abs(Math.cos(t * 1.4)) * 1.2;
 
       if (now - lastSwing > 1500) {
-        swingAxis = { x: 0, y: 1, z: 0 };
-        const k = 2 + Math.random();
-        q = quat.multiply(quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, k), q);
-        omega = SENSOR.SWING_PEAK + 2.5;
+        boost = 1;
         lastSwing = now;
       }
+      az += boost * 2.6;
+      boost = Math.max(0, boost - 0.1);
+
+      const x = Math.sin(zen) * Math.cos(az);
+      const y = Math.cos(zen);
+      const z = -Math.sin(zen) * Math.sin(az);
+      const d = Math.sqrt(x * x + y * y + z * z);
+      const dir = { x: x / d, y: y / d, z: z / d };
+
+      let q = quat.fromToDir({ x: 0, y: 1, z: 0 }, dir);
+      q = quat.multiply(q, quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, Math.sin(t * 0.8) * 0.3));
+
+      if (boost > 0.5) omega = SENSOR.SWING_PEAK + 2.5;
 
       this.quaternion = q;
       this.omega = omega;

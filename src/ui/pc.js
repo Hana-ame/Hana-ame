@@ -70,7 +70,6 @@ export function initPc() {
       },
       onControl(msg) {
         if (msg?.t === P.PING) host?.sendControl({ t: P.PONG, ts: msg.ts });
-        if (msg?.t === P.READY) console.info('[pc] mobile ready');
         handleControl(msg);
       },
       onMotion(frame) {

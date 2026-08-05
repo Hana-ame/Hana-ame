@@ -59,6 +59,20 @@ export const quat = {
     return out;
   },
 
+  fromToDir(from, to, out = { x: 0, y: 0, z: 0, w: 1 }) {
+    const d = Math.sqrt(
+      (from.x + to.x) ** 2 + (from.y + to.y) ** 2 + (from.z + to.z) ** 2,
+    );
+    if (d < 1e-8) {
+      return quat.fromAxisAngle({ x: 1, y: 0, z: 0 }, Math.PI, out);
+    }
+    out.x = from.y * to.z - from.z * to.y;
+    out.y = from.z * to.x - from.x * to.z;
+    out.z = from.x * to.y - from.y * to.x;
+    out.w = d / 2;
+    return quat.normalize(out);
+  },
+
   angleAndAxis(q) {
     const v = Math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z);
     if (v < 1e-8) return { angle: 0, axis: { x: 1, y: 0, z: 0 } };

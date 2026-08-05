@@ -156,7 +156,6 @@ export class Music {
     g.setValueAtTime(0.0001, t);
     g.exponentialRampToValueAtTime(peak, t + a);
     g.exponentialRampToValueAtTime(0.0001, t + a + d);
-    node.stop(t + a + d + 0.05);
   }
 
   _kick(t) {
@@ -167,6 +166,8 @@ export class Music {
     o.frequency.exponentialRampToValueAtTime(45, t + 0.11);
     o.connect(g).connect(this.master);
     this._env(g, t, 0.002, 0.13, 1.0);
+    o.start(t);
+    o.stop(t + 0.19);
   }
 
   _snare(t) {
@@ -179,6 +180,8 @@ export class Music {
     const g = this.ctx.createGain();
     n.connect(bp).connect(g).connect(this.master);
     this._env(g, t, 0.002, 0.16, 0.7);
+    n.start(t);
+    n.stop(t + 0.22);
 
     const o = this.ctx.createOscillator();
     const og = this.ctx.createGain();
@@ -187,6 +190,8 @@ export class Music {
     o.frequency.exponentialRampToValueAtTime(150, t + 0.06);
     o.connect(og).connect(this.master);
     this._env(og, t, 0.002, 0.07, 0.5);
+    o.start(t);
+    o.stop(t + 0.12);
   }
 
   _hat(t, open) {
@@ -198,6 +203,8 @@ export class Music {
     const g = this.ctx.createGain();
     n.connect(hp).connect(g).connect(this.master);
     this._env(g, t, 0.001, open ? 0.25 : 0.05, open ? 0.35 : 0.3);
+    n.start(t);
+    n.stop(t + (open ? 0.32 : 0.09));
   }
 
   _bass(t, freq) {
@@ -211,6 +218,8 @@ export class Music {
     lpf.frequency.exponentialRampToValueAtTime(250, t + 0.09);
     o.connect(lpf).connect(g).connect(this.master);
     this._env(g, t, 0.004, 0.18, 0.5);
+    o.start(t);
+    o.stop(t + 0.24);
   }
 
   _arp(t, freq) {
@@ -221,6 +230,8 @@ export class Music {
     o.frequency.value = freq;
     o.connect(g).connect(this.master);
     this._env(g, t, 0.005, 0.14, 0.18);
+    o.start(t);
+    o.stop(t + 0.2);
   }
 
   _noiseBuf() {

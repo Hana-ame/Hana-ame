@@ -1,10 +1,12 @@
+import * as THREE from 'three';
 import { GAME } from '../constants.js';
+import { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN } from './scene.js';
 
-const TRAVEL_STEPS = Math.round(GAME.NOTE_SPAWN_Z / GAME.NOTE_SPEED * 4 * GAME.BPM / 60);
+const TRAVEL_STEPS = Math.round(Math.abs(GAME.NOTE_SPAWN_Z) / GAME.NOTE_SPEED * 4 * GAME.BPM / 60);
 const HIT_STEPS = 4.5;
 const PERFECT_STEPS = 2;
 const MISS_STEPS = 6;
-const HIT_RADIUS = 1.15;
+const HIT_RADIUS = 1.2;
 
 const COLORS = [0x4de3ff, 0xff2d78, 0xffd166, 0xb06dff, 0x3ddc84, 0xff8a3d, 0x66b3ff, 0xff5c8a, 0x9af0c0];
 
@@ -56,7 +58,7 @@ export class Game {
     this.grid = scene.gridPos;
     this.chart = genChart();
     this.notes = [];
-    this.spawnCursor = -TRAVEL_STEPS;
+    this.spawnCursor = 0;
 
     this.swordQuat = { x: 0, y: 0, z: 0, w: 1 };
     this.swordVisible = false;
@@ -70,6 +72,7 @@ export class Game {
     this.misses = 0;
     this.ended = false;
     this._swordFlash = 0;
+    this._missLater = [];
   }
 
   setSwordQuat(q) {
@@ -84,7 +87,7 @@ export class Game {
 
     while (this.spawnCursor < step) {
       const cells = this.chart[((this.spawnCursor % 64) + 64) % 64];
-      for (const cell of cells) this._spawnNote(cell, this.spawnCursor);
+      for (const cell of cells) this._spawnNote(cell, this.spawnCursor + TRAVEL_STEPS);
       this.spawnCursor += 1;
     }
 
@@ -94,8 +97,10 @@ export class Game {
       n.mesh.position.z = GAME.NOTE_SPAWN_Z * (1 - Math.min(p, 1.4));
       n.mesh.rotation.y += dt * 2.4;
       n.mesh.rotation.x += dt * 1.6;
-      if (p > 1 + MISS_STEPS / TRAVEL_STEPS) this._miss(n);
+      if (p > 1 + MISS_STEPS / TRAVEL_STEPS) this._missLater.push(n);
     }
+    for (const n of this._missLater) this._miss(n);
+    this._missLater.length = 0;
 
     this._updateSword(dt);
   }
@@ -132,10 +137,17 @@ export class Game {
     }
   }
 
+  _swordPose() {
+    const q = this.swordQuat;
+    const dir = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
+    const tip = SWORD_PIVOT.clone().addScaledVector(dir, SWORD_LEN);
+    return { pivot: SWORD_PIVOT, dir, tip };
+  }
+
   onSwing(omega) {
     if (this.ended || !this.swordVisible) return;
     const step = this.music.currentStep;
-    const { pivot, tip } = this.scene.getSword();
+    const { pivot, tip } = this._swordPose();
 
     let best = null;
     let bestDist = Infinity;

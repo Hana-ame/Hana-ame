@@ -75,6 +75,12 @@ export function startGame({ host, roomCode, bpm }) {
     replay.onclick = null;
     exit.onclick = null;
   };
+
+  window.__beatriftDebug = {
+    getGame: () => ctx?.game,
+    getMusic: () => ctx?.music,
+    handleMotion,
+  };
 }
 
 export function cleanup() {

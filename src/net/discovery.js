@@ -8,9 +8,9 @@ export function isConnected() {
   return !!client && client.connected;
 }
 
-export function connect({ timeout = 6000 } = {}) {
+export function connect({ timeout = 6000, retries = 1 } = {}) {
   if (client) return Promise.resolve(isConnected());
-  return new Promise((resolve) => {
+  const attempt = (n) => new Promise((resolve) => {
     const opts = {
       clientId: `beatrift-${Math.random().toString(36).slice(2, 10)}`,
       clean: true,
@@ -31,7 +31,11 @@ export function connect({ timeout = 6000 } = {}) {
     });
     c.on('error', () => finish(false));
     setTimeout(() => finish(false), timeout);
+  }).then((ok) => {
+    if (ok || n >= retries) return ok;
+    return attempt(n + 1);
   });
+  return attempt(0);
 }
 
 export function pcAnnounce(roomCode, peerId) {
