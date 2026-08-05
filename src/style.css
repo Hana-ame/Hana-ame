@@ -276,6 +276,22 @@ html, body {
 }
 .debugcam-badge.hidden { display: none; }
 
+.debugcam-btn {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 21;
+  margin: 0;
+  background: rgba(255, 209, 102, 0.12);
+  border-color: rgba(255, 209, 102, 0.5);
+  color: #ffd166;
+  pointer-events: auto;
+}
+.debugcam-btn.on {
+  background: rgba(255, 209, 102, 0.35);
+  border-color: #ffd166;
+}
+
 /* overlays */
 .overlay {
   position: fixed;

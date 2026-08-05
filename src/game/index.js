@@ -47,6 +47,8 @@ export async function startGame({ host, roomCode, bpm, diff }) {
     if (on) app.debugControls.update();
     const badge = document.querySelector('#debugcam-badge');
     if (badge) badge.classList.toggle('hidden', !on);
+    const btn = document.querySelector('#debugcam-toggle');
+    if (btn) btn.classList.toggle('on', on);
   };
   const onKey = (e) => {
     if (e.code !== 'KeyC' || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -55,6 +57,10 @@ export async function startGame({ host, roomCode, bpm, diff }) {
   };
   window.addEventListener('keydown', onKey);
   ctx.removeKey = onKey;
+  const onCamClick = () => toggleDebugCamera();
+  const camBtn = document.querySelector('#debugcam-toggle');
+  if (camBtn) camBtn.addEventListener('click', onCamClick);
+  ctx.removeCamClick = () => camBtn?.removeEventListener('click', onCamClick);
 
   const onEnd = (stats) => {
     hud.showEnd(stats);
@@ -68,6 +74,8 @@ export async function startGame({ host, roomCode, bpm, diff }) {
   ctx.fx = fx;
   ctx.physics = physics;
   ctx.music = music;
+
+  game.setSwordDir({ x: 0, y: 0, z: 1 });
 
   document.querySelector('#hud').classList.remove('hidden');
   document.querySelector('#end-overlay').classList.add('hidden');
@@ -120,6 +128,7 @@ export function cleanup() {
   if (!ctx) return;
   cancelAnimationFrame(ctx.raf);
   window.removeEventListener('keydown', ctx.removeKey);
+  ctx.removeCamClick?.();
   ctx.game?.notes?.forEach?.((n) => ctx.app?.notePool?.release?.(n.mesh));
   ctx.physics?.dispose?.(ctx.app?.scene);
   ctx.app?.dispose?.();
