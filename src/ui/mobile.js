@@ -7,7 +7,7 @@ import { joinPeer } from '../net/connection.js';
 import { P, encodeMotion } from '../net/protocol.js';
 import { Sensor } from '../motion/sensor.js';
 import { Calib } from '../motion/calibrate.js';
-import { computeForward, screenRel } from '../motion/forward.js';
+import { screenRel, quatAxes } from '../motion/forward.js';
 
 export function initMobile(params) {
   const els = {
@@ -139,16 +139,16 @@ export function initMobile(params) {
     startCalibration();
   }
 
-  // 单点基准: 玩家目视 PC 屏幕, 手机竖直举在身前, 屏幕正对眼睛。
-  // 保持约 2 秒自动采样手机前方方向, 记录为基准 ref; 之后光剑连续跟随。
+  // 单点基准: 玩家手持手机像握光剑, 用手机前端对准 PC 屏幕中心点。
+  // 保持约 2 秒自动采样姿态四元数, 记录为基准 ref; 之后光剑连续跟随。
   function startCalibration() {
     calib.reset();
     calibrating = true;
     streaming = false;
     els.calib2Do.classList.add('hidden');
     showScreen('screen-calib2');
-    els.calib2Dir.textContent = '正视屏幕';
-    els.calib2Step.textContent = '请目视屏幕, 手机竖直举起, 屏幕正对眼睛';
+    els.calib2Dir.textContent = '手机指向屏幕中心';
+    els.calib2Step.textContent = '手持手机, 像握光剑一样用手机前端对准 PC 屏幕中心';
     sampleBuf.length = 0;
     const holdStart = performance.now();
     const tick = () => {
@@ -160,10 +160,21 @@ export function initMobile(params) {
       }
       const n = sampleBuf.length;
       if (n > 0) {
-        let g = 0;
-        let b = 0;
-        for (const s of sampleBuf) { g += s.gamma; b += s.beta; }
-        calib.setRef(computeForward(b / n, g / n).forward);
+        // 四元数平均: 求 Frobenius 平均(归一化求和, 符号校正)
+        let x = 0, y = 0, z = 0, w = 0;
+        let refQ = sampleBuf[0].q;
+        for (const s of sampleBuf) {
+          const q = s.q;
+          if (refQ.w * q.w + refQ.x * q.x + refQ.y * q.y + refQ.z * q.z < 0) {
+            x -= q.x; y -= q.y; z -= q.z; w -= q.w;
+          } else {
+            x += q.x; y += q.y; z += q.z; w += q.w;
+          }
+        }
+        const len = Math.sqrt(x * x + y * y + z * z + w * w) || 1;
+        const avgQ = { x: x / len, y: y / len, z: z / len, w: w / len };
+        const fwd = quatAxes(avgQ).forward;
+        calib.setRef(avgQ, fwd);
       }
       finishCalibration();
     };
@@ -195,19 +206,17 @@ export function initMobile(params) {
   }
   function onFrame(f) {
     if (calibrating) {
-      if (sampleBuf.length < 160) sampleBuf.push({ gamma: f.gamma, beta: f.beta });
+      if (f.forward && sampleBuf.length < 160) sampleBuf.push({ q: f.q, forward: f.forward });
       return;
     }
-    if (!streaming || !sess || !calib.complete) return;
-    const fwd = computeForward(f.beta, f.gamma).forward;
-    const rel = screenRel(fwd, calib.ref);
+    if (!streaming || !sess || !calib.complete || !f.forward) return;
+    const rel = screenRel(f.forward, calib.refForward);
     sess.sendMotion(encodeMotion(calib.dir(rel.onScreen.x, rel.onScreen.y), f.omega, 0));
   }
   function onSwing(s) {
     sensor.vibrate(s.omega / (SENSOR.SWING_PEAK * 2));
-    if (streaming && sess && calib.complete) {
-      const fwd = computeForward(sensor.beta, sensor.gamma).forward;
-      const rel = screenRel(fwd, calib.ref);
+    if (streaming && sess && calib.complete && sensor.forward) {
+      const rel = screenRel(sensor.forward, calib.refForward);
       sess.sendMotion(encodeMotion(calib.dir(rel.onScreen.x, rel.onScreen.y), s.omega, 1));
     }
   }

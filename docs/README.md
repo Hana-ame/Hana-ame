@@ -23,15 +23,15 @@
    - 控制消息: JSON 对象(`{t:'ping',...}` 等)
    - 体感帧: 24 字节二进制(`Float32Array[6]`), 通过 `d instanceof Uint8Array` 区分
    - 通道以 `reliable:false` 创建 → `ordered:false`(无序低延迟)
-4. Mobile 校准(单点基准: 目视屏幕、手机竖直举在身前 2s, iOS 需手势授权)→ 发送 `READY`。
+ 4. Mobile 校准(单点基准: 手机前端瞄准 PC 屏幕中心、静止 2s, iOS 需手势授权)→ 发送 `READY`。
 5. PC「开始游戏」→ 发送 `START` → 双方进入游戏。
 
 > 若 MQTT 不可用: 列表为空, 仍可手输房间码(PeerJS 直连不依赖 MQTT)。
 
 ### 体感输入
 
-- **方向解算**: `DeviceOrientation` 的 `gamma`/`beta` → 四元数(`lib/attitude.js`) → **拍面方向(屏幕法线)** `forward`(世界系 z 向上, 不依赖罗盘 alpha)。
-- **单点基准校准**: 目视屏幕、手机竖直举在身前、屏幕正对眼睛, 保持约 2 秒, 自动采样平均 forward 记为基准 `ref`。
+- **方向解算**: `devicemotion` 的加速度计(含重力)+陀螺仪 → **Mahony 互补滤波**(`lib/attitude.js`) → 姿态四元数 → **拍面方向(屏幕法线)** `forward`(世界系 z 向上, 不依赖罗盘 alpha)。四元数融合避开 deviceorientation 在竖立/平放位的万向锁读数不稳。
+- **单点基准校准**: 手机前端瞄准 PC 屏幕中心、静止保持约 2 秒, 采样平均姿态四元数记为基准 `ref`。
 - **连续映射**: 游玩时实时 forward 相对 `ref` 的偏移 `screenRel` → 屏幕平面连续坐标 `(u,v)` → 放大 `GAIN=2.5` 填满摆动范围 → 光剑方向。
 - **光剑可见性**: 方向强制保持在屏幕平面内(`dir.z=0`), 中性位竖直向上; u 控左右倾斜(±50°)、v 控上下摆动, 剑刃始终平行屏幕、相机必见全长。
 - 挥舞检测: 读数差分角速度峰值 + 迟滞 + 冷却(~60Hz 采样); 角速度跳变 >90° 丢弃防欧拉翻转。
@@ -58,7 +58,7 @@ src/
   main.js            hash 路由 + 身份选择
   ui/                screens(路由) / pc.js / mobile.js
   net/               discovery(MQTT) / connection(PeerJS) / protocol(帧格式) / joinUrl
-  motion/            calibrate(单点校准+连续映射) / forward(屏幕法线) / quat(四元数数学) / sensor(陀螺仪+挥舞+模拟器)
+  motion/            calibrate(单点校准+连续映射) / forward(屏幕法线) / sensor(Mahony 姿态+挥舞+模拟器)
   game/              index(编排) / scene(three) / gameplay(判定) / music / fx / physics
 public/
   charts/default.json  手写谱面({beat,x,y} 数组)

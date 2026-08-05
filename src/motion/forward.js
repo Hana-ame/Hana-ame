@@ -1,7 +1,7 @@
-import { DEG, quatFromDeviceEuler, qRotate, normalize3 } from '../../lib/attitude.js';
+import { qRotate, qInvert, qMul, qNormalize, normalize3 } from '../../lib/attitude.js';
 
 // 世界系: z 向上, 重力 down = (0,0,-1); 设备系 x=右, y=顶, z=屏幕法线(拍面)
-// 姿态由 W3C quaternion (设备系->地球系) 描述, 屏幕法线 = qRotate(q, {0,0,1})。
+// 姿态四元数 q (设备系->地球系), 屏幕法线 = qRotate(q, {0,0,1})。
 // 与 test/attitude.js (lib/attitude.js) 的 quatFromDeviceEuler 保持一致。
 
 function cross(a, b) {
@@ -16,23 +16,19 @@ function dot(a, b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-// 手机屏幕法线(拍面方向)在世界系的方向: 由 beta(与地平面夹角) 与 gamma(与屏幕夹角)
-// 经 W3C 四元数解算, 等价于旧公式 (sinγ, -sinβ·cosγ, cosβ·cosγ), 但四元数形式统一。
-export function computeForward(betaDeg, gammaDeg) {
-  const q = quatFromDeviceEuler(0, betaDeg, gammaDeg);
-  const forward = normalize3(qRotate(q, { x: 0, y: 0, z: 1 }));
-
-  // 手机顶边(长轴)方向在世界系: 只随 beta(重力倾斜)变化, 与 gamma 无关
-  const top = qRotate(q, { x: 0, y: 1, z: 0 });
-
+// 由姿态四元数解出屏幕法线(forward)与长轴(top)方向 (世界系)
+export function quatAxes(q) {
+  const n = qNormalize(q);
   return {
-    forward,
-    top,
-    beta: betaDeg * DEG,
-    gamma: gammaDeg * DEG,
-    elevation: Math.asin(Math.max(-1, Math.min(1, forward.z))),
-    azimuth: Math.atan2(forward.x, forward.y),
+    forward: qRotate(n, { x: 0, y: 0, z: 1 }),
+    top: qRotate(n, { x: 0, y: 1, z: 0 }),
   };
+}
+
+// 相对旋转: 当前姿态 q 相对基准姿态 refQ 的偏移, 返回应用在基准姿态上的相对旋转
+// 即 qRel = refQ⁻¹ ⊗ q, 表示"手机从基准姿态转到当前姿态的相对转动"
+export function relQuat(refQ, q) {
+  return qNormalize(qMul(qInvert(refQ), q));
 }
 
 // 相对游戏屏平面分解

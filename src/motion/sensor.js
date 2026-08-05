@@ -1,50 +1,39 @@
 import { SENSOR } from '../constants.js';
+import { Mahony, quatFromAccel, quatFromDeviceEuler, qNormalize, qRotate, DEG } from '../../lib/attitude.js';
 
 const JUMP_GUARD = 90;
 
 export class Sensor {
   constructor({ forceSim = false } = {}) {
     this.enabled = false;
-    this.gamma = 0;
-    this.beta = 0;
-    this.ax = 0;
-    this.ay = 0;
-    this.az = 0;
-    this.omega = 0;
+    this.q = null;               // 当前姿态四元数 (设备系->世界系)
+    this.forward = null;         // 屏幕法线方向 (世界系)
+    this.top = null;             // 手机长轴方向 (世界系)
+    this.omega = 0;              // 角速度 (rad/s)
     this.calibrated = false;
     this.forceSim = forceSim;
 
-    this._prev = null;
+    this._mahony = new Mahony({ kp: 0.5, ki: 0.05 });
     this._prevTs = 0;
+    this._prevAccel = null;
     this._peak = SENSOR.SWING_PEAK;
     this._min = SENSOR.SWING_MIN;
     this._lastSwingTs = 0;
     this._armed = false;
-    this._orientHandler = null;
     this._motionHandler = null;
     this._listeners = { frame: [], swing: [] };
     this._simTimer = null;
   }
 
   static get supported() {
-    return typeof window !== 'undefined' && 'DeviceOrientationEvent' in window;
+    return typeof window !== 'undefined' && 'DeviceMotionEvent' in window;
   }
 
   async requestPermission() {
     const withTimeout = (p) => Promise.race([p, new Promise((r) => setTimeout(() => r('denied'), 1500))]);
-    const needs = [];
     if (window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function') {
-      needs.push('motion');
-    }
-    if (window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent.requestPermission === 'function') {
-      needs.push('orientation');
-    }
-    for (const kind of needs) {
       try {
-        const r = await withTimeout(kind === 'motion'
-          ? window.DeviceMotionEvent.requestPermission()
-          : window.DeviceOrientationEvent.requestPermission());
-        if (r !== 'granted') return false;
+        return (await withTimeout(window.DeviceMotionEvent.requestPermission())) === 'granted';
       } catch {
         return false;
       }
@@ -55,54 +44,55 @@ export class Sensor {
   start(onFrame, onSwing) {
     this._listeners.frame.push(onFrame);
     if (onSwing) this._listeners.swing.push(onSwing);
-    if (this._orientHandler) return;
+    if (this._motionHandler) return;
 
-    if (this.forceSim || !window.DeviceOrientationEvent || !window.DeviceMotionEvent) {
+    if (this.forceSim || !window.DeviceMotionEvent || !window.DeviceOrientationEvent) {
       console.warn('[sensor] 使用模拟器 (无陀螺仪/加速度计或 forceSim)');
       this._startSimulator();
       return;
     }
-    this._orientHandler = (e) => this._onOrientation(e);
-    window.addEventListener('deviceorientation', this._orientHandler);
     this._motionHandler = (e) => this._onMotion(e);
     window.addEventListener('devicemotion', this._motionHandler);
     this.enabled = true;
   }
 
   _onMotion(e) {
-    const g = e.accelerationIncludingGravity;
-    if (g && (g.x || g.y || g.z)) {
-      this.ax = g.x;
-      this.ay = g.y;
-      this.az = g.z;
-    }
-  }
-
-  _onOrientation(e) {
-    if (e.gamma == null || e.beta == null) return;
+    const accel = e.accelerationIncludingGravity;
+    const gyro = e.rotationRate;
+    if (!accel || !gyro) return;
     const now = performance.now();
-    const dt = this._prevTs ? (now - this._prevTs) / 1000 : 0;
+    const dt = this._prevTs ? (now - this._prevTs) / 1000 : 0.016;
 
-    if (this._prev) {
-      const dg = e.gamma - this._prev.gamma;
-      const db = e.beta - this._prev.beta;
-      this.gamma = e.gamma;
-      this.beta = e.beta;
-      if (Math.abs(dg) <= JUMP_GUARD && Math.abs(db) <= JUMP_GUARD && dt > 0 && dt < 0.1) {
-        this.omega = Math.hypot(dg, db) * (Math.PI / 180) / dt;
-      } else {
-        this.omega = 0;
-      }
+    // 陀螺仪 rotationRate 单位 deg/s -> rad/s
+    const g = {
+      x: (gyro.alpha ?? 0) * DEG,
+      y: (gyro.beta ?? 0) * DEG,
+      z: (gyro.gamma ?? 0) * DEG,
+    };
+
+    // 角速度跳变 >90°/s 视为噪声/翻转, 抑制; 否则用于挥舞检测
+    const dg = Math.hypot(g.x, g.y, g.z);
+    this.omega = (dt > 0 && dt < 0.1 && dg <= JUMP_GUARD * DEG) ? dg : 0;
+
+    if (!this.q) {
+      // 首帧: 用重力初始化姿态 (静止时加速度计指向"上")
+      this._mahony.setOrientation(quatFromAccel(accel, 0));
     } else {
-      this.gamma = e.gamma;
-      this.beta = e.beta;
-      this.omega = 0;
+      this._mahony.update(dt, g, accel);
     }
-    this._prev = { gamma: e.gamma, beta: e.beta };
-    this._prevTs = now;
+    this.q = qNormalize(this._mahony.q);
+    this.forward = qRotate(this.q, { x: 0, y: 0, z: 1 });
+    this.top = qRotate(this.q, { x: 0, y: 1, z: 0 });
 
+    this._prevTs = now;
+    this._prevAccel = accel;
     this._checkSwing();
-    this._emit('frame', { gamma: this.gamma, beta: this.beta, ax: this.ax, ay: this.ay, az: this.az, omega: this.omega });
+    this._emit('frame', {
+      q: this.q,
+      forward: this.forward,
+      top: this.top,
+      omega: this.omega,
+    });
   }
 
   setSwingThresholds(peak, min) {
@@ -137,9 +127,7 @@ export class Sensor {
   }
 
   stop() {
-    if (this._orientHandler) window.removeEventListener('deviceorientation', this._orientHandler);
     if (this._motionHandler) window.removeEventListener('devicemotion', this._motionHandler);
-    this._orientHandler = null;
     this._motionHandler = null;
     this._stopSimulator();
     this.enabled = false;
@@ -152,37 +140,48 @@ export class Sensor {
   }
 
   _startSimulator() {
-    const DEG = Math.PI / 180;
     let t = 0;
     let lastSwing = 0;
     let boost = 0;
+    // 校准期间(calibrated=false)保持中性姿态(beta=90,gamma=0), 模拟玩家稳定持握对准屏幕中心
+    let holdUntil = 0;
     this._simTimer = setInterval(() => {
       t += 0.016;
       const now = performance.now();
-      let gamma = Math.sin(t * 1.2) * 55;
-      let beta = Math.sin(t * 0.7) * 45 + 90;
-      let omega = 1.0 + Math.abs(Math.cos(t * 1.2)) * 1.0;
-      if (now - lastSwing > 1500) {
-        boost = 1;
-        lastSwing = now;
+      let gamma, beta, omega;
+      if (!this.calibrated) {
+        // 模拟玩家对准屏幕中心保持 2.5s
+        if (holdUntil === 0) holdUntil = now + 2500;
+        if (now < holdUntil) {
+          gamma = 0;
+          beta = 90;
+          omega = 0.3;
+        } else {
+          this.calibrated = true;
+          holdUntil = 0;
+          gamma = 0;
+          beta = 90;
+          omega = 0.3;
+        }
+      } else {
+        gamma = Math.sin(t * 1.2) * 55;
+        beta = Math.sin(t * 0.7) * 45 + 90;
+        omega = 1.0 + Math.abs(Math.cos(t * 1.2)) * 1.0;
+        if (now - lastSwing > 1500) {
+          boost = 1;
+          lastSwing = now;
+        }
+        gamma += boost * 60;
+        boost = Math.max(0, boost - 0.1);
+        if (boost > 0.5) omega = SENSOR.SWING_PEAK + 2.5;
       }
-      gamma += boost * 60;
-      boost = Math.max(0, boost - 0.1);
-      if (boost > 0.5) omega = SENSOR.SWING_PEAK + 2.5;
 
-      const b = beta * DEG;
-      const gm = Math.cos(b) * Math.sin(gamma * DEG);
-      const gy = -Math.sin(b);
-      const gz = -Math.cos(b) * Math.cos(gamma * DEG);
-
-      this.gamma = gamma;
-      this.beta = beta;
-      this.ax = gm * 9.8;
-      this.ay = gy * 9.8;
-      this.az = gz * 9.8;
+      this.q = qNormalize(quatFromDeviceEuler(0, beta, gamma));
+      this.forward = qRotate(this.q, { x: 0, y: 0, z: 1 });
+      this.top = qRotate(this.q, { x: 0, y: 1, z: 0 });
       this.omega = omega;
       this._checkSwing();
-      this._emit('frame', { gamma, beta, ax: this.ax, ay: this.ay, az: this.az, omega });
+      this._emit('frame', { q: this.q, forward: this.forward, top: this.top, omega });
     }, 16);
   }
 
