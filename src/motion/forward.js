@@ -1,44 +1,35 @@
-const DEG = Math.PI / 180;
+import { DEG, quatFromDeviceEuler, qRotate, normalize3 } from '../../lib/attitude.js';
 
 // 世界系: z 向上, 重力 down = (0,0,-1); 设备系 x=右, y=顶, z=屏幕法线(拍面)
-// 约定与 W3C DeviceOrientation 一致: R = Rx(beta)·Ry(gamma), alpha=0 (不依赖罗盘)
-// 重力在设备系: ĝ = (cosβ·sinγ, -sinβ, -cosβ·cosγ)
+// 姿态由 W3C quaternion (设备系->地球系) 描述, 屏幕法线 = qRotate(q, {0,0,1})。
+// 与 test/attitude.js (lib/attitude.js) 的 quatFromDeviceEuler 保持一致。
 
-function normalize(v) {
-  const l = Math.hypot(v.x, v.y, v.z) || 1;
-  return { x: v.x / l, y: v.y / l, z: v.z / l };
+function cross(a, b) {
+  return {
+    x: a.y * b.z - a.z * b.y,
+    y: a.z * b.x - a.x * b.z,
+    z: a.x * b.y - a.y * b.x,
+  };
 }
 
-export function computeForward(gammaDeg, ax, ay, az) {
-  const g = normalize({ x: ax, y: ay, z: az });
+function dot(a, b) {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
 
-  const gam = gammaDeg * DEG;
-  const cg = Math.cos(gam);
-  const sg = Math.sin(gam);
-
-  let cosB;
-  if (Math.abs(cg) > 0.3) cosB = -g.z / cg;
-  else if (Math.abs(sg) > 0.3) cosB = g.x / sg;
-  else cosB = 0;
-  cosB = Math.max(-1, Math.min(1, cosB));
-  const sinB = -g.y;
-  const beta = Math.atan2(sinB, cosB);
-
-  // 屏幕法线(拍面方向)在世界系: 随 gamma 左右摆动, 随 beta 上下
-  const forward = normalize({
-    x: sg,
-    y: -sinB * cg,
-    z: cosB * cg,
-  });
+// 手机屏幕法线(拍面方向)在世界系的方向: 由 beta(与地平面夹角) 与 gamma(与屏幕夹角)
+// 经 W3C 四元数解算, 等价于旧公式 (sinγ, -sinβ·cosγ, cosβ·cosγ), 但四元数形式统一。
+export function computeForward(betaDeg, gammaDeg) {
+  const q = quatFromDeviceEuler(0, betaDeg, gammaDeg);
+  const forward = normalize3(qRotate(q, { x: 0, y: 0, z: 1 }));
 
   // 手机顶边(长轴)方向在世界系: 只随 beta(重力倾斜)变化, 与 gamma 无关
-  const top = { x: 0, y: cosB, z: sinB };
+  const top = qRotate(q, { x: 0, y: 1, z: 0 });
 
   return {
     forward,
     top,
-    beta,
-    gamma: gam,
+    beta: betaDeg * DEG,
+    gamma: gammaDeg * DEG,
     elevation: Math.asin(Math.max(-1, Math.min(1, forward.z))),
     azimuth: Math.atan2(forward.x, forward.y),
   };
@@ -47,9 +38,9 @@ export function computeForward(gammaDeg, ax, ay, az) {
 // 相对游戏屏平面分解
 // refDir: 校准时「正前」对应的 forward(指向屏幕中心), 定义屏幕平面的法线
 export function screenRel(dir, refDir) {
-  const n = normalize(refDir);
+  const n = normalize3(refDir);
   const up = { x: 0, y: 0, z: 1 };
-  const right = normalize(cross(n, up));
+  const right = normalize3(cross(n, up));
   const vert = cross(right, n);
 
   const dp = dot(dir, n);
@@ -61,6 +52,3 @@ export function screenRel(dir, refDir) {
     onScreen: { x: dot(inPlane, right), y: dot(inPlane, vert) },
   };
 }
-
-function dot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
-function cross(a, b) { return { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x }; }

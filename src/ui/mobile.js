@@ -169,11 +169,9 @@ export function initMobile(params) {
       const n = sampleBuf.length;
       if (n > 0) {
         let g = 0;
-        let aX = 0;
-        let aY = 0;
-        let aZ = 0;
-        for (const s of sampleBuf) { g += s.gamma; aX += s.ax; aY += s.ay; aZ += s.az; }
-        const fwd = computeForward(g / n, aX / n, aY / n, aZ / n).forward;
+        let b = 0;
+        for (const s of sampleBuf) { g += s.gamma; b += s.beta; }
+        const fwd = computeForward(b / n, g / n).forward;
         if (!calib.ref) calib.setRef(fwd);
         const rel = screenRel(fwd, calib.ref);
         calib.set(step.r, step.c, rel.onScreen.x, rel.onScreen.y);
@@ -208,18 +206,18 @@ export function initMobile(params) {
   }
   function onFrame(f) {
     if (calibrating) {
-      if (sampleBuf.length < 160) sampleBuf.push({ gamma: f.gamma, ax: f.ax, ay: f.ay, az: f.az });
+      if (sampleBuf.length < 160) sampleBuf.push({ gamma: f.gamma, beta: f.beta });
       return;
     }
     if (!streaming || !sess || !calib.complete) return;
-    const fwd = computeForward(f.gamma, f.ax, f.ay, f.az).forward;
+    const fwd = computeForward(f.beta, f.gamma).forward;
     const rel = screenRel(fwd, calib.ref);
     sess.sendMotion(encodeMotion(calib.dir(rel.onScreen.x, rel.onScreen.y), f.omega, 0));
   }
   function onSwing(s) {
     sensor.vibrate(s.omega / (SENSOR.SWING_PEAK * 2));
     if (streaming && sess && calib.complete) {
-      const fwd = computeForward(sensor.gamma, sensor.ax, sensor.ay, sensor.az).forward;
+      const fwd = computeForward(sensor.beta, sensor.gamma).forward;
       const rel = screenRel(fwd, calib.ref);
       sess.sendMotion(encodeMotion(calib.dir(rel.onScreen.x, rel.onScreen.y), s.omega, 1));
     }
