@@ -5,6 +5,7 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    allowedHosts: ['wsl-5173.moonchan.xyz'],
   },
   build: {
     target: 'es2020',

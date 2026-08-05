@@ -84,7 +84,21 @@ npm run test:e2e   # 需要: 已运行的 dev server + 本地 playwright chromiu
 
 流程: PC 建房间 → Mobile 手输码连接 → 校准(模拟器) → 开始游戏 → 断言 MQTT/连接/运动流/命中计分/延迟。
 
-## 部署 (GitHub Pages)
+## 部署
+
+### 方式 A: 5173 dev server(当前)
+
+手机同网络直接访问映射域名:
+
+```bash
+npm run dev
+# 监听 *:5173 (0.0.0.0), 已放行 Host: wsl-5173.moonchan.xyz
+# 手机/浏览器访问: https://wsl-5173.moonchan.xyz/webrtc/
+```
+
+HTTPS 由映射域名终结, 满足移动端陀螺仪的安全上下文要求。
+
+### 方式 B: GitHub Pages
 
 - `vite.config.js` 的 `base=/webrtc/` 已按目标子路径配置。
 - GitHub Actions(`.github/workflows/deploy.yml`)构建后通过 `actions/deploy-pages` 发布。
