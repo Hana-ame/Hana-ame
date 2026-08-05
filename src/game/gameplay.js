@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GAME } from '../constants.js';
-import { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN, SWORD_LOCAL_DIR } from './scene.js';
+import { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN } from './scene.js';
+
+const UP = new THREE.Vector3(0, 1, 0);
 
 const TRAVEL_STEPS = Math.round(Math.abs(GAME.NOTE_SPAWN_Z) / GAME.NOTE_SPEED * 4 * GAME.BPM / 60);
 const HIT_STEPS = 4.5;
@@ -62,7 +64,7 @@ export class Game {
     this.notes = [];
     this.spawnCursor = 0;
 
-    this.swordQuat = { x: 0, y: 0, z: 0, w: 1 };
+    this.swordDir = { x: 0, y: 1, z: 0 };
     this.swordVisible = false;
 
     this.score = 0;
@@ -77,8 +79,8 @@ export class Game {
     this._missLater = [];
   }
 
-  setSwordQuat(q) {
-    this.swordQuat = q;
+  setSwordDir(dir) {
+    this.swordDir = dir;
     this.swordVisible = true;
   }
 
@@ -118,7 +120,7 @@ export class Game {
     const s = this.scene.sword;
     s.group.visible = this.swordVisible;
     if (!this.swordVisible) return;
-    s.group.quaternion.set(this.swordQuat.x, this.swordQuat.y, this.swordQuat.z, this.swordQuat.w);
+    s.group.quaternion.setFromUnitVectors(UP, new THREE.Vector3(this.swordDir.x, this.swordDir.y, this.swordDir.z));
 
     const { tip } = this.scene.getSword();
     const trail = this.scene.trail;
@@ -140,8 +142,7 @@ export class Game {
   }
 
   _swordPose() {
-    const q = this.swordQuat;
-    const dir = SWORD_LOCAL_DIR.clone().applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
+    const dir = new THREE.Vector3(this.swordDir.x, this.swordDir.y, this.swordDir.z);
     const tip = SWORD_PIVOT.clone().addScaledVector(dir, SWORD_LEN);
     return { pivot: SWORD_PIVOT, dir, tip };
   }

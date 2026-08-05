@@ -1,74 +1,36 @@
-import { quat } from './quat.js';
 import { SENSOR } from '../constants.js';
 
-const DEG = Math.PI / 180;
-const GAME_DOWN = { x: 0, y: -1, z: 0 };
-const CORRECTION_GAIN = 0.05;
-const CORRECTION_OMEGA_MAX = 1.5;
-const GRAVITY = 9.80665;
-
-function rotateVector(q, v) {
-  const qv = { x: v.x, y: v.y, z: v.z, w: 0 };
-  const r = quat.multiply(quat.multiply(q, qv), quat.invert(q));
-  return { x: r.x, y: r.y, z: r.z };
-}
-
-function bodyDelta(omegaRad, dt) {
-  const mag = Math.sqrt(omegaRad.x * omegaRad.x + omegaRad.y * omegaRad.y + omegaRad.z * omegaRad.z);
-  if (mag < 1e-6 || dt <= 0) return quat.identity();
-  return quat.fromAxisAngle(
-    { x: omegaRad.x / mag, y: omegaRad.y / mag, z: omegaRad.z / mag },
-    mag * dt,
-  );
-}
-
-function deviceOrientationToQuaternion(alpha, beta, gamma, out) {
-  const e = { x: beta * DEG, y: alpha * DEG, z: -gamma * DEG };
-  return quat.fromEulerYXZ(e, out);
-}
+const JUMP_GUARD = 90;
 
 export class Sensor {
   constructor({ forceSim = false } = {}) {
     this.enabled = false;
-    this.quaternion = quat.identity();
+    this.gamma = 0;
+    this.beta = 0;
     this.omega = 0;
     this.calibrated = false;
     this.forceSim = forceSim;
 
-    this._q = quat.identity();
-    this._raw = quat.identity();
-    this._calibRef = null;
-    this._gyroMode = false;
     this._prev = null;
     this._prevTs = 0;
     this._peak = SENSOR.SWING_PEAK;
     this._min = SENSOR.SWING_MIN;
-    this._listeners = { frame: [], swing: [] };
-    this._armed = false;
     this._lastSwingTs = 0;
+    this._armed = false;
     this._handler = null;
+    this._listeners = { frame: [], swing: [] };
     this._simTimer = null;
   }
 
   static get supported() {
-    return typeof window !== 'undefined' && (
-      'DeviceOrientationEvent' in window || typeof DeviceMotionEvent !== 'undefined'
-    );
+    return typeof window !== 'undefined' && 'DeviceOrientationEvent' in window;
   }
 
   async requestPermission() {
-    const withTimeout = (p) => Promise.race([
-      p,
-      new Promise((r) => setTimeout(() => r('denied'), 1500)),
-    ]);
-    const DME = window.DeviceMotionEvent;
     const DOE = window.DeviceOrientationEvent;
-    if (DME && typeof DME.requestPermission === 'function') {
-      try { return (await withTimeout(DME.requestPermission())) === 'granted'; }
-      catch { return false; }
-    }
     if (DOE && typeof DOE.requestPermission === 'function') {
-      try { return (await withTimeout(DOE.requestPermission())) === 'granted'; }
+      const p = DOE.requestPermission();
+      try { return (await Promise.race([p, new Promise((r) => setTimeout(() => r('denied'), 1500))])) === 'granted'; }
       catch { return false; }
     }
     return true;
@@ -79,91 +41,45 @@ export class Sensor {
     if (onSwing) this._listeners.swing.push(onSwing);
     if (this._handler) return;
 
-    if (this.forceSim || !window.DeviceMotionEvent) {
-      if (this.forceSim || !window.DeviceOrientationEvent) {
-        console.warn('[sensor] 使用模拟器 (无陀螺仪或 forceSim)');
-        this._startSimulator();
-        return;
-      }
-      console.warn('[sensor] 无 DeviceMotion, 回退 DeviceOrientation');
-      this._gyroMode = false;
-      this._handler = (e) => this._onDeviceOrientation(e);
-      window.addEventListener('deviceorientation', this._handler);
-    } else {
-      this._gyroMode = true;
-      this._handler = (e) => this._onDeviceMotion(e);
-      window.addEventListener('devicemotion', this._handler);
+    if (this.forceSim || !window.DeviceOrientationEvent) {
+      console.warn('[sensor] 使用模拟器 (无 DeviceOrientationEvent 或 forceSim)');
+      this._startSimulator();
+      return;
     }
+    this._handler = (e) => this._onOrientation(e);
+    window.addEventListener('deviceorientation', this._handler);
     this.enabled = true;
   }
 
-  _onDeviceMotion(e) {
+  _onOrientation(e) {
+    if (e.gamma == null || e.beta == null) return;
     const now = performance.now();
-    const dt = this._prevTs ? Math.min((now - this._prevTs) / 1000, 0.1) : 0;
-    this._prevTs = now;
+    const dt = this._prevTs ? (now - this._prevTs) / 1000 : 0;
 
-    if (dt > 0) {
-      const rr = e.rotationRate;
-      if (rr && (rr.alpha || rr.beta || rr.gamma)) {
-        const w = { x: rr.beta * DEG, y: rr.gamma * DEG, z: rr.alpha * DEG };
-        const dq = bodyDelta(w, dt);
-        this._q = quat.normalize(quat.multiply(this._q, dq));
+    if (this._prev) {
+      const dg = e.gamma - this._prev.gamma;
+      const db = e.beta - this._prev.beta;
+      if (Math.abs(dg) <= JUMP_GUARD && Math.abs(db) <= JUMP_GUARD) {
+        this.gamma = e.gamma;
+        this.beta = e.beta;
+        if (dt > 0 && dt < 0.1) {
+          this.omega = Math.hypot(dg, db) * (Math.PI / 180) / dt;
+        }
+      } else {
+        this.gamma = e.gamma;
+        this.beta = e.beta;
+        this.omega = 0;
       }
-      if (e.accelerationIncludingGravity) this._correctGravity(e.accelerationIncludingGravity);
-    }
-
-    this._finalize(now, dt);
-  }
-
-  _correctGravity(g) {
-    const mag = Math.hypot(g.x, g.y, g.z);
-    if (Math.abs(mag - GRAVITY) > 3.5) return;
-    if (this.omega > CORRECTION_OMEGA_MAX) return;
-    const gm = { x: g.x / mag, y: g.y / mag, z: g.z / mag };
-    const predicted = rotateVector(quat.invert(this._q), GAME_DOWN);
-    const corr = quat.fromToDir(gm, predicted);
-    const { angle, axis } = quat.angleAndAxis(corr);
-    if (angle < 1e-3) return;
-    const scaled = quat.fromAxisAngle(axis, angle * CORRECTION_GAIN);
-    this._q = quat.normalize(quat.multiply(this._q, scaled));
-  }
-
-  _finalize(now, dt) {
-    this.quaternion = this._q;
-    if (this._prev && dt > 0) {
-      const dq = quat.delta(this._prev, this._q);
-      this.omega = quat.angleAndAxis(dq).angle / dt;
     } else {
+      this.gamma = e.gamma;
+      this.beta = e.beta;
       this.omega = 0;
     }
-    this._prev = quat.clone(this._q);
-    this._checkSwing();
-    this._emit('frame', { q: this.quaternion, omega: this.omega });
-  }
-
-  _onDeviceOrientation(e) {
-    if (e.alpha == null || e.beta == null || e.gamma == null) return;
-    deviceOrientationToQuaternion(e.alpha, e.beta, e.gamma, this._raw);
-
-    const now = performance.now();
-    const dt = this._prev ? (now - this._prevTs) / 1000 : 0;
-    if (this._prev && dt > 0 && dt < 0.1) {
-      const dq = quat.delta(this._prev, this._raw);
-      this.omega = quat.angleAndAxis(dq).angle / dt;
-    } else {
-      this.omega = 0;
-    }
-    this._prev = quat.clone(this._raw);
+    this._prev = { gamma: e.gamma, beta: e.beta };
     this._prevTs = now;
 
-    if (this.calibrated && this._calibRef) {
-      this.quaternion = quat.normalize(quat.multiply(quat.invert(this._calibRef), this._raw));
-    } else {
-      this.quaternion = quat.clone(this._raw);
-    }
-
     this._checkSwing();
-    this._emit('frame', { q: this.quaternion, omega: this.omega });
+    this._emit('frame', { gamma: this.gamma, beta: this.beta, omega: this.omega });
   }
 
   setSwingThresholds(peak, min) {
@@ -175,9 +91,7 @@ export class Sensor {
     const now = performance.now();
     if (now - this._lastSwingTs < SENSOR.SWING_COOLDOWN_MS) return;
     if (this._armed) {
-      if (this.omega < this._min) {
-        this._armed = false;
-      }
+      if (this.omega < this._min) this._armed = false;
     } else if (this.omega > this._peak) {
       this._armed = true;
       this._lastSwingTs = now;
@@ -187,30 +101,19 @@ export class Sensor {
 
   calibrate() {
     this.calibrated = true;
-    if (this._gyroMode) {
-      this._q = quat.identity();
-      this._prev = quat.identity();
-      this.quaternion = quat.identity();
-    } else {
-      this._calibRef = quat.clone(this._raw);
-      this.quaternion = quat.identity();
-    }
   }
 
   recalibrate() {
     this.calibrated = false;
-    this.calibrate();
   }
 
   vibrate(strength = 1) {
     if (navigator.vibrate) {
-      const ms = Math.round(10 + Math.min(strength, 1) * 60);
-      navigator.vibrate(ms);
+      navigator.vibrate(Math.round(10 + Math.min(strength, 1) * 60));
     }
   }
 
   stop() {
-    if (this._handler) window.removeEventListener('devicemotion', this._handler);
     if (this._handler) window.removeEventListener('deviceorientation', this._handler);
     this._handler = null;
     this._stopSimulator();
@@ -230,34 +133,22 @@ export class Sensor {
     this._simTimer = setInterval(() => {
       t += 0.016;
       const now = performance.now();
-
-      const zen = 0.9 + Math.sin(t * 0.45) * 0.45;
-      let az = Math.sin(t * 1.4) * 0.9;
-      let omega = 1.0 + Math.abs(Math.cos(t * 1.4)) * 1.2;
-
+      let gamma = Math.sin(t * 1.2) * 55;
+      let beta = Math.sin(t * 0.7) * 45;
+      let omega = 1.0 + Math.abs(Math.cos(t * 1.2)) * 1.0;
       if (now - lastSwing > 1500) {
         boost = 1;
         lastSwing = now;
       }
-      az += boost * 2.6;
+      gamma += boost * 60;
       boost = Math.max(0, boost - 0.1);
-
-      const x = Math.sin(zen) * Math.cos(az);
-      const y = Math.cos(zen);
-      const z = -Math.sin(zen) * Math.sin(az);
-      const d = Math.sqrt(x * x + y * y + z * z);
-      const dir = { x: x / d, y: y / d, z: z / d };
-
-      let q = quat.fromToDir({ x: 0, y: 0, z: 1 }, dir);
-      q = quat.multiply(q, quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, Math.sin(t * 0.8) * 0.3));
-
       if (boost > 0.5) omega = SENSOR.SWING_PEAK + 2.5;
 
-      this._q = q;
-      this.quaternion = q;
+      this.gamma = gamma;
+      this.beta = beta;
       this.omega = omega;
       this._checkSwing();
-      this._emit('frame', { q: this.quaternion, omega: this.omega });
+      this._emit('frame', { gamma, beta, omega });
     }, 16);
   }
 

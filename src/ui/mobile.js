@@ -1,9 +1,13 @@
 import { showScreen, navigate, $ } from './screens.js';
-import { normalizeCode, PEER_PREFIX, SENSOR, DIFFICULTY, DEFAULT_DIFFICULTY } from '../constants.js';
+import {
+  normalizeCode, PEER_PREFIX, SENSOR, DIFFICULTY, DEFAULT_DIFFICULTY,
+  CALIB_STEPS, CALIB_HOLD_MS,
+} from '../constants.js';
 import * as discovery from '../net/discovery.js';
 import { joinPeer } from '../net/connection.js';
 import { P, encodeMotion } from '../net/protocol.js';
 import { Sensor } from '../motion/sensor.js';
+import { Calib } from '../motion/calibrate.js';
 
 export function initMobile(params) {
   const els = {
@@ -13,17 +17,24 @@ export function initMobile(params) {
     calibState: $('#calib-state'),
     calibDo: $('#calib-do'),
     diffBtns: [...document.querySelectorAll('.diff-btn')],
+    calib2Dir: $('#calib2-dir'),
+    calib2Step: $('#calib2-step'),
+    calib2Fill: $('#calib2-fill'),
+    calib2Do: $('#calib2-do'),
     remoteStatus: $('#remote-status'),
     ping: $('#remote-ping'),
   };
   const known = new Map();
   let sess = null;
   let sensor = null;
+  let calib = null;
   let streaming = false;
+  let calibrating = false;
   let unsubscribe = null;
   let pingTimer = null;
-  let calibTimer = null;
+  let rafFill = 0;
   let diff = DEFAULT_DIFFICULTY;
+  const sampleBuf = [];
 
   function setDiff(d) {
     diff = DIFFICULTY[d] ? d : DEFAULT_DIFFICULTY;
@@ -120,31 +131,65 @@ export function initMobile(params) {
       els.calibDo.disabled = false;
       return;
     }
-    if (!sensor.calibrated) {
+    if (!sensor.enabled) {
       sensor.start((f) => onFrame(f), (s) => onSwing(s));
     }
     setDiff(diff);
-    els.calibState.textContent = '请保持手机静止… 2';
     sensor.recalibrate();
-    let n = 2;
-    calibTimer = setInterval(() => {
-      n -= 1;
-      if (n <= 0) {
-        clearInterval(calibTimer);
-        sensor.calibrate();
-        els.calibState.textContent = '校准完成! 准备挥舞';
-        els.calibState.classList.add('ready');
-        els.calibDo.disabled = false;
-        els.calibDo.textContent = '进入游戏';
-        els.calibDo.onclick = enterRemote;
-      } else {
-        els.calibState.textContent = `请保持手机静止… ${n}`;
+    startGuidedCalibration();
+  }
+
+  function startGuidedCalibration() {
+    calib.reset();
+    calibrating = true;
+    streaming = false;
+    els.calib2Do.classList.add('hidden');
+    showScreen('screen-calib2');
+    nextCalibStep(0);
+  }
+
+  function nextCalibStep(i) {
+    if (i >= CALIB_STEPS.length) {
+      finishCalibration();
+      return;
+    }
+    const step = CALIB_STEPS[i];
+    els.calib2Dir.textContent = step.label;
+    els.calib2Step.textContent = `步骤 ${i + 1}/${CALIB_STEPS.length}`;
+    sampleBuf.length = 0;
+    const holdStart = performance.now();
+    const tick = () => {
+      const p = Math.min(1, (performance.now() - holdStart) / CALIB_HOLD_MS);
+      els.calib2Fill.style.width = `${(p * 100).toFixed(1)}%`;
+      if (p < 1) {
+        rafFill = requestAnimationFrame(tick);
+        return;
       }
-    }, 1000);
+      const n = sampleBuf.length;
+      if (n > 0) {
+        let g = 0;
+        let b = 0;
+        for (const s of sampleBuf) { g += s.gamma; b += s.beta; }
+        calib.set(step.r, step.c, g / n, b / n);
+      }
+      nextCalibStep(i + 1);
+    };
+    rafFill = requestAnimationFrame(tick);
+  }
+
+  function finishCalibration() {
+    cancelAnimationFrame(rafFill);
+    sensor.calibrate();
+    els.calib2Fill.style.width = '100%';
+    els.calib2Step.textContent = '校准完成!';
+    els.calib2Do.classList.remove('hidden');
+    els.calib2Do.textContent = '进入游戏';
+    els.calib2Do.onclick = enterRemote;
   }
 
   function enterRemote() {
-    els.calibDo.onclick = null;
+    calibrating = false;
+    els.calib2Do.onclick = null;
     sess.sendControl({ t: P.READY, diff });
     showScreen('screen-remote');
     els.remoteStatus.textContent = '已连接 · 挥舞手机!';
@@ -156,15 +201,23 @@ export function initMobile(params) {
     streaming = true;
   }
   function onFrame(f) {
-    if (!streaming || !sess) return;
-    sess.sendMotion(encodeMotion(f.q, f.omega, 0));
+    if (calibrating) {
+      if (sampleBuf.length < 160) sampleBuf.push({ gamma: f.gamma, beta: f.beta });
+      return;
+    }
+    if (!streaming || !sess || !calib.complete) return;
+    sess.sendMotion(encodeMotion(calib.dir(f.gamma, f.beta), f.omega, 0));
   }
   function onSwing(s) {
     sensor.vibrate(s.omega / (SENSOR.SWING_PEAK * 2));
-    if (streaming && sess) sess.sendMotion(encodeMotion(sensor.quaternion, s.omega, 1));
+    if (streaming && sess && calib.complete) {
+      sess.sendMotion(encodeMotion(calib.dir(sensor.gamma, sensor.beta), s.omega, 1));
+    }
   }
 
   function recalibrate() {
+    cancelAnimationFrame(rafFill);
+    calibrating = false;
     streaming = false;
     sensor.recalibrate();
     goCalibrate();
@@ -200,13 +253,14 @@ export function initMobile(params) {
 
   const forceSim = params?.get('sim') === '1';
   sensor = new Sensor({ forceSim });
+  calib = new Calib();
   showScreen('screen-mobile');
   renderList();
   initDiscovery();
 
   return () => {
     clearInterval(pingTimer);
-    if (calibTimer) clearInterval(calibTimer);
+    cancelAnimationFrame(rafFill);
     unsubscribe?.();
     sensor?.stop();
     if (sess) { try { sess.close(); } catch { /* noop */ } }

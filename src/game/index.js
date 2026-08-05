@@ -11,7 +11,7 @@ let ctx = null;
 
 export function handleMotion(frame) {
   if (!ctx?.game || !frame) return;
-  ctx.game.setSwordQuat(frame.q);
+  ctx.game.setSwordDir(frame.dir);
   if (frame.hit > 0) ctx.game.onSwing(frame.omega || frame.hit);
 }
 

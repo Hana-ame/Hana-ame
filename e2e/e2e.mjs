@@ -49,10 +49,11 @@ try {
   const calibBtn = mob.locator('#calib-do');
   await calibBtn.waitFor({ state: 'visible', timeout: 20000 });
   await calibBtn.click();
-  await mob.waitForFunction(() => document.querySelector('#calib-state').textContent.includes('校准完成'), null, { timeout: 20000 });
-  ok('Mobile 校准完成(模拟器)', true);
+  await mob.waitForSelector('#screen-calib2', { state: 'visible', timeout: 10000 });
+  await mob.waitForFunction(() => document.querySelector('#calib2-step').textContent.includes('校准完成'), null, { timeout: 40000 });
+  ok('Mobile 引导校准完成(10方向)', true);
 
-  await mob.click('#calib-do', { force: true });
+  await mob.click('#calib2-do', { force: true });
   await mob.waitForSelector('#screen-remote', { state: 'visible' });
   ok('Mobile 进入遥控界面', (await mob.textContent('#remote-status')).includes('挥舞'), await mob.textContent('#remote-status'));
 
@@ -70,13 +71,6 @@ try {
   const scoreBefore = await pc.textContent('#score');
   const injected = await pc.evaluate(async () => {
     const d = window.__beatriftDebug;
-    function fromToDir(from, to) {
-      const f = from, t = to;
-      const dd = Math.sqrt((f.x + t.x) ** 2 + (f.y + t.y) ** 2 + (f.z + t.z) ** 2);
-      const x = f.y * t.z - f.z * t.y, y = f.z * t.x - f.x * t.z, z = f.x * t.y - f.y * t.x;
-      const n = Math.sqrt(x * x + y * y + z * z + (dd / 2) ** 2);
-      return { x: x / n, y: y / n, z: z / n, w: (dd / 2) / n };
-    }
     const pivot = { x: 0, y: 0.7, z: 1.6 };
     let swings = 0;
     for (let i = 0; i < 80; i++) {
@@ -92,8 +86,7 @@ try {
         }
         if (best) {
           const dir = best.mesh.position.clone().sub(new (best.mesh.position.constructor)(pivot.x, pivot.y, pivot.z)).normalize();
-          const q = fromToDir({ x: 0, y: 0, z: 1 }, { x: dir.x, y: dir.y, z: dir.z });
-          d.handleMotion({ q, omega: 4, hit: 4 });
+          d.handleMotion({ dir: { x: dir.x, y: dir.y, z: dir.z }, omega: 4, hit: 4 });
           swings++;
         }
       }

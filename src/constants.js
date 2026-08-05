@@ -17,6 +17,25 @@ export const SENSOR = {
   SWING_COOLDOWN_MS: 160,
 };
 
+export const SWORD = {
+  PIVOT: { x: 0, y: 0.7, z: 1.6 },
+  LEN: 2.6,
+};
+
+export const CALIB_STEPS = [
+  { r: 1, c: 1, label: '正前' },
+  { r: 1, c: 0, label: '正左' },
+  { r: 1, c: 2, label: '正右' },
+  { r: 1, c: 1, label: '正前' },
+  { r: 2, c: 1, label: '正上' },
+  { r: 0, c: 1, label: '正下' },
+  { r: 2, c: 0, label: '左上' },
+  { r: 0, c: 0, label: '左下' },
+  { r: 2, c: 2, label: '右上' },
+  { r: 0, c: 2, label: '右下' },
+];
+export const CALIB_HOLD_MS = 2000;
+
 export const DIFFICULTY = {
   easy: { hitRadius: 1.7, hitSteps: 6.0, swingPeak: 2.0, swingMin: 0.7 },
   normal: { hitRadius: 1.2, hitSteps: 4.5, swingPeak: 3.2, swingMin: 1.2 },
