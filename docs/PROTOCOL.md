@@ -22,8 +22,9 @@ WebRTC 单一 DataChannel(`reliable:false` → `ordered:false`)同时承载控�
 
 发送频率 ≈ 60Hz。`hit>0` 的帧与相邻帧顺序可能因无序通道而乱序, 接收方以 `hit>0` 为准触发挥击事件。
 
-方向由手机端在**9 方向引导校准**(正前/正左/正右/正上/正下/四对角)后, 对实时 `DeviceOrientation.gamma/beta`(角度制)做校准点插值得到:
-`(gamma, beta) → (u,v) ∈ [-1,1]² → 音符场坐标 (x,y) → 从剑枢指向该点的单位向量`。
+方向由手机端在**单点基准校准**(目视屏幕、手机竖直举在身前 2s 采样平均 forward 为 `ref`)后, 对实时 `DeviceOrientation.beta/gamma` 解出的屏幕法线 `forward` 相对 `ref` 的偏移做**连续映射**得到:
+`screenRel → (u,v) ∈ ℝ² → clamp + GAIN 放大 → (cu,cv) ∈ [-1,1]² → 光剑方向(屏幕平面内, 中性位竖直向上)`。
+全程连续无网格量化; 光剑方向 `dir.z = 0` 保证剑刃平行屏幕、相机可见。
 
 ## 控制消息
 
