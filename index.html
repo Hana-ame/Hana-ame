@@ -13,10 +13,11 @@
     <title>Hana — VN</title>
     <script>
       (function () {
-        // 仅新 VN 框架 hash：#vn-menu / #component-vn，或 #hscene-*，或 vn-title/vn-recall
+        // 仅新 VN 框架 hash：#vn-menu（含子路由 /<group>[/<scene>]）/ #component-vn，或 #hscene-*，或 vn-title/vn-recall
         var h = window.location.hash;
         var ok =
           h === '#vn-menu' ||
+          h.indexOf('#vn-menu/') === 0 ||
           h === '#component-vn' ||
           h === '#vn-title' ||
           h === '#vn-recall' ||
