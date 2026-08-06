@@ -246,7 +246,7 @@ export const azusa_HC3_38: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

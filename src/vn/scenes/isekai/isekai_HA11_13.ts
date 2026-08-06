@@ -187,7 +187,7 @@ export const isekai_HA11_13: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -593,7 +593,7 @@ export const azusa_HB3_30: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

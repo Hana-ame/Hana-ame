@@ -157,7 +157,7 @@ export const isekai_HB12_26: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

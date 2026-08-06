@@ -112,7 +112,7 @@ export const iru_T22_40: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -300,7 +300,7 @@ export const isekai_HB11_25: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

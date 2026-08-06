@@ -593,7 +593,7 @@ export const azusa_HC2_36: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

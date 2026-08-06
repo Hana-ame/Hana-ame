@@ -16,7 +16,7 @@
 
 ## 快速导航
 
-- 默认入口 `#vn-title` → 标题 → `#vn-menu`（回想）→ `#hscene-<key>`（场景）
+- 默认入口 `#vn-title` → 标题 → `#port`（回想）→ `#hscene-<key>`（场景）
 - 场景脚本：`src/vn/scenes/{azusa,iru,isekai}/`（77 个）
 - 场景注册表：`src/example/examples.ts`（唯一，全 `React.lazy` 分包）
 - 播放器：`src/vn/VnPlayer.tsx`

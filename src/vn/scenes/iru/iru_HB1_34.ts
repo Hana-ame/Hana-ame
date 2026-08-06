@@ -199,7 +199,7 @@ export const iru_HB1_34: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

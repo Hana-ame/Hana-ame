@@ -189,7 +189,7 @@ export const isekai_HA44_22: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

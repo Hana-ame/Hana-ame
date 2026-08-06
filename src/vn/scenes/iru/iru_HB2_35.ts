@@ -164,7 +164,7 @@ export const iru_HB2_35: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

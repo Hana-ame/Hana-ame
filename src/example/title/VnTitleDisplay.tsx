@@ -30,7 +30,7 @@ const titleScript: VnScript = {
       type: 'menu',
       layout: 'title',
       items: [
-        { id: '#vn-menu', title: '开始游戏' },
+        { id: '#port', title: '开始游戏' },
         { id: '#vn-recall', title: '回想' },
         { id: 'settings', title: '设置' },
       ],
@@ -39,7 +39,7 @@ const titleScript: VnScript = {
     { type: 'hook', run: (vn) => vn.openSettings() },
     { type: 'wait' },
     { type: 'menu', layout: 'title', items: [
-      { id: '#vn-menu', title: '开始游戏' },
+      { id: '#port', title: '开始游戏' },
       { id: '#vn-recall', title: '回想' },
       { id: 'settings', title: '设置' },
     ] },

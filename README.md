@@ -15,7 +15,7 @@ npm run test       # vitest
 ## 入口与路由
 
 - 默认入口 `#vn-title`：数据驱动标题界面
-- `#vn-menu`：HS 回想菜单（`menu layout:'grid'`）
+- `#port`：HS 回想菜单（`menu layout:'grid'`）
 - `#hscene-<key>`：H 场景（77 个，位于 `src/vn/scenes/{azusa,iru,isekai}`）
 - `#vn-recall`：回想解锁页面
 - `#component-vn`：通用 VN 宿主组件
@@ -35,7 +35,7 @@ npm run test       # vitest
 
 - H 场景图片一律用 `ex.moonchan.xyz` 外链（`ex.moonchan.xyz/s/<hash>/<id>?redirect_to=image`）
 - 资源按剧本 `preload` 声明加载；`wait:true` 等加载完再继续
-- 场景 `end.goto:'#vn-menu'` 自动回菜单；跨场景状态用 `global-state.ts`
+- 场景 `end.goto:'#port'` 自动回菜单；跨场景状态用 `global-state.ts`
 
 ## 分支
 

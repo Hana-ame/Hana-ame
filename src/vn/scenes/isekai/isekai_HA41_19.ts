@@ -704,7 +704,7 @@ export const isekai_HA41_19: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

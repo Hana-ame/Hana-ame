@@ -103,7 +103,7 @@ export interface VnWait {
   effect?: 'shake' | 'flash';
 }
 
-/** 结束指令。可选 goto：'#vn-menu' 回菜单、完整 URL 开网页、场景名加载。 */
+/** 结束指令。可选 goto：'#port' 回菜单、完整 URL 开网页、场景名加载。 */
 export interface VnEnd {
   type: 'end';
   goto?: string;

@@ -6,7 +6,7 @@
 
 - 仓库：`Hana-ame/Hana-ame`，开发/生产分支 `proj/vn`（纯浏览器 VN 项目，源自在 `gsap-framework` 里锤炼出的 `src/vn/` 引擎）
 - 项目形态：**纯浏览器 VN**。已删除旧 GSAP/PixiJS 框架（`src/framework`、`src/components`、`src/avd`）、多窗口/多应用、单机小游戏等全部非 VN 代码
-- 默认入口：`#vn-title`（数据驱动标题界面）→ `#vn-menu`（HS 回想菜单）→ `#hscene-<key>`（H 场景）；还有 `#vn-recall`（解锁回想）、`#component-vn`
+- 默认入口：`#vn-title`（数据驱动标题界面）→ `#port`（HS 回想菜单）→ `#hscene-<key>`（H 场景）；还有 `#vn-recall`（解锁回想）、`#component-vn`
 - `src/vn/scenes/{azusa,iru,isekai}` 77 个 H 场景剧本；`src/example/examples.ts` 是唯一场景注册表（全 `React.lazy` 分包）
 
 ## 硬规则（违反会返工）
@@ -17,7 +17,7 @@
 4. **VN 框架走 `src/vn/` 新引擎**（剧本驱动，`VnScript` = meta + lines）。指令集：`preload`（`{key,url}` + `wait`）、`say`（`bg`/`cg` + `stand`/`standPos` 立绘 + `index`/`zIndex` + `fadeMs` + `effect`）、`wait`（显式挂起等点击，可带 `effect`）、`bg`（cover 占满）、`cg`（contain 看全）、`choice`（`options[].to` + `set` 写变量 + `showWhen` 条件显示）、`jump`（label / `#hash` / `https://` / 场景名，`if` 条件满足才跳）、`label`、`hook`（内嵌 `run(vn)` 操作 VnHandle 或声明式 fetch）、`audio`（bgm/sfx/voice）、`menu`（title/list/grid 数据驱动界面）、`buttons`（场景内自定义按钮层：`jump`/`set`/`href` 动作 + 位置/布局）、`stand`（立绘进出场动画）、`transition`（全屏转场）、`video`（全屏视频演出）、`end`（可 `goto`）。meta 支持 `ui`（对话框/选项/CG/标题布局样式）、`typeSpeed`、`strictLoad`。详见 `src/vn/README.md`。
 5. 资源**按剧本加载**，`preload.wait:true` = 等加载完再继续，`wait:false` = 不等也能继续 —— 两种加载模式都要支持。
 6. **图层**：`bg` 背景层（cover 占满），`cg` CG 层（contain 看全）。同 `index` 时 cg 在 bg 前；`index`/`zIndex` 可选控制叠加。CG 不要 cover（会裁切溢出）。
-7. **场景播放完自动回菜单**：场景 `end.goto:'#vn-menu'`。
+7. **场景播放完自动回菜单**：场景 `end.goto:'#port'`。
 8. **跨场景状态**（`src/vn/global-state.ts`，localStorage 持久化）：场景 `end` 自动 `markSceneSeen(scriptKey)` 写 `seen_<key>`；回想解锁用 `showWhen: "$seen_<key>"`。`showWhen`/`jump.if` 求值视图 = 全局 ⊕ 本地。场景组件必须传 `scriptKey`（场景名），否则解锁不生效。
 
 ## Git 约定

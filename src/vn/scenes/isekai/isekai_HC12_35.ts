@@ -240,7 +240,7 @@ export const isekai_HC12_35: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

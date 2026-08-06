@@ -432,7 +432,7 @@ export const azusa_HG1_63: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -478,7 +478,7 @@ export const azusa_HC1_35: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

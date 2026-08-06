@@ -43,7 +43,7 @@ export const iru_HB_33: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  },
  {
   "type": "say",
@@ -60,7 +60,7 @@ export const iru_HB_33: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

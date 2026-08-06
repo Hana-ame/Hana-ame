@@ -201,7 +201,7 @@ export const iru_HD3_57: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -319,7 +319,7 @@ export const isekai_HC32_39: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

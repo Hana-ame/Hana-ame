@@ -210,7 +210,7 @@ export const azusa_HC4_39: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

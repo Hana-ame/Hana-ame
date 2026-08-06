@@ -112,7 +112,7 @@ export const iru_T21_39: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

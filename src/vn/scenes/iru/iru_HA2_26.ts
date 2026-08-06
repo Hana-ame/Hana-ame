@@ -104,7 +104,7 @@ export const iru_HA2_26: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  },
  {
   "type": "say",
@@ -113,7 +113,7 @@ export const iru_HA2_26: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -192,7 +192,7 @@ export const iru_HG1_65: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

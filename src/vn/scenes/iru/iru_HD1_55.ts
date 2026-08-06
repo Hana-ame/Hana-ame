@@ -230,7 +230,7 @@ export const iru_HD1_55: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

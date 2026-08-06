@@ -228,7 +228,7 @@ export const iru_HF1_63: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

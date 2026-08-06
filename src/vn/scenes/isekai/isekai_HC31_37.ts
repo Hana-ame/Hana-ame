@@ -350,7 +350,7 @@ export const isekai_HC31_37: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

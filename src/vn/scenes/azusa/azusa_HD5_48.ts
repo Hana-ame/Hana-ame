@@ -127,7 +127,7 @@ export const azusa_HD5_48: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

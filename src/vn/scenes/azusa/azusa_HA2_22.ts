@@ -54,7 +54,7 @@ export const azusa_HA2_22: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

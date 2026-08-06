@@ -197,7 +197,7 @@ export const azusa_HB2_29: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

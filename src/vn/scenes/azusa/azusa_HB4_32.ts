@@ -212,7 +212,7 @@ export const azusa_HB4_32: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

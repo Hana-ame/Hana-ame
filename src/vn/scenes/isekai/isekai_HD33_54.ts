@@ -355,7 +355,7 @@ export const isekai_HD33_54: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

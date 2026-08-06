@@ -87,7 +87,7 @@ export const azusa_HG2_64: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

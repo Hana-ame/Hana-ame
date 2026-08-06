@@ -38,7 +38,7 @@ export const iru_HC1_46: VnScript = {
  },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

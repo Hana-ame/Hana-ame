@@ -56,7 +56,7 @@
 
 标题/回想/菜单 = 普通 scenario（`menu` 指令：`title`/`list`/`grid`），不硬编码 React 界面：
 - `#vn-title`（`src/example/title/`）→ `menu layout:'title'`
-- `#vn-menu`（`src/example/vn-menu/`）→ `menu layout:'grid'`（分组/封面来自 `scene-covers.ts`）
+- `#port`（`src/example/vn-menu/`）→ `menu layout:'grid'`（分组/封面来自 `scene-covers.ts`）
 - `#vn-recall`（`src/example/recall/`）→ `menu layout:'list'` + `showWhen` 解锁
 
 ## 分包约束

@@ -44,7 +44,7 @@ export const azusa_HA4_24: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

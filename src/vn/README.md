@@ -31,7 +31,7 @@ export const demo: VnScript = {
     { type: 'choice', options: [{ text: '继续', to: 'next' }] },
     { type: 'label', name: 'next' },
     { type: 'jump', to: 'next' },        // 跳 label
-    { type: 'end', goto: '#vn-menu' },   // 结束并回菜单
+    { type: 'end', goto: '#port' },   // 结束并回菜单
   ],
 };
 ```
@@ -141,7 +141,7 @@ vn.playAudio('bgm1', { channel: 'bgm', loop: true });  // 播放预加载音频
 vn.stopAudio('bgm');                   // 停指定频道（缺省全部）
 vn.flash(); vn.shake();                // 特效
 vn.save(1); vn.load(1);                // 快存/读档（IndexedDB）
-vn.end('#vn-menu');                    // 结束（可回菜单）
+vn.end('#port');                    // 结束（可回菜单）
 vn.clearPrefetch();                    // 手动清理预加载栏
 vn.showBacklog(); vn.closeBacklog();   // 打开/关闭回放面板
 vn.openSettings(); vn.closeSettings(); // 打开/关闭设置面板
@@ -174,7 +174,7 @@ vn.markSeen('iru_HA1_25');             // 标记场景已通关（回想解锁�
 
 | 目标值 | 行为 |
 |--------|------|
-| `#vn-menu` | hash 路由切到菜单 |
+| `#port` | hash 路由切到菜单 |
 | `https://example.com` | 打开新网页标签 |
 | `scenario-key` | 自动加载 `hscene-<key>` 场景 |
 

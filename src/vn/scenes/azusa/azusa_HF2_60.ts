@@ -190,7 +190,7 @@ export const azusa_HF2_60: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -686,7 +686,7 @@ export const azusa_HF1_59: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

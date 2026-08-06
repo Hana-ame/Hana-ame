@@ -227,7 +227,7 @@ export const isekai_HC41_40: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -415,7 +415,7 @@ export const isekai_HD12_45: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

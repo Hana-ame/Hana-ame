@@ -415,7 +415,7 @@ export const iru_T3_54: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

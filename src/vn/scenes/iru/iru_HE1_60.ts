@@ -488,7 +488,7 @@ export const iru_HE1_60: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };

@@ -268,7 +268,7 @@ export const isekai_HB32_29: VnScript = {
   },
  {
   "type": "end",
-  "goto": "#vn-menu"
+  "goto": "#port"
  }
 ],
 };
