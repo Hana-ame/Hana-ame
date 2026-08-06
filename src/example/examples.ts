@@ -250,8 +250,80 @@ const hisekai_HD34_55 = lazy(() =>
   import('./hscene/isekai_HD34_55').then((m) => ({ default: m.default as ComponentType })),
 );
 
+const hs37_s37_ev21_21 = lazy(() =>
+  import('./hscene/s37_ev21_21').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev22_22 = lazy(() =>
+  import('./hscene/s37_ev22_22').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev23_23 = lazy(() =>
+  import('./hscene/s37_ev23_23').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev24_24 = lazy(() =>
+  import('./hscene/s37_ev24_24').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev25_25 = lazy(() =>
+  import('./hscene/s37_ev25_25').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev26_26 = lazy(() =>
+  import('./hscene/s37_ev26_26').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev27_27 = lazy(() =>
+  import('./hscene/s37_ev27_27').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_I22_28 = lazy(() =>
+  import('./hscene/s37_I22_28').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_N123_29 = lazy(() =>
+  import('./hscene/s37_N123_29').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_S05_30 = lazy(() =>
+  import('./hscene/s37_S05_30').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev31_31 = lazy(() =>
+  import('./hscene/s37_ev31_31').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev32_32 = lazy(() =>
+  import('./hscene/s37_ev32_32').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev33_33 = lazy(() =>
+  import('./hscene/s37_ev33_33').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev34_34 = lazy(() =>
+  import('./hscene/s37_ev34_34').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev35_35 = lazy(() =>
+  import('./hscene/s37_ev35_35').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev36_36 = lazy(() =>
+  import('./hscene/s37_ev36_36').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_ev37_37 = lazy(() =>
+  import('./hscene/s37_ev37_37').then((m) => ({ default: m.default as ComponentType }))
+);
+
+const hs37_s37_B01_38 = lazy(() =>
+  import('./hscene/s37_B01_38').then((m) => ({ default: m.default as ComponentType }))
+);
+
 export const EXAMPLES = [
-  'demo', 'vn-title', 'vn-menu', 'vn-recall', 'component-vn', 'hscene-azusa_HA1_21', 'hscene-azusa_HA2_22', 'hscene-azusa_HA3_23', 'hscene-azusa_HA4_24', 'hscene-azusa_HB1_27', 'hscene-azusa_HB2_29', 'hscene-azusa_HB3_30', 'hscene-azusa_HB4_32', 'hscene-azusa_HC1_35', 'hscene-azusa_HC2_36', 'hscene-azusa_HC3_38', 'hscene-azusa_HC4_39', 'hscene-azusa_HD1_42', 'hscene-azusa_HD2_44', 'hscene-azusa_HD3_45', 'hscene-azusa_HD4_46', 'hscene-azusa_HD5_48', 'hscene-azusa_HE1_52', 'hscene-azusa_HE2_53', 'hscene-azusa_HE3_55', 'hscene-azusa_HE4_56', 'hscene-azusa_HF1_59', 'hscene-azusa_HF2_60', 'hscene-azusa_HG1_63', 'hscene-azusa_HG2_64', 'hscene-azusa_HH1_69', 'hscene-azusa_HH2_70', 'hscene-azusa_HH3_71', 'hscene-azusa_HH4_72', 'hscene-azusa_HH5_74', 'hscene-iru_HA1_25', 'hscene-iru_HA2_26', 'hscene-iru_HA3_27', 'hscene-iru_HB1_34', 'hscene-iru_HB2_35', 'hscene-iru_HB_33', 'hscene-iru_HC1_42', 'hscene-iru_HC1_46', 'hscene-iru_HC2_47', 'hscene-iru_HC3_44', 'hscene-iru_HC3_48', 'hscene-iru_HD1_55', 'hscene-iru_HD2_56', 'hscene-iru_HD3_57', 'hscene-iru_HE1_60', 'hscene-iru_HE2_61', 'hscene-iru_HF1_63', 'hscene-iru_HG1_65', 'hscene-iru_T21_39', 'hscene-iru_T22_40', 'hscene-iru_T22_41', 'hscene-iru_T3_54', 'hscene-isekai_HA11_13', 'hscene-isekai_HA21_14', 'hscene-isekai_HA31_16', 'hscene-isekai_HA41_19', 'hscene-isekai_HA43_21', 'hscene-isekai_HA44_22', 'hscene-isekai_HB11_25', 'hscene-isekai_HB12_26', 'hscene-isekai_HB21_27', 'hscene-isekai_HB31_28', 'hscene-isekai_HB32_29', 'hscene-isekai_HB41_30', 'hscene-isekai_HC11_34', 'hscene-isekai_HC12_35', 'hscene-isekai_HC21_36', 'hscene-isekai_HC31_37', 'hscene-isekai_HC32_39', 'hscene-isekai_HC41_40', 'hscene-isekai_HD11_44', 'hscene-isekai_HD12_45', 'hscene-isekai_HD21_48', 'hscene-isekai_HD31_52', 'hscene-isekai_HD32_53', 'hscene-isekai_HD33_54', 'hscene-isekai_HD34_55'
+  'demo', 'vn-title', 'vn-menu', 'vn-recall', 'component-vn', 'hscene-azusa_HA1_21', 'hscene-azusa_HA2_22', 'hscene-azusa_HA3_23', 'hscene-azusa_HA4_24', 'hscene-azusa_HB1_27', 'hscene-azusa_HB2_29', 'hscene-azusa_HB3_30', 'hscene-azusa_HB4_32', 'hscene-azusa_HC1_35', 'hscene-azusa_HC2_36', 'hscene-azusa_HC3_38', 'hscene-azusa_HC4_39', 'hscene-azusa_HD1_42', 'hscene-azusa_HD2_44', 'hscene-azusa_HD3_45', 'hscene-azusa_HD4_46', 'hscene-azusa_HD5_48', 'hscene-azusa_HE1_52', 'hscene-azusa_HE2_53', 'hscene-azusa_HE3_55', 'hscene-azusa_HE4_56', 'hscene-azusa_HF1_59', 'hscene-azusa_HF2_60', 'hscene-azusa_HG1_63', 'hscene-azusa_HG2_64', 'hscene-azusa_HH1_69', 'hscene-azusa_HH2_70', 'hscene-azusa_HH3_71', 'hscene-azusa_HH4_72', 'hscene-azusa_HH5_74', 'hscene-iru_HA1_25', 'hscene-iru_HA2_26', 'hscene-iru_HA3_27', 'hscene-iru_HB1_34', 'hscene-iru_HB2_35', 'hscene-iru_HB_33', 'hscene-iru_HC1_42', 'hscene-iru_HC1_46', 'hscene-iru_HC2_47', 'hscene-iru_HC3_44', 'hscene-iru_HC3_48', 'hscene-iru_HD1_55', 'hscene-iru_HD2_56', 'hscene-iru_HD3_57', 'hscene-iru_HE1_60', 'hscene-iru_HE2_61', 'hscene-iru_HF1_63', 'hscene-iru_HG1_65', 'hscene-iru_T21_39', 'hscene-iru_T22_40', 'hscene-iru_T22_41', 'hscene-iru_T3_54', 'hscene-isekai_HA11_13', 'hscene-isekai_HA21_14', 'hscene-isekai_HA31_16', 'hscene-isekai_HA41_19', 'hscene-isekai_HA43_21', 'hscene-isekai_HA44_22', 'hscene-isekai_HB11_25', 'hscene-isekai_HB12_26', 'hscene-isekai_HB21_27', 'hscene-isekai_HB31_28', 'hscene-isekai_HB32_29', 'hscene-isekai_HB41_30', 'hscene-isekai_HC11_34', 'hscene-isekai_HC12_35', 'hscene-isekai_HC21_36', 'hscene-isekai_HC31_37', 'hscene-isekai_HC32_39', 'hscene-isekai_HC41_40', 'hscene-isekai_HD11_44', 'hscene-isekai_HD12_45', 'hscene-isekai_HD21_48', 'hscene-isekai_HD31_52', 'hscene-isekai_HD32_53', 'hscene-isekai_HD33_54', 'hscene-isekai_HD34_55', 'hscene-s37_ev21_21', 'hscene-s37_ev22_22', 'hscene-s37_ev23_23', 'hscene-s37_ev24_24', 'hscene-s37_ev25_25', 'hscene-s37_ev26_26', 'hscene-s37_ev27_27', 'hscene-s37_I22_28', 'hscene-s37_N123_29', 'hscene-s37_S05_30', 'hscene-s37_ev31_31', 'hscene-s37_ev32_32', 'hscene-s37_ev33_33', 'hscene-s37_ev34_34', 'hscene-s37_ev35_35', 'hscene-s37_ev36_36', 'hscene-s37_ev37_37', 'hscene-s37_B01_38'
 ] as const;
 
 export type Example = (typeof EXAMPLES)[number];
@@ -343,4 +415,22 @@ export const exampleMap: Record<Example, ComponentType> = {
   'hscene-isekai_HD32_53': hisekai_HD32_53,
   'hscene-isekai_HD33_54': hisekai_HD33_54,
   'hscene-isekai_HD34_55': hisekai_HD34_55,
+  'hscene-s37_ev21_21': hs37_s37_ev21_21,
+  'hscene-s37_ev22_22': hs37_s37_ev22_22,
+  'hscene-s37_ev23_23': hs37_s37_ev23_23,
+  'hscene-s37_ev24_24': hs37_s37_ev24_24,
+  'hscene-s37_ev25_25': hs37_s37_ev25_25,
+  'hscene-s37_ev26_26': hs37_s37_ev26_26,
+  'hscene-s37_ev27_27': hs37_s37_ev27_27,
+  'hscene-s37_I22_28': hs37_s37_I22_28,
+  'hscene-s37_N123_29': hs37_s37_N123_29,
+  'hscene-s37_S05_30': hs37_s37_S05_30,
+  'hscene-s37_ev31_31': hs37_s37_ev31_31,
+  'hscene-s37_ev32_32': hs37_s37_ev32_32,
+  'hscene-s37_ev33_33': hs37_s37_ev33_33,
+  'hscene-s37_ev34_34': hs37_s37_ev34_34,
+  'hscene-s37_ev35_35': hs37_s37_ev35_35,
+  'hscene-s37_ev36_36': hs37_s37_ev36_36,
+  'hscene-s37_ev37_37': hs37_s37_ev37_37,
+  'hscene-s37_B01_38': hs37_s37_B01_38,
 };

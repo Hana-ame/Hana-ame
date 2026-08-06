@@ -41,6 +41,12 @@ GAMES = [
         'ce': '/mnt/c/Users/lumin/Downloads/otomi-games.com_KGB6FSSY0/RJ01353427/イルと貧乳の国/data/CommonEvents.json',
         'cg': '/tmp/opencode/cg_iru.json',
     },
+    {
+        'prefix': 's37',
+        'name': '名探偵S37-R-',
+        'ce': '/tmp/opencode/s37/otomi-games.com_S1AVIE4SB/RJ01639633/蜷肴爾蛛ｵS37R(譛ｬ邱ｨver1.0+readme)/蜷肴爾蛛ｵS37R-ver1.0/data/CommonEvents.json',
+        'cg': '/tmp/opencode/cg_tantei2.json',
+    },
 ]
 
 def load_cg(path):
@@ -48,10 +54,14 @@ def load_cg(path):
     return {name: info['url'] for name, info in raw.items()}
 
 def cg_url(cg_map, rmmz_name):
-    """游戏图名(HA1-3 / HA1-3^ / '1') → gallery URL"""
-    # 数字或字母命名的直接匹配，带 -/_ 转义的匹配 gallery 名
-    for cand in (rmmz_name, rmmz_name.replace('-', '_'), rmmz_name.replace('-', '_').replace('^', ''),
-                 rmmz_name + '.png', rmmz_name.replace('-', '_') + '.png'):
+    """游戏图名(HA1-3 / adult/19-1 / '1') → gallery URL"""
+    # 带子目录(adult/19-1)的取 basename；数字或字母命名的直接匹配，带 -/_ 转义的匹配 gallery 名
+    base = rmmz_name.rsplit('/', 1)[-1]
+    cands = [rmmz_name, base]
+    for c in list(cands):
+        cands += [c.replace('-', '_'), c.replace('-', '_').replace('^', ''),
+                  c + '.png', c.replace('-', '_') + '.png', c.replace('^', '')]
+    for cand in cands:
         if cand in cg_map:
             return cg_map[cand], cand
     return None, None
@@ -153,7 +163,7 @@ def convert_event(ev, cg_map, prefix):
             i += 1
         elif code == 117:
             if p[0] == 10:
-                out.append({'type': 'end', 'goto': '#vn-menu'})
+                out.append({'type': 'end', 'goto': '#port'})
                 # 后面可能还有收尾对话，不 break，继续
             i += 1
         elif code in (121, 122, 250, 241, 245, 246, 221, 222, 357, 355, 108, 408, 233, 234, 205, 212, 301, 351):
@@ -199,9 +209,12 @@ def sanitize_name(name):
     return m.group(1) if m else ''
 
 def main():
+    only = sys.argv[1] if len(sys.argv) > 1 else None
     OUT.mkdir(parents=True, exist_ok=True)
     total = 0
     for game in GAMES:
+        if only and game['prefix'] != only:
+            continue
         common = json.load(open(game['ce'], encoding='utf-8'))
         cg_map = load_cg(game['cg'])
         events = [ev for ev in common if ev and any(c['code'] == 231 for c in ev.get('list', []))]
@@ -227,7 +240,7 @@ def main():
                 clean.append(l)
             # 保证以 end+goto 收尾（无则追加）
             if not clean or clean[-1].get('type') != 'end':
-                clean.append({'type': 'end', 'goto': '#vn-menu'})
+                clean.append({'type': 'end', 'goto': '#port'})
             all_lines = [{'type': 'preload', 'wait': True, 'assets': assets}] + clean
             base = sanitize_name(ev['name']) or f"ev{ev['id']}"
             fname = f"{game['prefix']}_{base}_{ev['id']}"
