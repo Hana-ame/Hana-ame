@@ -411,6 +411,7 @@ export function VnPlayer({ script, onEnd, scriptKey, renderMenu, onMenuPick }: V
 
         case 'audio': {
           const url = loader.get(line.key)?.url ?? line.key;
+          const mediaEl = loader.get(line.key)?.media ?? undefined;
           if (line.action === 'stop') {
             if (!line.channel || line.channel === 'bgm') audioActiveRef.current.bgm = null;
             audio.stop(line.channel);
@@ -423,7 +424,7 @@ export function VnPlayer({ script, onEnd, scriptKey, renderMenu, onMenuPick }: V
               channel,
               loop: line.loop,
               volume: vol,
-            });
+            }, mediaEl);
           }
           runLine(idx + 1);
           break;
@@ -908,6 +909,7 @@ export function VnPlayer({ script, onEnd, scriptKey, renderMenu, onMenuPick }: V
             const w = videoEndRef.current;
             if (w && w.key === ui.video.key) {
               videoEndRef.current = null;
+              setUi((prev) => ({ ...prev, video: null }));
               w.done();
             }
           }}

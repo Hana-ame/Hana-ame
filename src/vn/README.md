@@ -112,7 +112,7 @@ $flag == 'x' || $cnt == 2     // 或（优先级最低，可用整体括号）
 
 | 指令 | 作用 |
 |------|------|
-| `preload` | 声明资源 `{key,url}`。`wait:true` 等加载完再继续；`wait:false` 立即继续后台加载 |
+| `preload` | 声明资源 `{key,url}`。图片用 `<img>` 预热；`.mp3/.mp4` 等媒体用 `<audio>/<video preload=auto>` 预热进媒体缓存（播放时同 key 秒开，`audio`/`video` 指令会复用）。`wait:true` 等加载完再继续；`wait:false` 立即继续后台加载 |
 | `say` | 对话。`speaker` 空串=旁白。`bg`/`cg` 附带切对应图层；`stand`/`standPos` 带立绘；`fadeMs` 淡入；`effect`（`shake`/`flash`） |
 | `wait` | 显式挂起：停在当前画面，等点击（advance）才继续，不自动推进。可带 `effect`（如 `{ type: 'wait', effect: 'flash' }` 白闪+定格） |
 | `bg` | 背景层，cover 占满全屏。`fadeMs` 淡入 |

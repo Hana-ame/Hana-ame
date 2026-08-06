@@ -40,6 +40,7 @@ const demoScript: VnScript = {
   },
   lines: [
     // ── ① preload（wait:true 严格等待）+ bg + 旁白 ─────────────────────────
+    // 图片用 <img> 预热；bgm/sfx/video 用 <audio>/<video preload=auto> 预热进媒体缓存（播时秒开）。
     { type: 'label', name: 'demo_start' },
     {
       type: 'preload',
@@ -53,6 +54,9 @@ const demoScript: VnScript = {
         { key: 'cg4', url: URL.cg4 },
         { key: 'standL', url: URL.standL },
         { key: 'standR', url: URL.standR },
+        { key: 'bgm1', url: BGM },
+        { key: 'sfx1', url: SFX },
+        { key: 'vid1', url: VIDEO },
       ],
     },
     { type: 'bg', key: 'bg1', fadeMs: 800 },
@@ -137,13 +141,13 @@ const demoScript: VnScript = {
     { type: 'say', speaker: '', text: '按钮层已清除。' },
 
     // ── ⑦ audio（bgm/sfx）+ video ──
-    { type: 'audio', key: BGM, channel: 'bgm', loop: true, volume: 0.5 },
+    { type: 'audio', key: 'bgm1', channel: 'bgm', loop: true, volume: 0.5 },
     { type: 'say', speaker: '', text: 'audio 指令：开始循环播放 BGM（音量可在设置面板调节）。' },
-    { type: 'audio', key: SFX, channel: 'sfx', volume: 0.3 },
+    { type: 'audio', key: 'sfx1', channel: 'sfx', volume: 0.3 },
     { type: 'say', speaker: '', text: '再放一个 SFX。' },
-    { type: 'video', key: VIDEO, fit: 'contain', wait: true },
+    { type: 'video', key: 'vid1', fit: 'contain', wait: true },
     { type: 'say', speaker: '', text: 'video 指令：全屏视频演出，播完自动继续（flower.mp4，CC0 样例）。' },
-    { type: 'audio', key: BGM, action: 'stop' },
+    { type: 'audio', key: 'bgm1', action: 'stop' },
 
     // ── ⑧ transition + menu（grid / list）──
     { type: 'transition', effect: 'wipe-left', fadeMs: 600 },

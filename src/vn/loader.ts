@@ -10,8 +10,22 @@ export interface LoadedAsset {
   url: string;
   loaded: boolean;
   img: HTMLImageElement | null;
+  /** 媒体类型（audio/video）的预热元素；图片资源为 null。 */
+  media: HTMLMediaElement | null;
   error: boolean;
 }
+
+/** 媒体文件扩展名（audio / video）。带 query/hash 也识别。 */
+const MEDIA_RE = /\.(mp3|ogg|oga|wav|m4a|aac|flac|mp4|m4v|webm|ogv)(\?|#|$)/i;
+const VIDEO_RE = /\.(mp4|m4v|webm|ogv)(\?|#|$)/i;
+
+/** 预加载栏容器：媒体元素挂到它上面才会真正开始拉取（off-DOM 的 media 不保证加载）。 */
+const WARM_HOST = (() => {
+  const d = document.createElement('div');
+  d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none;';
+  document.body.appendChild(d);
+  return d;
+})();
 
 export class VnAssetLoader {
   private _cache = new Map<string, LoadedAsset>();
@@ -43,10 +57,36 @@ export class VnAssetLoader {
     const existing = this._cache.get(key);
     if (existing) return existing;
 
-    const entry: LoadedAsset = { key, url, loaded: false, img: null, error: url === '' };
+    const entry: LoadedAsset = { key, url, loaded: false, img: null, media: null, error: url === '' };
     this._cache.set(key, entry);
     if (url === '') {
       entry.loaded = true;
+      return entry;
+    }
+
+    // 媒体资源（audio/video）：用 <audio>/<video preload=auto> 预热进媒体缓存，
+    // 播放时同 URL 直接秒开。挂在 WARM_HOST 下确保真正拉取。
+    if (MEDIA_RE.test(url)) {
+      const el: HTMLMediaElement = VIDEO_RE.test(url)
+        ? document.createElement('video')
+        : document.createElement('audio');
+      el.preload = 'auto';
+      el.muted = false;
+      el.setAttribute('playsinline', '');
+      el.src = url;
+      WARM_HOST.appendChild(el);
+      const done = () => {
+        entry.loaded = true;
+        entry.media = el;
+        this._emit();
+      };
+      el.onloadedmetadata = done;
+      el.onerror = () => {
+        entry.error = true;
+        done();
+      };
+      el.load();
+      entry.media = el;
       return entry;
     }
 
@@ -120,6 +160,9 @@ export class VnAssetLoader {
   }
 
   dispose(): void {
+    for (const e of this._cache.values()) {
+      if (e.media) e.media.remove();
+    }
     this._cache.clear();
     this._pending.clear();
     this._listeners.clear();

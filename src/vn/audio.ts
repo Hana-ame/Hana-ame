@@ -18,8 +18,8 @@ export class VnAudioEngine {
   private _bgm: { key: string; audio: HTMLAudioElement } | null = null;
   private _oneshot = new Set<HTMLAudioElement>();
 
-  /** 播放音频（url 为空静默跳过）。 */
-  play(key: string, url: string, opts: VnAudioEngineOptions = {}): void {
+  /** 播放音频（url 为空静默跳过）。mediaEl 为预热好的元素（preload 已拉取）时复用，避免重新拉取。 */
+  play(key: string, url: string, opts: VnAudioEngineOptions = {}, mediaEl?: HTMLMediaElement): void {
     if (!url) return;
     const channel = opts.channel ?? (opts.loop ? 'bgm' : 'sfx');
     const volume = opts.volume ?? 1;
@@ -28,17 +28,19 @@ export class VnAudioEngine {
     if (channel === 'bgm') {
       if (this._bgm && this._bgm.key === key) return; // 同一首已在播
       this.stopBgm();
-      const audio = new Audio(url);
+      const audio = (mediaEl as HTMLAudioElement | undefined) ?? new Audio(url);
       audio.loop = loop;
       audio.volume = volume;
+      audio.currentTime = 0;
       audio.play().catch(() => undefined);
       this._bgm = { key, audio };
       return;
     }
 
-    const audio = new Audio(url);
+    const audio = (mediaEl as HTMLAudioElement | undefined) ?? new Audio(url);
     audio.loop = loop;
     audio.volume = volume;
+    audio.currentTime = 0;
     this._oneshot.add(audio);
     audio.addEventListener('ended', () => this._remove(audio));
     audio.play().catch(() => this._remove(audio));
