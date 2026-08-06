@@ -6,6 +6,7 @@
 
 | 文档 | 内容 |
 |------|------|
+| [DIRECTION.md](DIRECTION.md) | **大方向**：定位、目标、取舍、内容方向（不涉及技术细节，先读这个） |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | 引擎架构：`src/vn/` 模块职责、播放流程、图层/存档/全局状态 |
 | [SCENARIO.md](SCENARIO.md) | 剧本编写指南：新增一个场景的完整步骤、指令集速查、变量与条件 |
 | [ASSETS.md](ASSETS.md) | 资源与工具链：图片外链、`scripts/` 生成/校验工具、上传流程 |
