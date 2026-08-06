@@ -30,8 +30,8 @@ export const DEFAULT_DIFFICULTY = 'easy';
 export const GAME = {
   BPM: 128,
   BEATS_PER_BAR: 4,
-  NOTE_PLANE_Y: -2.7,
-  NOTE_SPAWN_Y: -46,
+  NOTE_PLANE_Y: -4.4,
+  NOTE_SPAWN_Y: -56,
   NOTE_SPEED: 13,
   NOTE_LIFETIME: 9999,
   HIT_WINDOW_Y: 2.4,

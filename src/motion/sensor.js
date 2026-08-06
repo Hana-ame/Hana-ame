@@ -1,7 +1,7 @@
 import { SENSOR } from '../constants.js';
 import { Mahony, quatFromAccel, quatFromDeviceEuler, qNormalize, qRotate, DEG } from '../../lib/attitude.js';
 
-const JUMP_GUARD = 90;
+const JUMP_GUARD = 300;
 
 export class Sensor {
   constructor({ forceSim = false } = {}) {
@@ -16,11 +16,13 @@ export class Sensor {
     this._mahony = new Mahony({ kp: 0.5, ki: 0.05 });
     this._prevTs = 0;
     this._prevAccel = null;
+    this._deviceQ = null;       // 设备绝对姿态 (deviceorientation), 与 /sword/ 一致, 全程锚定遏漂移
     this._peak = SENSOR.SWING_PEAK;
     this._min = SENSOR.SWING_MIN;
     this._lastSwingTs = 0;
     this._armed = false;
     this._motionHandler = null;
+    this._orientationHandler = null;
     this._listeners = { frame: [], swing: [] };
     this._simTimer = null;
   }
@@ -52,8 +54,18 @@ export class Sensor {
       return;
     }
     this._motionHandler = (e) => this._onMotion(e);
+    this._orientationHandler = (e) => this._onOrientation(e);
     window.addEventListener('devicemotion', this._motionHandler);
+    window.addEventListener('deviceorientation', this._orientationHandler);
     this.enabled = true;
+  }
+
+  // 与 /sword/ 同一姿态来源: deviceorientation 绝对 alpha/beta/gamma -> 四元数, 全程锚定偏航, 不漂移
+  _onOrientation(e) {
+    const a = e.alpha, b = e.beta, g = e.gamma;
+    if (a == null || b == null || g == null) return;
+    this._deviceQ = quatFromDeviceEuler(a, b, g);
+    if (!this.q) this.q = qNormalize(this._deviceQ);
   }
 
   _onMotion(e) {
@@ -74,13 +86,18 @@ export class Sensor {
     const dg = Math.hypot(g.x, g.y, g.z);
     this.omega = (dt > 0 && dt < 0.1 && dg <= JUMP_GUARD * DEG) ? dg : 0;
 
-    if (!this.q) {
-      // 首帧: 用重力初始化姿态 (静止时加速度计指向"上")
-      this._mahony.setOrientation(quatFromAccel(accel, 0));
+    // 姿态来源: 优先 deviceorientation 绝对姿态(与 /sword/ 同一套, 偏航全程锚定, 不漂移);
+    // 无 deviceorientation 时回退重力初始化+陀螺积分的 Mahony。
+    if (this._deviceQ) {
+      this.q = this._deviceQ;
     } else {
-      this._mahony.update(dt, g, accel);
+      if (!this.q) {
+        this._mahony.setOrientation(quatFromAccel(accel, 0));
+      } else {
+        this._mahony.update(dt, g, accel);
+      }
+      this.q = qNormalize(this._mahony.q);
     }
-    this.q = qNormalize(this._mahony.q);
     this.forward = qRotate(this.q, { x: 0, y: 0, z: 1 });
     this.top = qRotate(this.q, { x: 0, y: 1, z: 0 });
 
@@ -131,6 +148,7 @@ export class Sensor {
     this._motionHandler = null;
     this._stopSimulator();
     this.enabled = false;
+    this._listeners = { frame: [], swing: [] };
   }
 
   _emit(type, data) {

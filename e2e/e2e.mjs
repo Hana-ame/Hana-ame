@@ -55,38 +55,29 @@ try {
   }
   okSoft('Mobile 在列表中看到 PC (MQTT)', sawList, `房间 ${code}`);
 
-  await mob.fill('#mobile-code', code);
+await mob.fill('#mobile-code', code);
   await mob.click('#mobile-join');
-  await mob.waitForSelector('#screen-calibrate', { state: 'visible', timeout: 20000 });
-  ok('Mobile 进入校准', true);
+  await mob.waitForSelector('#screen-remote', { state: 'visible', timeout: 20000 });
+  await mob.waitForFunction(() => document.querySelector('#remote-status').textContent.includes('校准'), null, { timeout: 20000 });
+  ok('Mobile 进入遥控界面', true);
 
-  const calibBtn = mob.locator('#calib-do');
-  await calibBtn.waitFor({ state: 'visible', timeout: 20000 });
-  await calibBtn.click();
-  await mob.waitForSelector('#screen-calib2', { state: 'visible', timeout: 10000 });
-  await mob.waitForFunction(() => document.querySelector('#calib2-step').textContent.includes('校准完成'), null, { timeout: 40000 });
-  ok('Mobile 引导校准完成(单点基准)', true);
-
-  await mob.click('#calib2-do', { force: true });
-  await mob.waitForSelector('#screen-remote', { state: 'visible' });
-  ok('Mobile 进入遥控界面', (await mob.textContent('#remote-status')).includes('挥舞'), await mob.textContent('#remote-status'));
-
-  await pc.waitForFunction(() => !document.querySelector('#pc-start').disabled, null, { timeout: 20000 });
-  ok('PC 开始按钮可用(已连接)', true);
-
-  await pc.click('#pc-start', { force: true });
-  await pc.waitForSelector('#hud:not(.hidden)', { state: 'visible', timeout: 5000 });
-  ok('PC 进入游戏画面', true);
-
+  // PC 端校准界面(光剑跟随, 无音符): 等校准开始出现并点击开始
+  await pc.waitForSelector('#calib-overlay:not(.hidden)', { state: 'visible', timeout: 20000 });
+  ok('PC 进入光剑校准界面', true);
   await pc.waitForFunction(() => !!window.__beatriftDebug?.getGame()?.swordVisible, null, { timeout: 20000 });
   ok('网络 motion 流到达 PC(光剑可见)', true);
+  await pc.waitForTimeout(1500);
+
+  await pc.click('#calib-start', { force: true });
+  await pc.waitForSelector('#hud:not(.hidden)', { state: 'visible', timeout: 5000 });
+  ok('PC 进入游戏画面', true);
 
   await pc.waitForTimeout(2500);
   const scoreBefore = await pc.textContent('#score');
   const injected = await pc.evaluate(async () => {
     const d = window.__beatriftDebug;
     const pivot = { x: 0, y: 0.5, z: 1.4 };
-    const planeY = -2.7;
+    const planeY = -4.4;
     let swings = 0;
     for (let i = 0; i < 80; i++) {
       const game = d.getGame();

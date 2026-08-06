@@ -56,40 +56,12 @@
         </div>
       </section>
 
-      <!-- ============ Mobile: 校准 ============ -->
-      <section id="screen-calibrate" class="screen hidden">
-        <div class="calib-card">
-          <h2 class="section-title">校准朝向</h2>
-          <p class="hint">校准前请保持手机静止, 需授权传感器(加速度计+陀螺仪)</p>
-          <div class="diff-row">
-            <button class="btn btn-small diff-btn" data-diff="easy">简单</button>
-            <button class="btn btn-small diff-btn" data-diff="normal">普通</button>
-            <button class="btn btn-small diff-btn" data-diff="hard">困难</button>
-          </div>
-          <div id="calib-state" class="calib-state">等待陀螺仪…</div>
-          <button id="calib-do" class="btn btn-big btn-accent hidden">开始校准</button>
-        </div>
-      </section>
-
-      <!-- ============ Mobile: 引导校准(单点基准) ============ -->
-      <section id="screen-calib2" class="screen hidden">
-        <div class="calib-card calib2-card">
-          <h2 class="section-title">瞄准屏幕中心</h2>
-          <div id="calib2-dir" class="calib2-dir">手机指向屏幕中心</div>
-          <div class="calib2-bar"><div id="calib2-fill"></div></div>
-          <div id="calib2-step" class="calib2-step">手持手机, 像握光剑一样用手机前端对准 PC 屏幕中心</div>
-          <div id="calib2-hint" class="hint">保持 2 秒完成校准 · 之后手机指向哪, 剑就指向哪</div>
-          <button id="calib2-do" class="btn btn-big btn-accent hidden">进入游戏</button>
-        </div>
-      </section>
-
-      <!-- ============ Mobile: 游戏中 ============ -->
+      <!-- ============ Mobile: 软件即可 ============ -->
       <section id="screen-remote" class="screen hidden">
         <div class="remote-hud">
           <div id="remote-status" class="remote-status">已连接</div>
           <div id="remote-ping" class="remote-ping">-- ms</div>
           <div class="calib-bar">
-            <button id="remote-recalib" class="btn btn-small">重新校准</button>
             <button id="remote-vibrate" class="btn btn-small">震动测试</button>
           </div>
         </div>
@@ -98,6 +70,24 @@
       <!-- ============ PC: 游戏中 ============ -->
       <section id="screen-game" class="screen hidden">
         <canvas id="game-canvas"></canvas>
+        <div id="calib-overlay" class="calib-overlay hidden">
+          <div class="calib-card calib2-card">
+            <h2 class="section-title">校准光剑</h2>
+            <p class="hint">像握光剑般手持手机, 手机顶边指向屏幕; 光剑应指向屏幕内部。</p>
+            <div class="flip-row">
+              <button id="calib-fx" data-flip="x" class="btn btn-small flip-btn">反转左右</button>
+              <button id="calib-fy" data-flip="y" class="btn btn-small flip-btn">反转上下</button>
+              <button id="calib-fz" data-flip="z" class="btn btn-small flip-btn">反转正反</button>
+              <button id="calib-setfront" class="btn btn-small">设为正面</button>
+            </div>
+            <div class="diff-row hidden">
+              <button class="btn btn-small diff-btn" data-diff="easy">简单</button>
+              <button class="btn btn-small diff-btn" data-diff="normal">普通</button>
+              <button class="btn btn-small diff-btn" data-diff="hard">困难</button>
+            </div>
+            <button id="calib-start" class="btn btn-big btn-accent">光剑 OK · 开始游戏</button>
+          </div>
+        </div>
         <div id="hud" class="hud hidden">
           <div class="hud-top">
             <div class="hud-score">

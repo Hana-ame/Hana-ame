@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const SWORD_PIVOT = new THREE.Vector3(0, 0.5, 1.4);
-const SWORD_LEN = 2.6;
+const SWORD_LEN = 5.6;
+const SWORD_OFFSET = 0.7;
 const TRAIL_LEN = 14;
 
 export function createGameScene(canvas) {
@@ -12,13 +13,13 @@ export function createGameScene(canvas) {
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a0a16);
-  scene.fog = new THREE.Fog(0x0a0a16, 18, 55);
+  scene.fog = new THREE.Fog(0x0a0a16, 45, 140);
   scene.up.set(0, 0, 1);
 
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 300);
   camera.up.set(0, 0, 1);
-  camera.position.set(0, 5.6, 1.4);
-  camera.lookAt(0, 0.5, 1.4);
+  camera.position.set(0, 0.85, 2.0);
+  camera.lookAt(0, -3.6, 1.6);
 
   const debugCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
   debugCamera.up.set(0, 0, 1);
@@ -34,7 +35,6 @@ export function createGameScene(canvas) {
   scene.add(key);
 
   addStars(scene);
-  addGridMarkers(scene);
 
   const sword = createSword();
   scene.add(sword.group);
@@ -90,39 +90,32 @@ function addStars(scene) {
   })));
 }
 
-function addGridMarkers(scene) {
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: 0x2a2a44, transparent: true, opacity: 0.5,
-  });
-  const ringGeo = new THREE.RingGeometry(0.55, 0.72, 32);
-  const marks = [];
-  for (const x of [-1.2, 1.2]) {
-    for (const z of [1.0, 2.0]) {
-      marks.push(new THREE.Vector3(x, -2.7, z));
-    }
-  }
-  for (const p of marks) {
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.copy(p);
-    ring.position.y = -2.68;
-    scene.add(ring);
-  }
-}
-
 function createSword() {
   const group = new THREE.Group();
   group.position.copy(SWORD_PIVOT);
+
+  // 旋转轴(枢轴)放在光剑之外: 剑身整体偏移枢轴 SWORD_OFFSET, 枢轴处只有握持圆钮,
+  // 于是绕枢轴摆动时剑尖扫过的弧更大, 命中更跟手。
+  const body = new THREE.Group();
+  body.position.y = SWORD_OFFSET;
+  group.add(body);
+
+  const knob = new THREE.Mesh(
+    new THREE.SphereGeometry(0.14, 12, 10),
+    new THREE.MeshStandardMaterial({ color: 0x8899bb, roughness: 0.5, metalness: 0.6 }),
+  );
+  group.add(knob);
 
   const handle = new THREE.Mesh(
     new THREE.CylinderGeometry(0.09, 0.11, 0.5, 12),
     new THREE.MeshStandardMaterial({ color: 0x333344, roughness: 0.7, metalness: 0.6 }),
   );
   handle.position.y = -0.1;
-  group.add(handle);
+  body.add(handle);
 
+  const bladeLen = SWORD_LEN - SWORD_OFFSET;
   const blade = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09, SWORD_LEN, 0.09),
+    new THREE.BoxGeometry(0.09, bladeLen, 0.09),
     new THREE.MeshBasicMaterial({
       color: 0x4de3ff,
       transparent: true,
@@ -131,11 +124,11 @@ function createSword() {
       depthWrite: false,
     }),
   );
-  blade.position.y = SWORD_LEN / 2;
-  group.add(blade);
+  blade.position.y = bladeLen / 2;
+  body.add(blade);
 
   const glow = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.42, SWORD_LEN),
+    new THREE.PlaneGeometry(0.42, bladeLen),
     new THREE.MeshBasicMaterial({
       color: 0x9ff6ff,
       transparent: true,
@@ -145,12 +138,12 @@ function createSword() {
       side: THREE.DoubleSide,
     }),
   );
-  glow.position.y = SWORD_LEN / 2;
-  group.add(glow);
+  glow.position.y = bladeLen / 2;
+  body.add(glow);
 
   const tipLight = new THREE.PointLight(0x4de3ff, 1.2, 6);
   tipLight.position.y = SWORD_LEN;
-  group.add(tipLight);
+  body.add(tipLight);
 
   group.visible = false;
   return { group, blade, tipLight };
@@ -175,7 +168,7 @@ function createTrail() {
 }
 
 function createNotePool(scene) {
-  const geo = new THREE.OctahedronGeometry(0.62, 0);
+  const geo = new THREE.OctahedronGeometry(0.95, 0);
   const free = [];
   const active = [];
 
@@ -194,7 +187,7 @@ function createNotePool(scene) {
           opacity: 1,
         }),
       );
-      mesh.scale.set(1, 1.4, 0.55);
+      mesh.scale.set(1.35, 1.85, 0.8);
       mesh.frustumCulled = false;
     } else {
       mesh.material.color.set(color);

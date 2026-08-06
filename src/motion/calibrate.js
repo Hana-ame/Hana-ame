@@ -1,50 +1,40 @@
-// 光剑校准: 单点基准 + 连续映射
-// 玩家手持手机, 像握光剑一样用手机前端对准 PC 屏幕中心, 保持约 2 秒。
-// 记录手机前方(屏幕法线)方向为基准 ref, 之后:
-//   实时 forward 相对 ref 的偏移 screenRel -> 屏幕平面连续坐标 (u,v),
-//   放大 GAIN 倍填满摆动范围 (替代旧 3x3 表的自适应增益),
-//   光剑方向保持在屏幕平面内 (dir.y=0, 世界系 z-up, 屏幕平面为垂直 XZ 面):
-//     中性位竖直向上 (+Z), u 控制左右倾斜, v 控制上下摆动。
-// 剑尖始终平行屏幕(相机可见剑刃全长), 判定用 tip.x/tip.z, 与 y 无关。
-// 全程连续, 无网格量化; 提示: 光剑前方 = 手机前端。
+// 光剑校准: 单点基准 + 全 3D 重映射 (与 sword/pc.js 一致)
+import { qRotate, shortestArc } from '../../lib/attitude.js';
+// 玩家手持手机, 像握光剑一样用手机顶边对准 PC 屏幕中心, 保持约 2 秒。
+// 记录手机顶边(设备 +Y)方向为 refTop, 构造重映射旋转 mapQ = shortestArc(refTop, INTO),
+// 使校准时(顶边冲向屏幕)剑指 INTO=(0,-1,0)(屏幕内部, 水平, 与重力垂直)。
+// 之后: dir = qRotate(mapQ, 实时顶边方向) —— 剑在 3D 中跟随手机顶边, 全自由度。
+// 优势: 剑可指向屏幕内/外/上下左右任意方向, 与 sword 调试页行为完全一致。
 //
-// 方向符号: screenRel 的 onScreen.x 定义为 right 轴分量, right=cross(n,up)。
-// 手机向右摆(gamma>0)时 forward 相对 ref 的投影落在 -right 方向,
-// 故 onScreen.x>0 实际对应屏幕左。这里在 dir() 中对 u 取反,
-// 使"手机前端指向屏幕右" -> dir.x>0 -> 剑尖向右。
-// v 方向: 手机前端上抬(beta 减小) -> onScreen.y>0 -> 剑尖向上, 符号一致无需取反。
+// 方向符号: 手机顶边向右转 -> 剑尖向右; 上抬 -> 剑尖向上; 前倾(顶边指向屏幕)-> 剑指 INTO。
 
-const MAX_U = 50 * Math.PI / 180;  // u=±1 -> 左右倾斜 ±50°
-const MAX_V = 70 * Math.PI / 180;  // v=-1(前倾)→直下, v=1(后仰)→竖直
-const GAIN = 2.5;                  // screenRel 原始投影较小(≈sinθ), 放大到填满摆动范围
+const INTO = { x: 0, y: -1, z: 0 };   // 屏幕内部方向 (剑尖基准朝此, 水平, 与重力垂直)
 
 export class Calib {
   constructor() {
-    this.ref = null;        // 基准四元数
+    this.map = null;        // 基准重映射旋转 (四元数): refTop -> INTO
     this.refForward = null; // 基准 forward (屏幕法线, 指向屏幕中心)
   }
 
   reset() {
-    this.ref = null;
+    this.map = null;
     this.refForward = null;
   }
 
+  // q: 校准姿态四元数 (设备系->世界系)
   setRef(q, forward) {
-    this.ref = q;
-    this.refForward = forward;
+    const top = qRotate(q, { x: 0, y: 1, z: 0 });
+    this.map = shortestArc(top, INTO);
+    this.refForward = forward || qRotate(q, { x: 0, y: 0, z: 1 });
   }
 
   get complete() {
-    return !!this.refForward;
+    return !!this.map;
   }
 
-  // 屏幕平面连续坐标 (u,v) -> 光剑方向 (保持在屏幕平面内, 中性位竖直向上 +Z)
-  dir(u, v) {
-    const cu = Math.max(-1, Math.min(1, -u * GAIN));
-    const cv = Math.max(-1, Math.min(1, v * GAIN));
-    const bx = Math.sin(cu * MAX_U);
-    const bz = Math.cos((1 - cv) * MAX_V);
-    const len = Math.sqrt(bx * bx + bz * bz) || 1;
-    return { x: bx / len, y: 0, z: bz / len };
+  // 实时手机顶边方向 (世界系) -> 光剑方向 (全 3D)
+  dir(top) {
+    if (!this.map) return INTO;
+    return qRotate(this.map, top);
   }
 }

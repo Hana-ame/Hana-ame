@@ -71,7 +71,9 @@ export function initPc() {
         connected = true;
         els.devices.innerHTML = `<div class="device-item"><span>手机已连接</span><span class="dot on"></span></div>`;
         els.start.disabled = false;
-        setStatus('已连接, 可以开始游戏', true);
+        setStatus('已连接, 校准光剑中…', true);
+        startGame({ host, roomCode, diff, calibrate: true });
+        showScreen('screen-game');
       },
       onControl(msg) {
         if (msg?.t === P.PING) host?.sendControl({ t: P.PONG, ts: msg.ts });

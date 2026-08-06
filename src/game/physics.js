@@ -1,111 +1,92 @@
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 
-const SHARD_COUNT = 9;
-const SHARD_FADE = 3.0;
+const SHARD_COUNT = 2;
+const SHARD_FADE = 2.2;
 
+// 音符碎裂: 碎块是音符本身(八面体)的碎片, 不设地面/墙壁, 不受任何反弹碰撞,
+// 受重力直接下落、翻滚、淡出, 到时间后从场景删除。
 export class ShardPhysics {
   constructor() {
     this.world = new CANNON.World({ gravity: new CANNON.Vec3(0, 0, -14) });
     this.world.allowSleep = true;
-
-    const mat = new CANNON.Material({ friction: 0.3, restitution: 0.45 });
-    const ground = new CANNON.Body({
-      type: CANNON.Body.STATIC,
-      shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, 0, -2.6),
-    });
-    const ceil = new CANNON.Body({
-      type: CANNON.Body.STATIC,
-      shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, 0, 6.2),
-      quaternion: new CANNON.Quaternion().setFromEuler(Math.PI, 0, 0),
-    });
-    const back = new CANNON.Body({
-      type: CANNON.Body.STATIC,
-      shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, -7, 0),
-      quaternion: new CANNON.Quaternion().setFromEuler(-Math.PI / 2, 0, 0),
-    });
-    const front = new CANNON.Body({
-      type: CANNON.Body.STATIC,
-      shape: new CANNON.Plane(),
-      position: new CANNON.Vec3(0, 5, 0),
-      quaternion: new CANNON.Quaternion().setFromEuler(Math.PI / 2, 0, 0),
-    });
-    for (const b of [ground, ceil, back, front]) {
-      b.material = mat;
-      this.world.addBody(b);
-    }
-
     this._shards = [];
-    this._geoCache = new Map();
+    this._scene = null;
   }
 
-  spawn(pos, impulse) {
-    const bodies = [];
+  splitNote(pos, color, cutDir, scene) {
+    if (!scene) scene = this._scene;
+    const d = new THREE.Vector3(cutDir.x, cutDir.y, cutDir.z).normalize();
+    // 垂直于剑刃的切向, 两块各朝一侧飞开
+    let perp = new THREE.Vector3(d.z, 0, -d.x);
+    if (perp.lengthSq() < 1e-4) perp.set(1, 0, 0);
+    perp.normalize();
+
     for (let i = 0; i < SHARD_COUNT; i++) {
-      const s = 0.12 + Math.random() * 0.18;
+      const sgn = i === 0 ? 1 : -1;
+      const s = 0.45 + Math.random() * 0.25;
+
+      const geo = new THREE.OctahedronGeometry(s, 0);
+      const mat = new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.5,
+        metalness: 0.4,
+        roughness: 0.3,
+        transparent: true,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      // 非均匀缩放 -> 像被劈开的音符碎片, 而不是方块
+      mesh.scale.set(
+        0.6 + Math.random() * 0.9,
+        0.6 + Math.random() * 0.9,
+        0.5 + Math.random() * 0.8,
+      );
+      mesh.frustumCulled = false;
+      scene.add(mesh);
+
       const body = new CANNON.Body({
-        mass: 1,
+        mass: 0.5 + Math.random() * 0.4,
         shape: new CANNON.Box(new CANNON.Vec3(s, s, s)),
         position: new CANNON.Vec3(
-          pos.x + (Math.random() - 0.5) * 0.4,
-          pos.y + (Math.random() - 0.5) * 0.4,
-          pos.z + (Math.random() - 0.5) * 0.4,
+          pos.x + perp.x * sgn * 0.25,
+          pos.y + perp.y * sgn * 0.25,
+          pos.z + perp.z * sgn * 0.25,
         ),
       });
-      body.linearDamping = 0.05;
-      body.angularDamping = 0.2;
-      const v = new CANNON.Vec3(
-        impulse.x * (4 + Math.random() * 5) + (Math.random() - 0.5) * 3,
-        impulse.y * (4 + Math.random() * 5) + (Math.random() - 0.5) * 3,
-        impulse.z * (4 + Math.random() * 5) + 2 + Math.random() * 4,
+      body.linearDamping = 0.12;
+      body.angularDamping = 0.12;
+      // 主要向下落, 两块沿切向各自飞开, 少量沿剑刃方向散开
+      body.velocity.set(
+        d.x * (1 + Math.random() * 2) + perp.x * sgn * (2.5 + Math.random() * 2),
+        d.y * (1 + Math.random() * 2) + perp.y * sgn * (2.5 + Math.random() * 2),
+        -(2 + Math.random() * 3),
       );
-      body.velocity.set(v.x, v.y, v.z);
       body.angularVelocity.set(
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 12,
       );
       this.world.addBody(body);
-      const mesh = this._mesh(s);
-      this._shards.push({ body, mesh, life: SHARD_FADE });
-      bodies.push({ body, mesh });
-    }
-    return bodies;
-  }
 
-  _mesh(s) {
-    let geo = this._geoCache.get(s.toFixed(2));
-    if (!geo) {
-      geo = new THREE.BoxGeometry(s * 2, s * 2, s * 2);
-      this._geoCache.set(s.toFixed(2), geo);
+      this._shards.push({ body, mesh, life: SHARD_FADE * (0.6 + Math.random() * 0.7) });
     }
-    const mat = new THREE.MeshStandardMaterial({
-      color: 0x4de3ff,
-      emissive: 0x1a5f73,
-      metalness: 0.6,
-      roughness: 0.2,
-      transparent: true,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.frustumCulled = false;
-    return mesh;
   }
 
   update(dt, scene) {
-    this.world.step(1 / 60, dt, 3);
+    if (scene) this._scene = scene;
+    this.world.step(1 / 60, dt, 2);
     const dead = [];
     for (let i = 0; i < this._shards.length; i++) {
       const s = this._shards[i];
       s.life -= dt;
       s.mesh.position.copy(s.body.position);
       s.mesh.quaternion.copy(s.body.quaternion);
-      const alpha = Math.min(1, s.life / 0.8);
+      const alpha = Math.min(1, s.life / 0.5);
       s.mesh.material.opacity = alpha;
-      if (s.life <= 0 || s.body.position.z < -3.5) {
+      if (s.life <= 0) {
         scene.remove(s.mesh);
+        s.mesh.geometry.dispose();
         s.mesh.material.dispose();
         this.world.removeBody(s.body);
         dead.push(i);
@@ -115,7 +96,10 @@ export class ShardPhysics {
   }
 
   dispose(scene) {
-    for (const s of this._shards) scene.remove(s.mesh);
+    for (const s of this._shards) {
+      scene.remove(s.mesh);
+      this.world.removeBody(s.body);
+    }
     this._shards = [];
   }
 }

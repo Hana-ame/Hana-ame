@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GAME } from '../constants.js';
+import { GAME, DIFFICULTY } from '../constants.js';
 import { SWORD_PIVOT, SWORD_LEN, TRAIL_LEN } from './scene.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -49,6 +49,11 @@ export class Game {
 
     this.swordDir = { x: 0, y: 0, z: 1 };
     this.swordVisible = false;
+    this.calibrating = false;
+    this.omega = 0;
+    this._ray = new THREE.Raycaster();
+    this._prevTip = null;
+    this._prevDir = null;
 
     this.score = 0;
     this.combo = 0;
@@ -68,13 +73,26 @@ export class Game {
     this.notes = [];
   }
 
-  setSwordDir(dir) {
+  setSwordDir(dir, omega) {
     this.swordDir = dir;
     this.swordVisible = true;
+    if (omega != null) this.omega = omega;
+  }
+
+  setDifficulty(d) {
+    const c = DIFFICULTY[d];
+    this.hitRadius = c ? c.hitRadius : HIT_RADIUS;
+    this.hitSteps = c ? c.hitSteps : HIT_STEPS;
   }
 
   update(dt) {
     if (this.ended) return;
+
+    // 校准模式: 只显示光剑跟随, 不生成/不移动/不结算音符
+    if (this.calibrating) {
+      this._updateSword(dt);
+      return;
+    }
 
     const step = this.music.currentStep;
 
@@ -97,6 +115,39 @@ export class Game {
     this._missLater.length = 0;
 
     this._updateSword(dt);
+    this._collideNotes(step);
+  }
+
+  // 碰撞 (纯接触): 剑刃(枢轴→剑尖)所在线段与音符中心的距离 <= HIT_RADIUS 即砍中。
+  // 与挥动速度/位移无关——剑尖停着碰到音符也会立刻砍碎。命中在 _hit 里触发物理碎块。
+  _collideNotes(step) {
+    if (this.ended || !this.swordVisible) return;
+
+    const dir = new THREE.Vector3(this.swordDir.x, this.swordDir.y, this.swordDir.z);
+    if (dir.lengthSq() < 1e-9) return;
+
+    const pivot = SWORD_PIVOT;
+    const tip = pivot.clone().addScaledVector(dir, SWORD_LEN);
+    const blade = tip.clone().sub(pivot);
+    const bladeLen = blade.length();
+    const bladeDir = blade.clone().normalize();
+
+    for (const n of this.notes) {
+      if (n.dead) continue;
+      const y = n.mesh.position.y;
+      if (y < GAME.NOTE_PLANE_Y - 2.2 || y > GAME.NOTE_PLANE_Y + 1.6) continue;
+      if (Math.abs(step - n.targetStep) > this.hitSteps) continue;
+
+      // 点到线段最近点
+      const p = n.mesh.position.clone().sub(pivot);
+      const t = p.dot(bladeDir) / bladeLen;
+      const tt = Math.max(0, Math.min(1, t));
+      const closest = pivot.clone().addScaledVector(bladeDir, tt * bladeLen);
+      if (closest.distanceTo(n.mesh.position) <= HIT_RADIUS) {
+        this._hit(n, step);
+        break;
+      }
+    }
   }
 
   _spawnNote(chartNote, _step) {
@@ -105,6 +156,7 @@ export class Game {
     this.notes.push({
       targetStep: chartNote.step,
       pos: chartNote.pos.clone(),
+      color: chartNote.color,
       mesh,
       dead: false,
     });
@@ -189,7 +241,7 @@ export class Game {
     this.scene.notePool.release(n.mesh);
     this.notes.splice(this.notes.indexOf(n), 1);
 
-    this.physics.spawn(pos, dir);
+    this.physics.splitNote(pos, n.color, dir, this.scene.scene);
     this.fx.burst(pos, grade === 'perfect' ? 0xffd166 : 0x4de3ff, grade === 'perfect' ? 34 : 22, dir);
     this.fx.addShake(grade === 'perfect' ? 0.3 : 0.18);
     this._swordFlash = 0.35;
