@@ -1,7 +1,7 @@
 {
-  "name": "sim",
-  "short_name": "sim",
-  "description": "PixiJS + React playground — draggable windows, 3D, confirm dialogs",
+  "name": "Hana VN",
+  "short_name": "Hana VN",
+  "description": "Browser visual novel engine — script-driven, hash-routed scenes.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -4,10 +4,10 @@
 
 ## 现状
 
-- 仓库：`Hana-ame/gsap-framework`，生产分支 `main` → Cloudflare Pages → `https://react.moonchan.xyz/`
-- `sim` 分支是废弃集成分支，**永远不要 push 到 sim**
-- VN 框架 = `src/vn/`（剧本驱动，已从 `vn-rework` 合并到 `main` 并上线）。旧 `src/avd/*` 遗留代码已清除
+- 仓库：`Hana-ame/Hana-ame`，开发/生产分支 `proj/vn`（纯浏览器 VN 项目，源自在 `gsap-framework` 里锤炼出的 `src/vn/` 引擎）
+- 项目形态：**纯浏览器 VN**。已删除旧 GSAP/PixiJS 框架（`src/framework`、`src/components`、`src/avd`）、多窗口/多应用、单机小游戏等全部非 VN 代码
 - 默认入口：`#vn-title`（数据驱动标题界面）→ `#vn-menu`（HS 回想菜单）→ `#hscene-<key>`（H 场景）；还有 `#vn-recall`（解锁回想）、`#component-vn`
+- `src/vn/scenes/{azusa,iru,isekai}` 77 个 H 场景剧本；`src/example/examples.ts` 是唯一场景注册表（全 `React.lazy` 分包）
 
 ## 硬规则（违反会返工）
 
@@ -25,5 +25,5 @@
 - 交互 git 用内联身份：`git -c user.name=lumin -c user.email=luminovoez@gmail.com ...`
 - **每个有意义的进展必须新建 commit**（`type(scope): 描述`），不得攒着一次性提交
 - **push 由用户决定：agent 绝对不可以自行 push**。有 push 需求/进展时只提交 commit，然后明确问用户是否 push
-- `main` 提交前必须 `npm run lint` 绿；CI 处理 typecheck/build
-- 结构改动（framework/components/example）先声明归属，不跨越 `index.ts` 直连
+- `proj/vn` 提交前必须 `npm run lint` 绿；CI 处理 typecheck/build
+- 结构改动（场景/注册表/播放器）先声明归属
