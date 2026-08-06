@@ -49,10 +49,10 @@ export function handleControl(msg) {
   if (msg.t === P.START) startGame({ host: ctx?.host, roomCode: ctx?.roomCode, bpm: msg.bpm });
 }
 
-export async function startGame({ host, roomCode, bpm, diff, calibrate = false }) {
+export async function startGame({ host, roomCode, bpm, diff, calibrate = false, keepCalib = false }) {
   cleanup();
   ctx = { host, roomCode, bpm };
-  calibState = { mapQ: null, ref: null, flips: { x: 1, y: 1, z: 1 }, top: null };
+  if (!keepCalib) calibState = { mapQ: null, ref: null, flips: { x: 1, y: 1, z: 1 }, top: null };
   let calibDiff = diff ?? 'normal';
 
   let chart = null;
@@ -69,28 +69,6 @@ export async function startGame({ host, roomCode, bpm, diff, calibrate = false }
   const music = new Music(bpm || GAME.BPM);
   const hud = bindHud();
   const popup = bindPopup();
-
-  let debugCameraOn = false;
-  const toggleDebugCamera = (on = !debugCameraOn) => {
-    debugCameraOn = on;
-    app.debugControls.enabled = on;
-    if (on) app.debugControls.update();
-    const badge = document.querySelector('#debugcam-badge');
-    if (badge) badge.classList.toggle('hidden', !on);
-    const btn = document.querySelector('#debugcam-toggle');
-    if (btn) btn.classList.toggle('on', on);
-  };
-  const onKey = (e) => {
-    if (e.code !== 'KeyC' || e.metaKey || e.ctrlKey || e.altKey) return;
-    toggleDebugCamera();
-    e.preventDefault();
-  };
-  window.addEventListener('keydown', onKey);
-  ctx.removeKey = onKey;
-  const camBtn = document.querySelector('#debugcam-toggle');
-  const onCamClick = () => toggleDebugCamera();
-  camBtn?.addEventListener('click', onCamClick);
-  ctx.removeCamClick = () => camBtn?.removeEventListener('click', onCamClick);
 
   const onEnd = (stats) => {
     hud.showEnd(stats);
@@ -156,13 +134,28 @@ export async function startGame({ host, roomCode, bpm, diff, calibrate = false }
   startBtn?.addEventListener('click', beginPlay);
 
   if (calibrate) calibOv?.classList.remove('hidden');
+  // 不需要校准(如"再来一次"/房间直接开始)时立即开打
+  if (!calibrate) beginPlay();
+
+  const exitToRoom = () => {
+    cleanup();
+    showScreen('screen-pc');
+  };
+  const hudExit = document.querySelector('#hud-exit');
+  const onHudExit = () => exitToRoom();
+  hudExit?.addEventListener('click', onHudExit);
+  const endReplay = document.querySelector('#end-replay');
+  const onEndReplay = () => startGame({ host, roomCode, bpm, diff: calibDiff, keepCalib: true });
+  endReplay?.addEventListener('click', onEndReplay);
+  const endExit = document.querySelector('#end-exit');
+  const onEndExit = () => exitToRoom();
+  endExit?.addEventListener('click', onEndExit);
 
   const clock = new THREE.Clock();
   let raf = 0;
   let camT = new THREE.Vector3(0, -3.6, 1.6);
   const camPosOffset = new THREE.Vector3(0, 0.35, 0.6);
   const followView = (dt) => {
-    if (debugCameraOn) return;
     const { pivot, dir } = app.getSword();
     const base = new THREE.Vector3(0, -3.6, 1.6);
     const aim = pivot.clone().addScaledVector(dir, 10);
@@ -179,8 +172,7 @@ export async function startGame({ host, roomCode, bpm, diff, calibrate = false }
     fx.update(dt);
     game.update(dt);
     followView(dt);
-    if (debugCameraOn) app.debugControls.update();
-    app.renderer.render(app.scene, debugCameraOn ? app.debugCamera : app.camera);
+    app.renderer.render(app.scene, app.camera);
   };
   ctx.raf = raf;
   loop();
@@ -190,13 +182,15 @@ export async function startGame({ host, roomCode, bpm, diff, calibrate = false }
     calibOv?.querySelectorAll('[data-flip]').forEach((b) => b.removeEventListener('click', b._f));
     diffBtns.forEach((b) => b.removeEventListener('click', b._f));
     calibOv?.querySelector('#calib-setfront')?.removeEventListener('click', () => {});
+    document.querySelector('#hud-exit')?.removeEventListener('click', onHudExit);
+    document.querySelector('#end-replay')?.removeEventListener('click', onEndReplay);
+    document.querySelector('#end-exit')?.removeEventListener('click', onEndExit);
   };
 
   window.__beatriftDebug = {
     getGame: () => ctx?.game,
     getMusic: () => ctx?.music,
     handleMotion,
-    toggleDebugCamera: (on) => toggleDebugCamera(on),
     setFront,
     toggleFlip,
   };
@@ -205,8 +199,6 @@ export async function startGame({ host, roomCode, bpm, diff, calibrate = false }
 export function cleanup() {
   if (!ctx) return;
   cancelAnimationFrame(ctx.raf);
-  window.removeEventListener('keydown', ctx.removeKey);
-  ctx.removeCamClick?.();
   if (ctx.dirTimer) clearInterval(ctx.dirTimer);
   ctx.game?.notes?.forEach?.((n) => ctx.app?.notePool?.release?.(n.mesh));
   ctx.physics?.dispose?.(ctx.app?.scene);
@@ -215,7 +207,7 @@ export function cleanup() {
   ctx.cleanupButtons?.();
   document.querySelector('#hud')?.classList.add('hidden');
   document.querySelector('#calib-overlay')?.classList.add('hidden');
-  document.querySelector('#debugcam-badge')?.classList.add('hidden');
+  document.querySelector('#end-overlay')?.classList.add('hidden');
   ctx = null;
 }
 
