@@ -29,6 +29,8 @@ npm run test       # vitest
   - `hscene/*.tsx` 场景包装器、`title/` 标题、`recall/` 回想、`vn-menu/` 菜单、`component-vn/` 宿主
 - `scripts/` — 场景/资源工具链（`rmmz2vn`、`generate_scripts`、`verify_scenes`、`decrypt_cgs`、`fetch_gallery`）
 
+文档见 [`docs/README.md`](docs/README.md)（架构 / 剧本编写 / 资源工具链）。
+
 ## 资源约定
 
 - H 场景图片一律用 `ex.moonchan.xyz` 外链（`ex.moonchan.xyz/s/<hash>/<id>?redirect_to=image`）
