@@ -32,6 +32,28 @@
             margin-bottom: 40px;
         }
 
+        /* 顶部紧急提示框样式 */
+        .alert-notice {
+            display: inline-block;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .alert-notice:hover {
+            background-color: #ffe8a1;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
         /* 响应式 Grid 布局 */
         #services-list {
             display: grid;
@@ -124,8 +146,9 @@
         @media (max-width: 600px) {
             body { padding: 15px; }
             #services-list { grid-template-columns: 1fr; }
-            .entry-item { padding: 12px 15px; width: 100%; text-align: center; } /* 增加点击面积 */
+            .entry-item { padding: 12px 15px; width: 100%; text-align: center; box-sizing: border-box; } /* 增加点击面积 */
             .entry-item .tooltip { display: none; } /* 移动端通常通过描述文字解决，不建议用 tooltip */
+            .alert-notice { display: block; line-height: 1.5; } /* 移动端提示框换行适配 */
         }
     </style>
 </head>
@@ -134,7 +157,10 @@
 <div class="container">
     <header>
         <h1>一览</h1>
-        <p></p>
+        <!-- 新增的顶部紧急提示栏 -->
+        <a href="https://chatto.moonchan.xyz" class="alert-notice" target="_blank">
+            🚨 sukebei被攻击导致ip被封。请前往chatto聊天室(点击进入)等待进一步通知，
+        </a>
     </header>
 
     <!-- 渲染后的 HTML 将挂载到这里 -->
@@ -178,6 +204,14 @@
                 { name: "里站", url: "https://sukebei.moonchan.xyz", note: "R18资源" },
             ]
         },
+        // 新增的 chatto 栏目
+        {
+            title: "chatto",
+            hint: "聊天室 / 交流区",
+            entries: [
+                { name: "chatto", url: "https://chatto.moonchan.xyz", note: "聊天室入口" }
+            ]
+        }
     ];
 
     // 2. 渲染函数
