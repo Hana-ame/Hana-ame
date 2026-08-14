@@ -40,18 +40,45 @@
             border: 1px solid #ffeeba;
             padding: 12px 20px;
             border-radius: 8px;
-            text-decoration: none;
             margin-top: 10px;
             font-size: 0.95rem;
             font-weight: 500;
-            transition: all 0.2s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            line-height: 1.5;
         }
 
-        .alert-notice:hover {
-            background-color: #ffe8a1;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
+        /* 提示框内的链接样式 */
+        .alert-notice a {
+            color: #d35400; 
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 0 4px;
+        }
+
+        .alert-notice a:hover {
+            color: #a04000;
+        }
+
+        /* 吐槽图片区域样式 */
+        .meme-box {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .meme-box p {
+            font-size: 1.05rem;
+            color: var(--text-main);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .meme-box img {
+            max-width: 100%;
+            width: 400px; /* 限制PC端最大宽度，防止图片过大 */
+            height: auto;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            border: 2px solid #eee;
         }
 
         /* 响应式 Grid 布局 */
@@ -142,13 +169,14 @@
             opacity: 1;
         }
 
-        /* 适配触屏：移动端不显示过于复杂的 hover 动画 */
+        /* 适配触屏 */
         @media (max-width: 600px) {
             body { padding: 15px; }
             #services-list { grid-template-columns: 1fr; }
-            .entry-item { padding: 12px 15px; width: 100%; text-align: center; box-sizing: border-box; } /* 增加点击面积 */
-            .entry-item .tooltip { display: none; } /* 移动端通常通过描述文字解决，不建议用 tooltip */
-            .alert-notice { display: block; line-height: 1.5; } /* 移动端提示框换行适配 */
+            .entry-item { padding: 12px 15px; width: 100%; text-align: center; box-sizing: border-box; }
+            .entry-item .tooltip { display: none; }
+            .alert-notice { display: block; text-align: left; }
+            .meme-box img { width: 100%; } /* 移动端图片撑满容器 */
         }
     </style>
 </head>
@@ -157,10 +185,17 @@
 <div class="container">
     <header>
         <h1>一览</h1>
-        <!-- 新增的顶部紧急提示栏 -->
-        <a href="https://chatto.moonchan.xyz" class="alert-notice" target="_blank">
-            🚨 sukebei被攻击导致ip被封。请前往chatto聊天室(点击进入)等待进一步通知，
-        </a>
+        
+        <!-- 顶部紧急提示栏 -->
+        <div class="alert-notice">
+            🚨 提示：<a href="https://gh-proxy.com/https://github.com/Hana-ame/wintools/releases/download/v2.3.0/ech-proxy-windows-amd64.exe" target="_blank">点击下载工具</a>，运行后，访问 <a href="https://sukebei.l.moonchan.xyz:8443" target="_blank">https://sukebei.l.moonchan.xyz:8443</a>
+        </div>
+
+        <!-- 新增的吐槽文本和图片 -->
+        <div class="meme-box">
+            <p>给你们气笑了</p>
+            <img src="https://p.sda1.dev/34/4a4576a110156096128fcd6cbb34dc84/0d6a7881-a6f9-43df-87cf-3367935c7c9c.webp" alt="吐槽图片">
+        </div>
     </header>
 
     <!-- 渲染后的 HTML 将挂载到这里 -->
@@ -172,7 +207,7 @@
     const servicesData = [
         {
             title: "月岛 - 匿名版",
-            hint: "",
+            hint: "默认列表会不同",
             entries: [
                 { name: "810114.xyz", url: "https://810114.xyz", note: "被墙了的话会删除" },
             ]
@@ -197,10 +232,9 @@
             hint: "下种子的地方",
             entries: [
                 { name: "表站", url: "https://nyaa.moonchan.xyz", note: "全年龄资源" },
-                { name: "里站", url: "https://sukebei.moonchan.xyz", note: "R18资源" },
+                { name: "里站（噶了）", url: "https://sukebei.moonchan.xyz", note: "R18资源" },
             ]
         },
-        // 新增的 chatto 栏目
         {
             title: "chatto",
             hint: "聊天室 / 交流区",
